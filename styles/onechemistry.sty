@@ -1,0 +1,2450 @@
+% ============================================================================
+% onechemistry.sty — shared style for the One Chemistry Book project
+%
+% All packages, theorem environments and macros live here. Chapter files must
+% not load packages or define macros: if you need something new, add it here
+% and document it in CONTRIBUTING.md.
+%
+% Language: set \booklang before loading (default en). UI strings and part
+% titles live in styles/lang/<lang>.tex. Chapter bodies for non-English
+% languages live under parts/<year>/<lang>/ (see \ominput / \ominputsol).
+% ============================================================================
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{onechemistry}[2026/07/11 v0.2 One Chemistry Book common style]
+
+% ----------------------------------------------------------------------------
+% Language selection (default: English)
+% ----------------------------------------------------------------------------
+\providecommand{\booklang}{en}
+
+% ----------------------------------------------------------------------------
+% Core packages
+% ----------------------------------------------------------------------------
+% Engine / script detection. Hindi editions use Devanagari and must be built
+% with XeLaTeX (or LuaLaTeX); pdfTeX cannot load OpenType Devanagari fonts.
+% Other languages stay on the historical pdfTeX path (T1 + lmodern).
+\RequirePackage{iftex}
+\edef\om@booklang@exp{\booklang}%
+\def\om@lang@fr{fr}%
+\def\om@lang@nl{nl}%
+\def\om@lang@es{es}%
+\def\om@lang@pt{pt}%
+\def\om@lang@id{id}%
+\def\om@lang@hi{hi}%
+\def\om@lang@ar{ar}%
+\newif\ifom@hindi
+\newif\ifom@arabic
+\ifx\om@booklang@exp\om@lang@hi
+  \om@hinditrue
+\fi
+\ifx\om@booklang@exp\om@lang@ar
+  \om@arabictrue
+\fi
+
+\ifom@hindi
+  \ifPDFTeX
+    \PackageError{onechemistry}{%
+      Hindi editions require XeLaTeX (or LuaLaTeX).\MessageBreak
+      Use: xelatex \jobname.tex\MessageBreak
+      (or latexmk, which picks XeLaTeX for *_hi.tex)}{Build with XeLaTeX.}%
+  \fi
+  \RequirePackage{fontspec}%
+  % Bundled under assets/fonts/ so CI and local builds do not depend on
+  % system font packages. Noto Sans Devanagari covers Devanagari + basic Latin.
+  % (Same path as onemath.sty; SI micro µ uses math \mu — see siunitx setup.)
+  %
+  % Noto Sans Devanagari ships Regular and Bold only: no italic, no small
+  % caps. Left undeclared, every \emph and \textsc raised "Font shape
+  % TU/NotoSansDevanagari(0)/m/it undefined" and silently fell back to
+  % upright — so every defined term, marked \emph{term}\index{term} inside a
+  % definition, was typographically invisible in the Hindi PDF. Alias the
+  % missing shapes onto the faces we have, then carry emphasis with WEIGHT,
+  % which is what Devanagari typography does: the script has no italic.
+  \IfFileExists{assets/fonts/NotoSansDevanagari-Regular.ttf}{%
+    \setmainfont{NotoSansDevanagari}[%
+      Path=assets/fonts/,%
+      Extension=.ttf,%
+      UprightFont=*-Regular,%
+      BoldFont=*-Bold,%
+      ItalicFont=*-Regular,%
+      BoldItalicFont=*-Bold,%
+      SmallCapsFont=*-Regular,%
+      Script=Devanagari,%
+    ]%
+  }{%
+    \setmainfont{Noto Sans Devanagari}[Script=Devanagari]%
+  }%
+  % \emph -> bold at the first level, upright at the second (nested emphasis
+  % toggles back, as \em does in Latin scripts). \DeclareEmphSequence is the
+  % supported hook for this; do not \renewcommand\emph, which breaks nesting.
+  \DeclareEmphSequence{\bfseries,\normalfont}%
+  % Table of contents: book.cls sizes the page-number box at \@pnumwidth =
+  % 1.55em, which fits three Latin Modern digits. Noto Sans Devanagari's
+  % digits are wider, so every three-digit entry overflowed by exactly
+  % 1.12782pt -- that single cause accounted for ALL 141 overfull boxes in
+  % the Hindi edition, while every other language sat at zero. Not a prose
+  % problem: the log shows no "Overfull \hbox ... in paragraph" at all, so
+  % Hindi needs no hyphenation patterns here. Widen the box and push the
+  % entry's right margin out by the same amount.
+  \renewcommand{\@pnumwidth}{2.2em}%
+  \renewcommand{\@tocrmarg}{3.2em}%
+\else
+  \ifom@arabic
+    % Arabic is the first right-to-left edition. It needs LuaTeX, not XeTeX:
+    % the bidirectional engine we use is babel's own "bidi=basic", which is
+    % implemented in Lua and therefore does not patch LaTeX internals the way
+    % the xetex "bidi" package does. That matters here because this stack
+    % leans on tcolorbox[most], tikz, pgfplots, circuitikz and hyperref, all
+    % of which "bidi" is known to fight with. See the babel block below for
+    % the four fixes the combination still needs.
+    \ifLuaTeX\else
+      \PackageError{onechemistry}{%
+        Arabic editions require LuaLaTeX.\MessageBreak
+        Use: lualatex \jobname.tex\MessageBreak
+        (or latexmk, which picks LuaLaTeX for *_ar.tex)}{Build with LuaLaTeX.}%
+    \fi
+    \RequirePackage{fontspec}%
+  \else
+    \ifPDFTeX
+      \RequirePackage[T1]{fontenc}%
+      \RequirePackage[utf8]{inputenc}%
+      \RequirePackage{lmodern}%
+    \fi
+  \fi
+\fi
+\RequirePackage{microtype}
+% microtype letterspacing (\textls) is not implemented for XeTeX; Hindi
+% editions use XeLaTeX for Devanagari. Provide a no-op so the cover wordmark
+% and branded header still compile (tracking is cosmetic).
+\ifXeTeX
+  \DeclareRobustCommand{\textls}[2][]{#2}%
+\fi
+\RequirePackage[a4paper,inner=2.2cm,outer=2.2cm,top=2.4cm,bottom=2.6cm,headheight=14pt]{geometry}
+
+% babel: only for non-English editions (keeps English builds unchanged).
+% Compare expanded token lists so \newcommand{\booklang}{fr} matches.
+% Load language babel only when the .ldf is installed; UI strings still
+% come from styles/lang/<lang>.tex either way.
+% Hindi: no babel (no babel-hindi in our stack); UI strings from
+% styles/lang/hi.tex and colon-safe labels without active characters.
+% shorthands=off: French (and Dutch/Spanish/Portuguese) babel makes characters
+% such as ":" active for punctuation spacing. Our labels use colons throughout
+% (type:year:slug:name) and cleveref cannot parse active characters in
+% label names — CI with full TeX Live would fail at the first \cref.
+% French/Dutch sources already use ~ before :;!? for spacing.
+\ifx\om@booklang@exp\om@lang@fr
+  \IfFileExists{french.ldf}{%
+    \RequirePackage[french,shorthands=off]{babel}%
+  }{%
+    \PackageWarning{onechemistry}{%
+      french.ldf not found; building French without babel.
+      Install texlive-lang-french for hyphenation}%
+  }%
+\fi
+\ifx\om@booklang@exp\om@lang@nl
+  \IfFileExists{dutch.ldf}{%
+    \RequirePackage[dutch,shorthands=off]{babel}%
+  }{%
+    \PackageWarning{onechemistry}{%
+      dutch.ldf not found; building Dutch without babel.
+      Install texlive-lang-european (or babel-dutch) for hyphenation}%
+  }%
+\fi
+
+\ifx\om@booklang@exp\om@lang@es
+  \IfFileExists{spanish.ldf}{%
+    \RequirePackage[spanish,es-noshorthands,shorthands=off]{babel}%
+    % babel-spanish redefines \% to auto-insert a thin space; its
+    % \lastskip probe is fatal after a math \, (mu-glue), and the
+    % sources set the space explicitly ($t\,\%$, as in fr/nl).
+    \spanishplainpercent
+  }{%
+    \PackageWarning{onechemistry}{%
+      spanish.ldf not found; building Spanish without babel.
+      Install texlive-lang-spanish for hyphenation}%
+  }%
+\fi
+\ifx\om@booklang@exp\om@lang@pt
+  \IfFileExists{brazilian.ldf}{%
+    \RequirePackage[brazilian,shorthands=off]{babel}%
+  }{%
+    \IfFileExists{portuguese.ldf}{%
+      \RequirePackage[portuguese,shorthands=off]{babel}%
+    }{%
+      \IfFileExists{portuges.ldf}{%
+        \RequirePackage[portuges,shorthands=off]{babel}%
+      }{%
+        \PackageWarning{onechemistry}{%
+          brazilian/portuguese.ldf not found; building Portuguese without babel.
+          Install texlive-lang-portuguese for hyphenation}%
+      }%
+    }%
+  }%
+\fi
+
+% Indonesian: babel-indonesian declares no shorthands, no active characters
+% and no command redefinitions (its "extras" hook is empty), so neither the
+% babel-spanish \% trap nor any of the Hindi/Arabic script work applies here.
+% shorthands=off is kept only for the house reason: our labels carry colons.
+% The engine stays pdfTeX and hyphenation comes from hyph-id through babel.
+\ifx\om@booklang@exp\om@lang@id
+  \IfFileExists{bahasai.ldf}{%
+    \RequirePackage[bahasai,shorthands=off]{babel}%
+  }{%
+    \IfFileExists{indonesian.ldf}{%
+      \RequirePackage[indonesian,shorthands=off]{babel}%
+    }{%
+      \PackageWarning{onechemistry}{%
+        bahasai/indonesian.ldf not found; building Indonesian without babel.
+        Install texlive-lang-other (babel-indonesian) for hyphenation}%
+    }%
+  }%
+\fi
+
+% ----------------------------------------------------------------------------
+% Arabic: right-to-left, via babel's Lua bidi engine.
+%
+% "layout=graphics" is load-bearing, not cosmetic. Without it every pgfpicture
+% -- which includes the frame of every tcolorbox, i.e. every statement
+% environment in the series -- is drawn mirrored about the picture origin, so
+% the coloured box lands beside its own text, off the page. babel's own patch
+% (luababel.def, \bbl@pictsetdir) typesets pictures left-to-right and then
+% re-applies RTL at each tikz node, which is exactly what figures need: the
+% drawing coordinates stay untouched and only the node text reads RTL.
+%
+% Four more fixes live after the packages load; see "Arabic runtime fixes"
+% below.
+% ----------------------------------------------------------------------------
+\ifom@arabic
+  % layout=tabular is the second load-bearing one. babel's bidi=basic
+  % implements the Unicode algorithm's W1-W7 and N1-N2 but NOT N0, the paired
+  % bracket rule, so a table cell like "$V$ (\unit{mL})" ended with its
+  % closing parenthesis taking the paragraph direction: the cell rendered
+  % "(mLV (", with two opening brackets and none closing. \babelsublr around
+  % the cell does not help -- the direction is decided for the cell box.
+  % layout=tabular fixes the cells and, correctly for a right-to-left book,
+  % orders the columns right to left. Prose is unaffected: a parenthesised
+  % Latin run inside an Arabic sentence already resolved correctly, because
+  % there the closing bracket has following context to key on.
+  \RequirePackage[bidi=basic,layout=graphics.tabular]{babel}%
+  % Table of contents. Arabic prose uses ASCII digits, so this looked like it
+  % would not be needed -- but it is: Noto Naskh Arabic's ASCII digits are
+  % themselves wider than Latin Modern's, and every three-digit contents entry
+  % overflowed \@pnumwidth by 1.39063pt. That single cause produced 147 of the
+  % 149 overfull boxes in the first Arabic build, against 0 for English; the
+  % log said "detected at line", i.e. a box, not "in paragraph", so this is not
+  % a hyphenation problem and Arabic needs no patterns here either.
+  \renewcommand{\@pnumwidth}{2.2em}%
+  \renewcommand{\@tocrmarg}{3.2em}%
+  \babelprovide[import,main]{arabic}%
+  % Two bundled STATIC faces, cut from the Noto Naskh Arabic variable font at
+  % wght 400 and 700. Noto Naskh is a book face and these instances carry the
+  % full Arabic block AND full ASCII (95/95), which matters because the prose
+  % is full of parentheses, ASCII digits and Latin symbols -- the Noto Naskh
+  % statics published upstream have no ASCII at all, not even "(", which is
+  % why the variable font was bundled originally.
+  %
+  % DO NOT go back to instancing the variable font at run time
+  % (RawFeature={axis={wght=...}} or instance=Bold). luaotfload's variable
+  % instancing SEGFAULTS LuaHBTeX 1.24 on musl libc, which is what CI runs
+  % (ghcr.io/xu-cheng/texlive-full is Alpine). It killed the Arabic Book 5
+  % release build at page 308 with no error in the log at all, while the same
+  % engine on glibc built it perfectly -- so a local build proves nothing
+  % here. Any axis value crashed, including wght=400, the font's own default.
+  % The instances were cut once, offline:
+  %
+  %   python3 -c "from fontTools.ttLib import TTFont; \
+  %     from fontTools.varLib import instancer; \
+  %     f=TTFont('NotoNaskhArabic-VF.ttf'); \
+  %     instancer.instantiateVariableFont(f,{'wght':700},inplace=True, \
+  %       updateFontNames=True).save('NotoNaskhArabic-Bold.ttf')"
+  %
+  % NotoNaskhArabic-VF.ttf is kept beside them ONLY as the source for that
+  % command. Nothing loads it, and nothing should. Re-running the command
+  % reproduces the committed faces exactly apart from the head-table
+  % timestamp, so compare glyphs and metrics, not md5sums.
+  %
+  % Arabic has no italic and no small caps; left undeclared, the bold shape
+  % comes out undefined and every \emph{term}\index{term} -- the series'
+  % marker for a defined term -- is typographically invisible, exactly as it
+  % was in Hindi before its fix.
+  \IfFileExists{assets/fonts/NotoNaskhArabic-Regular.ttf}{%
+    \babelfont{rm}[%
+      Path=assets/fonts/,%
+      Extension=.ttf,%
+      UprightFont=*-Regular,%
+      BoldFont=*-Bold,%
+      ItalicFont=*-Regular,%
+      BoldItalicFont=*-Bold,%
+      SmallCapsFont=*-Regular,%
+      Script=Arabic,%
+    ]{NotoNaskhArabic}%
+  }{%
+    \babelfont{rm}[Script=Arabic]{Noto Naskh Arabic}%
+  }%
+  % Emphasis by weight, as in the Hindi edition: the script has no italic
+  % tradition. \DeclareEmphSequence is the supported hook; do not
+  % \renewcommand\emph, which breaks nesting.
+  \DeclareEmphSequence{\bfseries,\normalfont}%
+\fi
+
+
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\RequirePackage{amsthm}
+\RequirePackage{mathtools}
+\RequirePackage{enumitem}
+\RequirePackage{graphicx}
+\RequirePackage{tikz}
+\RequirePackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepgfplotslibrary{fillbetween}
+\usetikzlibrary{arrows.meta,calc,angles,quotes,patterns}
+% Figures use path decorations, relative positioning, intersections,
+% geometric shapes, fitted groups, and layered backgrounds.
+\usetikzlibrary{decorations.pathmorphing,decorations.markings,positioning,intersections}
+\usetikzlibrary{shapes.geometric,shapes.misc,fit,backgrounds,matrix}
+% Units: \qty{3.5}{m/s}, \unit{kW.h}, \num{6.02e23}. list/range separators in
+% text mode so they inherit the surrounding font.
+\RequirePackage{siunitx}
+\sisetup{per-mode=symbol, output-decimal-marker={.}, range-units=single}
+% Hindi (XeTeX + Noto Sans Devanagari): siunitx v3 injects Unicode µ (U+00B5)
+% and Ω (U+2126) under XeTeX; those glyphs are absent from the Devanagari face.
+% Redeclare prefixes/units with math symbols (math-micro options were removed in v3).
+% The same holds for Arabic (LuaTeX + Noto Naskh Arabic): U+00B5, U+2126,
+% U+03BC and U+03A9 are all absent from that face too, so both Unicode-engine
+% editions need the patch and the Latin pdfTeX editions need none of it.
+\newif\ifom@unicodeface
+\ifom@hindi\om@unicodefacetrue\fi
+\ifom@arabic\om@unicodefacetrue\fi
+\ifom@unicodeface
+  \AtBeginDocument{%
+    \DeclareSIPrefix{\micro}{\ensuremath{\mu}}{-6}%
+    \DeclareSIUnit{\ohm}{\ensuremath{\Omega}}%
+  }%
+\fi
+% Unbreakable in-text figure block: keeps a picture and its caption line
+% on the same page. Use in place of "center" around tikzpicture figures.
+% The [b] alignment matters: with the default [c] the minipage's huge box
+% *depth* is invisible to the page breaker beyond \maxdepth, so a figure at
+% the bottom of a page silently overprints the footer (page number over the
+% caption). Bottom alignment keeps the whole box above the baseline.
+\newenvironment{omfigure}
+  {\par\medskip\noindent\begin{minipage}[b]{\linewidth}\centering}
+  {\end{minipage}\par\medskip}
+
+% Raster illustrations live under assets/ (and assets/book1/ for primary
+% volumes). Chapters include them with \omimg{path}{width}{caption}.
+\graphicspath{{assets/}{assets/book1/}}
+% #1 = file (with or without assets/ prefix), #2 = width, #3 = caption
+\newcommand{\omimg}[3]{%
+  \begin{omfigure}%
+    \includegraphics[width=#2]{#1}%
+    \par\smallskip{\small #3}%
+  \end{omfigure}%
+}
+
+% Shared axis style for in-text figures: use with \begin{axis}[omaxis, ...].
+\pgfplotsset{
+  omaxis/.style={
+    axis lines=middle,
+    tick label style={font=\small},
+    label style={font=\small},
+    xlabel={$x$}, ylabel={$y$},
+    xlabel style={below right}, ylabel style={above left},
+    samples=100,
+  },
+}
+\RequirePackage[most]{tcolorbox}
+\RequirePackage{imakeidx}
+\makeindex[intoc]
+\RequirePackage[colorlinks=true,linkcolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+\RequirePackage[nameinlink,capitalize]{cleveref}
+\RequirePackage{etoolbox}
+
+% ----------------------------------------------------------------------------
+% Arabic runtime fixes. These must come AFTER mathtools, tikz, pgfplots and
+% tcolorbox are loaded, because each one repairs an interaction with them.
+% All four were found by building the real chapters, not by reading docs; a
+% green log does not reveal any of them, only the rendered page does.
+% ----------------------------------------------------------------------------
+\ifom@arabic
+  % 1. babel vs mathtools. luababel.def does \bbl@sreplace\intertext@{...}
+  %    when an RTL language is provided. mathtools has already redefined
+  %    \intertext@ in expl3 syntax, and \bbl@sreplace re-tokenises that body
+  %    WITHOUT expl3 catcodes, so \l_MT_below_intertext_sep comes back as \l
+  %    followed by garbage. Every single align/gather in the book then fails
+  %    with "Undefined control sequence". Save mathtools' meaning here and put
+  %    it back after babel's own \AtBeginDocument patch has run (ours is
+  %    declared later, so it runs later). \intertext is used nowhere in the
+  %    sources, so losing babel's baseline tweak for it costs nothing.
+  \let\om@saved@intertext\intertext@
+  \AtBeginDocument{\let\intertext@\om@saved@intertext}%
+  % 2. Whole pictures are typeset left-to-right. layout=graphics already does
+  %    this for pgfpicture, but pgfplots places its axis label and tick label
+  %    rows outside the tikz-node path that babel re-orients, so an axis came
+  %    out with its x labels mirrored and shifted a full picture-width left.
+  %    Use babel's OWN \bbl@textdir, not the raw \textdir primitive: the
+  %    primitive changes TeX's direction but not the attribute babel's Lua
+  %    filter reads, so the filter still walked the picture as RTL and died
+  %    with "babel-bidi-basic.lua:345: attempt to index a nil value" on the
+  %    first pgfplots mark glyph. Forcing it properly fixes the whole
+  %    node, so Arabic node text reads correctly.
+  \AddToHook{env/tikzpicture/before}{\leavevmode\begingroup\bbl@textdir\z@}%
+  \AddToHook{env/tikzpicture/after}{\endgroup}%
+  % 3. ... but tcolorbox builds its content INSIDE that left-to-right picture
+  %    scope, so without this the Arabic inside every definition, theorem and
+  %    exercise box came out in reversed word order. Put the box body back to
+  %    RTL.
+  \tcbset{before upper={\pardir TRT\textdir TRT}}%
+  % 4. pgfplots axis labels and titles are Arabic prose and must read RTL
+  %    inside the otherwise left-to-right picture.
+  \pgfplotsset{every axis/.append style={%
+    label style={execute at begin node={\pardir TRT\textdir TRT}},%
+    title style={execute at begin node={\pardir TRT\textdir TRT}},%
+  }}%
+\fi
+
+\setlist[enumerate]{itemsep=1pt,topsep=3pt}
+\setlist[itemize]{itemsep=1pt,topsep=3pt}
+
+% ----------------------------------------------------------------------------
+% Language strings (theorem names, cover, part titles, …)
+% ----------------------------------------------------------------------------
+\input{styles/lang/\booklang.tex}
+
+% Lookup structural string defined in the lang file via \@namedef{omstr@KEY}.
+\newcommand{\omstr}[1]{\csname omstr@#1\endcsname}
+
+% ----------------------------------------------------------------------------
+% Language-aware content paths
+%
+% \ominput{grade-1}{01-counting-to-20}
+%   → parts/grade-1/<lang>/01-counting-to-20.tex if it exists
+%   → else parts/grade-1/01-counting-to-20.tex (English canonical)
+%
+% \ominputsol{grade-1}{01-counting-to-20} — same rule under solutions/
+% ----------------------------------------------------------------------------
+\newcommand{\ominput}[2]{%
+  \IfFileExists{parts/#1/\booklang/#2.tex}%
+    {\input{parts/#1/\booklang/#2}}%
+    {\input{parts/#1/#2}}%
+}
+\newcommand{\ominputsol}[2]{%
+  \IfFileExists{parts/#1/solutions/\booklang/#2.tex}%
+    {\input{parts/#1/solutions/\booklang/#2}}%
+    {\input{parts/#1/solutions/#2}}%
+}
+
+% ----------------------------------------------------------------------------
+% Page layout details
+% ----------------------------------------------------------------------------
+% Chapters/parts open on any page (class option "openany" in main.tex);
+% also drop the forced blank page at the front/back matter boundaries.
+\patchcmd{\mainmatter}{\cleardoublepage}{\clearpage}{}{}
+\patchcmd{\backmatter}{\cleardoublepage}{\clearpage}{}{}
+
+% The book has more than 99 chapters: widen the number boxes in the table
+% of contents so three-digit chapter numbers (and their section numbers,
+% like "102.4") do not run into the titles.
+\patchcmd{\l@chapter}{1.5em}{2.3em}{}{}
+\renewcommand*\l@section{\@dottedtocline{1}{2.3em}{3.2em}}
+
+% Running headers: small italics, no uppercase, so long chapter titles fit.
+\RequirePackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE]{\thepage\quad{\small\itshape\nouppercase{\leftmark}}}
+\fancyhead[RO]{{\small\itshape\nouppercase{\rightmark}}\quad\thepage}
+\renewcommand{\headrulewidth}{0.2pt}
+
+% ----------------------------------------------------------------------------
+% Colors (sober)
+% ----------------------------------------------------------------------------
+\definecolor{omDef}{RGB}{0,84,147}      % definitions: blue
+\definecolor{omThm}{RGB}{150,20,30}     % theorems: dark red
+\definecolor{omProp}{RGB}{190,90,20}    % propositions/lemmas/corollaries: orange
+\definecolor{omMeth}{RGB}{20,110,60}    % methods: green
+\definecolor{omExo}{RGB}{80,80,80}      % exercises: gray
+
+% ----------------------------------------------------------------------------
+% One Course brand (title page and shared product theme — see THEME.md)
+% ----------------------------------------------------------------------------
+\definecolor{ocMint}{HTML}{06D6A0}      % brand quad: mint
+\definecolor{ocYellow}{HTML}{FFD166}    % brand quad: yellow
+\definecolor{ocRed}{HTML}{EF476F}       % brand quad: red
+\definecolor{ocBlue}{HTML}{118AB2}      % brand quad: blue
+\definecolor{ocInk}{HTML}{1F2430}       % near-black text on light grounds
+\colorlet{ocPaleBlue}{ocBlue!14!white}  % pale blue-gray ground / band tint
+\colorlet{ocDarkBlue}{ocBlue!80!black}  % titles and the "1" of the rosette
+
+% \ocQuadLine{x0}{x1}{y}{h}: horizontal bar from x0 to x1 at height y,
+% thickness h, split into four equal segments in the brand quad colors.
+% Coordinates in the surrounding tikzpicture's units (cm on the cover).
+\newcommand{\ocQuadLine}[4]{%
+  \pgfmathsetmacro{\ocqSeg}{(#2-#1)/4}%
+  \fill[ocMint]   (#1,#3) rectangle ({#1+\ocqSeg},{#3+#4});
+  \fill[ocYellow] ({#1+\ocqSeg},#3) rectangle ({#1+2*\ocqSeg},{#3+#4});
+  \fill[ocRed]    ({#1+2*\ocqSeg},#3) rectangle ({#1+3*\ocqSeg},{#3+#4});
+  \fill[ocBlue]   ({#1+3*\ocqSeg},#3) rectangle (#2,{#3+#4});}
+
+% \ocRosette{x}{y}{R}{pt}: the One Course rosette logo centered at (x,y),
+% radius R cm, with the "1" set at pt points. Four quadrant wedges (mint on
+% top, yellow left, red bottom, blue right) separated by white diagonals,
+% around a white core circle. The diagonal line width scales with R.
+\newcommand{\ocRosette}[4]{%
+  \pgfmathsetmacro{\ocrCut}{#3*1.02}%
+  \pgfmathsetlengthmacro{\ocrLW}{#3*1.4}%
+  \fill[ocMint]   (#1,#2) -- ([shift={(#1,#2)}]45:#3)
+    arc[start angle=45, end angle=135, radius=#3] -- cycle;
+  \fill[ocYellow] (#1,#2) -- ([shift={(#1,#2)}]135:#3)
+    arc[start angle=135, end angle=225, radius=#3] -- cycle;
+  \fill[ocRed]    (#1,#2) -- ([shift={(#1,#2)}]225:#3)
+    arc[start angle=225, end angle=315, radius=#3] -- cycle;
+  \fill[ocBlue]   (#1,#2) -- ([shift={(#1,#2)}]315:#3)
+    arc[start angle=315, end angle=405, radius=#3] -- cycle;
+  \draw[white, line width=\ocrLW]
+    ([shift={(#1,#2)}]45:\ocrCut) -- ([shift={(#1,#2)}]225:\ocrCut);
+  \draw[white, line width=\ocrLW]
+    ([shift={(#1,#2)}]135:\ocrCut) -- ([shift={(#1,#2)}]315:\ocrCut);
+  \fill[white] (#1,#2) circle ({#3*0.58});
+  \node[text=ocDarkBlue, font=\fontsize{#4}{#4}\selectfont\bfseries]
+    at (#1,#2) {1};}
+
+% ----------------------------------------------------------------------------
+% Branded running header (opt-in: a book's entry file calls \ombrandheader
+% after loading this package; see one_physics_book_5_university_year_3.tex).
+%
+% Even (left) pages carry the brand and the book title, on two lines:
+%
+%     .           (rosette) ONE-COURSE.COM            .
+%     116  Chapter 11. Sequences     Book 5: ... -- Year 3
+%     ----------------------------------------------------
+%
+% Odd (right) pages keep the plain navigation line (section mark + page
+% number): the brand travels with the chapter mark, and leaving the odd side
+% clear is what lets even the longest section titles print unclipped. Their
+% empty first header line keeps the rule level across a spread.
+%
+% The rosette is drawn once into a box, not on every page. The wordmark sits
+% two font steps below the running mark: all-caps bold sans reads optically
+% larger than the italic serif mark at equal size.
+% ----------------------------------------------------------------------------
+\newsavebox{\omHeadRosette}
+\AtBeginDocument{\savebox{\omHeadRosette}{%
+  \begin{tikzpicture}[baseline=-0.5ex]
+    \ocRosette{0}{0}{0.135}{3.1}%
+  \end{tikzpicture}}}
+% The brand mark links out to the site. \href would recolor it (hyperref's
+% urlcolor), so the ink is restated inside the link.
+\newcommand{\omSiteURL}{https://one-course.com}
+\newcommand{\omHeadBrand}{%
+  \href{\omSiteURL}{\textcolor{ocInk}{\usebox{\omHeadRosette}\hspace{0.3em}%
+    {\scriptsize\sffamily\bfseries\textls[40]{ONE-COURSE.COM}}}}}
+\newcommand{\omHeadBook}{{\small\bookline}}
+
+% The chapter mark links back to its own line in the table of contents; both
+% halves of the mechanism are armed by \ombrandheader, so books that do not
+% opt in keep the stock marks.
+%
+% Anchors: hyperref hands \contentsline the destination name of the entry it is
+% typesetting (#4, e.g. "chapter.11" or "appendix.A"). Wrapping it lets us drop
+% a target, "toc.<that name>", on the contents line itself. \Hy@raisedlink keeps
+% the anchor from displacing the line.
+%
+% Marks: \@currentHref holds the current chapter's destination name at
+% \chaptermark time, so the mark carries the anchor alongside the title
+% (\omTocMark{anchor}{title}), and the header builds the link at shipout -- on
+% whichever chapter owns the page.
+%
+% The header must NOT put the link inside \truncate: truncate typesets its
+% argument into a box to measure it, and a hyperlink opened inside a box that
+% is then discarded leaks pdfTeX's link stack ("TeX capacity exceeded [pdf link
+% stack size=10]"). So the mark is first split into anchor and title, the title
+% alone is truncated, and the finished box is wrapped in one link.
+\newcommand{\omTocMark}[2]{#2}          % plain text outside the header
+\newcommand{\om@anchor}{}
+\newcommand{\om@title}{}
+% A mark without \omTocMark (Contents, Index, the solutions appendix) used to
+% be typeset raw here, outside the capped box, and on even pages pushed the
+% book line onto a second line (found 2026-10-02, chemistry Book 1). The mark
+% is now run in a discarded box; when it carries no \omTocMark, the plain mark
+% itself becomes the (capped) title.
+\newcommand{\om@hit}{0}
+\newcommand{\om@splitmark}[1]{%
+  \begingroup
+    \def\omTocMark##1##2{\gdef\om@anchor{##1}\gdef\om@title{##2}\gdef\om@hit{1}}%
+    \gdef\om@anchor{}\gdef\om@title{}\gdef\om@hit{0}%
+    \setbox0\hbox{#1}%
+  \endgroup
+  \ifnum\om@hit=0 \gdef\om@title{#1}\fi}
+\newcommand{\om@tocbacklinks}{%
+  \AtBeginDocument{%
+    \let\om@orig@contentsline\contentsline
+    \renewcommand{\contentsline}[4]{%
+      \Hy@raisedlink{\hypertarget{toc.##4}{}}%
+      \om@orig@contentsline{##1}{##2}{##3}{##4}}%
+  }%
+  \renewcommand{\chaptermark}[1]{%
+    \markboth{\protect\omTocMark{\@currentHref}{%
+      \ifnum\c@secnumdepth>\m@ne\if@mainmatter
+        \@chapapp\ \thechapter. \ %
+      \fi\fi ##1}}{}}%
+  % Same for the section mark, which is what the odd pages show.
+  \renewcommand{\sectionmark}[1]{%
+    \markright{\protect\omTocMark{\@currentHref}{%
+      \ifnum\c@secnumdepth>\z@ \thesection. \ \fi ##1}}}%
+}
+\newcommand{\omHeadMark}[1]{{\small\itshape\nouppercase{#1}}}
+% On even pages the chapter mark shares its line with the book title, and some
+% chapter titles are long ("Product Measures, Fubini, Change of Variables"):
+% cap the mark at whatever width the book title leaves, ending it with an
+% ellipsis, so the two never touch.
+\RequirePackage{truncate}
+\newlength{\omHeadBookWd}
+\newcommand{\omHeadMarkCapped}[1]{%
+  \settowidth{\omHeadBookWd}{\omHeadBook}%
+  \truncate[\,\dots]{\dimexpr\headwidth-\omHeadBookWd-1.5em\relax}{%
+    \omHeadMark{#1}}}
+% Split the mark, truncate the title, wrap the result in the link to the
+% contents line (nothing linked inside the measured box -- see above).
+\newcommand{\omHeadChapMark}{%
+  \om@splitmark{\leftmark}%
+  \ifx\om@anchor\@empty
+    \omHeadMarkCapped{\om@title}%
+  \else
+    \hyperlink{toc.\om@anchor}{\textcolor{ocInk}{%
+      \omHeadMarkCapped{\om@title}}}%
+  \fi}
+% The section mark, shown on odd pages, links the same way. It has the line to
+% itself, so it needs no width cap.
+\newcommand{\omHeadSectMark}{%
+  \om@splitmark{\rightmark}%
+  \ifx\om@anchor\@empty
+    \omHeadMark{\om@title}%
+  \else
+    \hyperlink{toc.\om@anchor}{\textcolor{ocInk}{\omHeadMark{\om@title}}}%
+  \fi}
+\newcommand{\ombrandheader}{%
+  % The two-line head needs 40.3pt (fancyhdr's own figure); the body block is
+  % unchanged, so page counts do not move.
+  \geometry{headheight=41pt,headsep=12pt}%
+  \om@tocbacklinks
+  \fancyhead[LE]{\parbox[b]{\headwidth}{%
+    \hfill\omHeadBrand\hfill\null\\[2pt]
+    \omHeadChapMark\hfill\omHeadBook}}%
+  \fancyhead[RO]{\parbox[b]{\headwidth}{%
+    \strut\\[2pt]
+    \hfill\omHeadSectMark}}%
+  % Page number at the foot, centered -- which is also where the `plain' style
+  % puts it on chapter-opening pages, so every page of the book agrees.
+  \fancyfoot[C]{\thepage}%
+}
+
+% ----------------------------------------------------------------------------
+% Theorem environments
+%
+% amsthm owns numbering, labels and cleveref support; tcolorbox only
+% decorates. All statement environments share one counter, numbered within
+% chapter. Exercises have their own counter.
+%
+% Titles come from styles/lang/<lang>.tex (\omnameDefinition, …).
+% Usage: \begin{theorem}[Monotone convergence]\label{thm:tle:seq:monotone}
+% ----------------------------------------------------------------------------
+\theoremstyle{definition}                 % upright body text, bold heading
+\newtheorem{definition}{\omnameDefinition}[chapter]
+\newtheorem{theorem}[definition]{\omnameTheorem}
+\newtheorem{proposition}[definition]{\omnameProposition}
+\newtheorem{lemma}[definition]{\omnameLemma}
+\newtheorem{corollary}[definition]{\omnameCorollary}
+\newtheorem{method}[definition]{\omnameMethod}
+\newtheorem{example}[definition]{\omnameExample}
+\newtheorem{notation}[definition]{\omnameNotation}
+\theoremstyle{remark}
+\newtheorem{remark}[definition]{\omnameRemark}
+
+\newtheorem{exercise}{\omnameExercise}[chapter]
+% Weekend problem sets ("devoir maison"): one long, structured problem per
+% chapter at university level, with its own counter.
+\newtheorem{problem}{\omnameProblem}[chapter]
+
+% Decoration: colored left rule + light background.
+% "lines before break" forces boxes with no room for their first lines to
+% move to the next page instead of attempting a zero-height first part,
+% which would silently discard any \label written there. (Raised from 3
+% to 5 after a recurrence: a box starting very close to the page bottom
+% could still produce a discarded zero-height first part. If a label that
+% plainly exists still reports as undefined, move it to just before the
+% environment's \end -- the counter is unchanged and the write survives.)
+% The coloured rule marks the edge a reader starts from, so it follows the
+% script: west for the left-to-right editions, east for Arabic, with the
+% asymmetric padding mirrored to match. The two option lists are written out
+% in full rather than assembled from a macro: pgfkeys does not expand a macro
+% while parsing key names, and a \om@statementrule{...} in there is read as
+% one long unknown key ("I do not know the key '/tcb/borderline west=...'").
+\ifom@arabic
+\newcommand{\omdecorate}[2]{%
+  \tcolorboxenvironment{#1}{%
+    enhanced jigsaw, breakable, frame hidden,
+    boxrule=0pt, sharp corners,
+    borderline east={2pt}{0pt}{#2},
+    left=4pt, right=8pt, top=4pt, bottom=4pt,
+    before skip=10pt, after skip=10pt,
+    lines before break=5,
+    colback=#2!4!white}%
+}
+\else
+\newcommand{\omdecorate}[2]{%
+  \tcolorboxenvironment{#1}{%
+    enhanced jigsaw, breakable, frame hidden,
+    boxrule=0pt, sharp corners,
+    borderline west={2pt}{0pt}{#2},
+    left=8pt, right=4pt, top=4pt, bottom=4pt,
+    before skip=10pt, after skip=10pt,
+    lines before break=5,
+    colback=#2!4!white}%
+}
+\fi
+\omdecorate{definition}{omDef}
+\omdecorate{theorem}{omThm}
+\omdecorate{proposition}{omProp}
+\omdecorate{lemma}{omProp}
+\omdecorate{corollary}{omProp}
+\omdecorate{method}{omMeth}
+\omdecorate{exercise}{omExo}
+\omdecorate{problem}{omExo}
+
+% ----------------------------------------------------------------------------
+% Chemistry
+%
+% Formulas and equations: \ce{...} (mhchem, version 4) everywhere, in prose,
+% in tables, in figures -- never hand-built subscripts. Structural formulas:
+% \chemfig{...}. Both arguments are masked by tools/termlink/protect.py and
+% read by tools/check_ce_balance.py, which checks every equation that has an
+% arrow for the conservation of atoms and of charge.
+% ----------------------------------------------------------------------------
+\RequirePackage[version=4]{mhchem}
+\RequirePackage{chemfig}
+\setchemfig{atom sep=2.2em, bond offset=1pt, double bond sep=2.6pt}
+
+% Three-dimensional drawings (unit cells, interstitial sites, orbital lobes):
+% \tdplotsetmaincoords{<theta>}{<phi>} then \begin{tikzpicture}[tdplot_main_coords].
+% Molecular-orbital energy diagrams: modiagram's \begin{MOdiagram} ... \end{MOdiagram}.
+% Both are preloaded for the university volumes (Step 0 of the Books 1-4 run).
+\RequirePackage{tikz-3dplot}
+\RequirePackage{modiagram}
+
+% GHS hazard pictograms, by their official codes: \ghs{GHS02}. The pictures
+% are the PDFs shipped with TeX Live's ghsystem package; the package itself is
+% NOT loaded (its current release calls a chemmacros module interface that the
+% installed chemmacros does not provide, and the build dies in the preamble),
+% so the files are included directly from the TeX tree.
+\@namedef{om@ghs@GHS01}{explos}%  explosive
+\@namedef{om@ghs@GHS02}{flame}%   flammable
+\@namedef{om@ghs@GHS03}{flame-O}% oxidising
+\@namedef{om@ghs@GHS04}{bottle}%  gas under pressure
+\@namedef{om@ghs@GHS05}{acid}%    corrosive
+\@namedef{om@ghs@GHS06}{skull}%   acute toxicity
+\@namedef{om@ghs@GHS07}{exclam}%  harmful, irritant
+\@namedef{om@ghs@GHS08}{health}%  serious health hazard
+\@namedef{om@ghs@GHS09}{aqpol}%   hazardous to the environment
+\newcommand{\ghs}[2][1.1cm]{%
+  \ifcsname om@ghs@#2\endcsname
+    \includegraphics[height=#1]{ghsystem_\csname om@ghs@#2\endcsname.pdf}%
+  \else
+    \PackageError{onechemistry}{Unknown GHS pictogram `#2'}{Use GHS01 ... GHS09.}%
+  \fi}
+
+% The four chemistry boxes. They are unnumbered and carry no label, and a
+% defined term is never introduced inside one (\emph{..}\index{..} belongs in a
+% definition): they are asides, not statements.
+%
+%   recall    -- "You already know": opens a chapter that builds on a notion
+%                owned by an earlier chapter; 3-5 lines and a \cref to the
+%                owner. Book 1 never re-teaches a notion.
+%   inthelab  -- "In the lab": a procedure carried out in a laboratory, by or
+%                with a teacher. Nothing in the series is ever proposed as an
+%                experiment to do at home.
+%   history   -- a short history box: who, when, what was found.
+%   safety    -- the hazard pictograms of a product and what they mean.
+%
+% The frames are closed and symmetric, so they need no mirroring in the
+% right-to-left editions (unlike the statement boxes' west rule above).
+\definecolor{omRecall}{RGB}{88,98,120}
+\definecolor{omLab}{RGB}{0,118,128}
+\definecolor{omHist}{RGB}{135,96,45}
+\definecolor{omSafe}{RGB}{196,30,40}
+\tcbset{om@aside/.style={%
+  enhanced, breakable, sharp corners=downhill, arc=1.6mm,
+  boxrule=0.5pt, colframe=#1!75!black, colback=#1!4!white,
+  coltitle=white, colbacktitle=#1!75!black,
+  fonttitle=\small\bfseries, toptitle=0.6mm, bottomtitle=0.4mm,
+  left=6pt, right=6pt, top=4pt, bottom=4pt,
+  before skip=10pt, after skip=10pt}}
+\newtcolorbox{recall}{om@aside=omRecall, title={\omnameRecall}}
+\newtcolorbox{inthelab}[1][]{om@aside=omLab,
+  title={\omnameInTheLab\ifstrempty{#1}{}{\ --- #1}}}
+\newtcolorbox{history}[1][]{om@aside=omHist,
+  title={\omnameHistory\ifstrempty{#1}{}{\ --- #1}}}
+% \begin{safety}{\ghs{GHS05}\ghs{GHS07}} text \end{safety}: the pictograms in a
+% column on the left, the text beside them. Not breakable (two minipages);
+% keep safety boxes short.
+\newlength{\om@safepic}
+\newtcolorbox{safety}[1]{om@aside=omSafe, breakable=false, title={\omnameSafety},
+  before upper={\settowidth{\om@safepic}{#1}%
+    \ifdim\om@safepic>3.6cm\setlength{\om@safepic}{3.6cm}\fi
+    \begin{minipage}[c]{\om@safepic}\centering #1\end{minipage}\hfill
+    \begin{minipage}[c]{\dimexpr\linewidth-\om@safepic-0.6em\relax}},
+  after upper={\end{minipage}}}
+
+% ----------------------------------------------------------------------------
+% Molecular models (ball and stick): \node[aO] (o) at (0,0) {};
+% CPK colours. Sizes follow the order of atomic radii, scaled for print.
+% ----------------------------------------------------------------------------
+\tikzset{
+  om atom/.style={circle, inner sep=0pt, draw=black!70, line width=0.3pt},
+  aH/.style={om atom, ball color=white, minimum size=4.2mm},
+  aC/.style={om atom, ball color=black!65, minimum size=6.4mm},
+  aN/.style={om atom, ball color=blue!70, minimum size=6.0mm},
+  aO/.style={om atom, ball color=red!80, minimum size=5.8mm},
+  aCl/.style={om atom, ball color=green!60!black, minimum size=7.0mm},
+  aS/.style={om atom, ball color=yellow!80!orange, minimum size=7.0mm},
+  aNa/.style={om atom, ball color=violet!70, minimum size=7.4mm},
+  bond/.style={line width=1.6pt, black!55},
+}
+
+% ----------------------------------------------------------------------------
+% Laboratory glassware: a TikZ pic library, so that every apparatus in the
+% series is drawn from the same exact parts. Each pic has its origin at the
+% bottom centre of the vessel and is drawn in centimetres. Liquids are filled
+% by clipping to the vessel's own outline, so a level is a fraction of the
+% vessel's height.
+%
+% SCALING: a picture-level [scale=...] moves a pic but does NOT scale its
+% drawing -- TikZ applies only the shift to a pic unless the pic itself says
+% \pic[transform shape]. In a scaled tikzpicture every pic must carry
+% [transform shape] (tools/gates.sh checks it); a liquid layer or a label drawn
+% beside an untransformed pic is otherwise out of place by the scale factor.
+%
+%   pic {beaker={<level 0..1>}{<liquid colour>}}        2.0 cm tall
+%   pic {erlenmeyer={<level>}{<colour>}}                2.6 cm tall
+%   pic {testtube={<level>}{<colour>}}                  3.0 cm tall
+%   pic {rbflask={<level of the bulb>}{<colour>}}       neck top at 3.0 cm
+%   pic {condenser}                                     3.2 cm, set on a neck
+%   pic {burette={<level>}{<colour>}}                   5.6 cm tall, tip at 0
+%   pic {funnel={<residue colour or none>}}             1.6 cm, stem tip at 0
+%   pic {sepfunnel={<lower colour>}{<upper colour>}}    3.4 cm, tip at 0
+%   pic {hotplate}                                      top surface at 0
+%   pic {tlcplate}                                      1.4 x 3.0 cm, baseline 0.4
+% ----------------------------------------------------------------------------
+\colorlet{omGlass}{black!75}
+\colorlet{omWater}{omDef!16}
+\tikzset{
+  om glass/.style={draw=omGlass, line width=0.7pt, line join=round, line cap=round},
+  pics/beaker/.style 2 args={code={
+    \begin{scope}
+      \clip (-0.8,0) rectangle (0.8,2);
+      \fill[#2] (-0.8,0) rectangle (0.8,{2*(#1)});
+    \end{scope}
+    \draw[om glass] (-0.88,2.08) -- (-0.8,2) -- (-0.8,0) -- (0.8,0) -- (0.8,2)
+      -- (0.9,2.1);
+    \foreach \y in {0.5,1,1.5} \draw[omGlass, line width=0.4pt]
+      (-0.8,\y) -- (-0.6,\y);
+  }},
+  pics/erlenmeyer/.style 2 args={code={
+    \begin{scope}
+      \clip (-1,0) -- (-0.3,1.9) -- (-0.3,2.6) -- (0.3,2.6) -- (0.3,1.9)
+        -- (1,0) -- cycle;
+      \fill[#2] (-1,0) rectangle (1,{2.6*(#1)});
+    \end{scope}
+    \draw[om glass] (-0.36,2.66) -- (-0.3,2.6) -- (-0.3,1.9) -- (-1,0)
+      -- (1,0) -- (0.3,1.9) -- (0.3,2.6) -- (0.36,2.66);
+  }},
+  pics/testtube/.style 2 args={code={
+    \begin{scope}
+      \clip (-0.25,3) -- (-0.25,0.25) arc[start angle=180, end angle=360,
+        radius=0.25] -- (0.25,3) -- cycle;
+      \fill[#2] (-0.25,0) rectangle (0.25,{3*(#1)});
+    \end{scope}
+    \draw[om glass] (-0.3,3.05) -- (-0.25,3) -- (-0.25,0.25)
+      arc[start angle=180, end angle=360, radius=0.25] -- (0.25,3) -- (0.3,3.05);
+  }},
+  pics/rbflask/.style 2 args={code={
+    \begin{scope}
+      \clip (-0.2,3) -- (-0.2,1.98) arc[start angle=101.54, end angle=438.46,
+        radius=1] -- (0.2,3) -- cycle;
+      \fill[#2] (-1,0) rectangle (1,{2*(#1)});
+    \end{scope}
+    \draw[om glass] (-0.25,3.05) -- (-0.2,3) -- (-0.2,1.98)
+      arc[start angle=101.54, end angle=438.46, radius=1] -- (0.2,3) -- (0.25,3.05);
+  }},
+  pics/condenser/.style={code={
+    \fill[omWater] (-0.35,0.45) rectangle (0.35,2.75);
+    \fill[white] (-0.14,0.45) rectangle (0.14,2.75);
+    \draw[om glass] (-0.35,0.45) rectangle (0.35,2.75);
+    \draw[om glass] (-0.14,0) -- (-0.14,3.2) (0.14,0) -- (0.14,3.2);
+    \draw[om glass] (0.35,0.7) -- (0.75,0.7) (0.35,0.95) -- (0.75,0.95);
+    \draw[om glass] (0.35,2.25) -- (0.75,2.25) (0.35,2.5) -- (0.75,2.5);
+    \fill[omWater] (0.35,0.7) rectangle (0.75,0.95);
+    \fill[omWater] (0.35,2.25) rectangle (0.75,2.5);
+  }},
+  pics/burette/.style 2 args={code={
+    \begin{scope}
+      \clip (-0.15,0.7) rectangle (0.15,5.6);
+      \fill[#2] (-0.15,0.7) rectangle (0.15,{0.7+4.9*(#1)});
+    \end{scope}
+    \draw[om glass] (-0.18,5.65) -- (-0.15,5.6) -- (-0.15,0.7) -- (-0.05,0.35)
+      -- (-0.04,0) (0.04,0) -- (0.05,0.35) -- (0.15,0.7) -- (0.15,5.6)
+      -- (0.18,5.65);
+    \fill[omGlass] (-0.32,0.5) rectangle (0.32,0.58);
+    \foreach \k in {0,...,10} \draw[omGlass, line width=0.35pt]
+      (-0.15,{5.4-0.45*\k}) -- (-0.03,{5.4-0.45*\k});
+  }},
+  pics/funnel/.style={code={
+    \draw[om glass] (-0.9,1.6) -- (-0.1,0.7) -- (-0.1,0) (0.1,0) -- (0.1,0.7)
+      -- (0.9,1.6);
+    \def\om@tmp{#1}\def\om@none{none}%
+    \ifx\om@tmp\om@none\else
+      \fill[#1] (-0.38,1.05) -- (0.38,1.05) -- (0,0.8) -- cycle;
+    \fi
+    \draw[omGlass!60, line width=0.5pt, dash pattern=on 2pt off 1.2pt]
+      (-0.8,1.6) -- (0,0.72) -- (0.8,1.6);
+  }},
+  pics/funnel/.default=none,
+  pics/sepfunnel/.style 2 args={code={
+    \begin{scope}
+      \clip (0,0.9) .. controls (-0.25,1.0) and (-1.0,1.6) .. (-0.75,2.4)
+        .. controls (-0.6,2.85) and (-0.25,2.95) .. (-0.15,3.0) -- (0.15,3.0)
+        .. controls (0.25,2.95) and (0.6,2.85) .. (0.75,2.4)
+        .. controls (1.0,1.6) and (0.25,1.0) .. (0,0.9);
+      \fill[#1] (-1,0.9) rectangle (1,1.75);
+      \fill[#2] (-1,1.75) rectangle (1,2.45);
+    \end{scope}
+    \draw[om glass] (-0.06,0.9) .. controls (-0.3,1.0) and (-1.0,1.6) .. (-0.75,2.4)
+      .. controls (-0.6,2.85) and (-0.25,2.95) .. (-0.15,3.0) -- (-0.15,3.25)
+      (0.15,3.25) -- (0.15,3.0)
+      .. controls (0.25,2.95) and (0.6,2.85) .. (0.75,2.4)
+      .. controls (1.0,1.6) and (0.3,1.0) .. (0.06,0.9);
+    \draw[om glass] (-0.06,0.9) -- (-0.05,0) (0.06,0.9) -- (0.05,0);
+    \fill[omGlass] (-0.25,3.25) rectangle (0.25,3.4);
+    \fill[omGlass] (-0.28,0.48) rectangle (0.28,0.56);
+  }},
+  pics/hotplate/.style={code={
+    \fill[black!12] (-1.2,-0.5) rectangle (1.2,0);
+    \draw[omGlass, line width=0.6pt] (-1.2,-0.5) rectangle (1.2,0);
+    \fill[black!40] (-1.1,-0.06) rectangle (1.1,0);
+    \draw[omGlass, fill=white] (0.85,-0.25) circle (0.12);
+  }},
+  pics/tlcplate/.style={code={
+    \fill[white] (-0.7,0) rectangle (0.7,3);
+    \draw[omGlass, line width=0.6pt] (-0.7,0) rectangle (0.7,3);
+    \draw[black!60, line width=0.4pt] (-0.7,0.4) -- (0.7,0.4);
+  }},
+}
+
+% amsthm's proof environment prints \proofname, which is English unless babel
+% localises it — and babel is optional here (see above). Without this, a French
+% chapter opens every proof with "Proof." instead of "Démonstration.".
+\renewcommand{\proofname}{\omnameProof}
+
+% Results stated without proof
+\newcommand{\admitted}{\begin{proof}[\omnameProof]\emph{\omadmittedtext}\end{proof}}
+
+% cleveref names. Every referenceable environment needs one: cleveref's built-in
+% names are English, and babel (which would localise them) is optional here — so
+% without these a French book reads "d'apres le Theorem 3.1" and "Chapter 5" in
+% the middle of its French prose. The names come from styles/lang/<lang>.tex, so
+% English output is unchanged and each translation gets its own.
+\crefname{definition}{\omnameDefinition}{\omnameDefinitions}
+\Crefname{definition}{\omnameDefinition}{\omnameDefinitions}
+\crefname{theorem}{\omnameTheorem}{\omnameTheorems}
+\Crefname{theorem}{\omnameTheorem}{\omnameTheorems}
+\crefname{proposition}{\omnameProposition}{\omnamePropositions}
+\Crefname{proposition}{\omnameProposition}{\omnamePropositions}
+\crefname{lemma}{\omnameLemma}{\omnameLemmas}
+\Crefname{lemma}{\omnameLemma}{\omnameLemmas}
+\crefname{corollary}{\omnameCorollary}{\omnameCorollarys}
+\Crefname{corollary}{\omnameCorollary}{\omnameCorollarys}
+\crefname{method}{\omnameMethod}{\omnameMethods}
+\Crefname{method}{\omnameMethod}{\omnameMethods}
+\crefname{example}{\omnameExample}{\omnameExamples}
+\Crefname{example}{\omnameExample}{\omnameExamples}
+\crefname{notation}{\omnameNotation}{\omnameNotations}
+\Crefname{notation}{\omnameNotation}{\omnameNotations}
+\crefname{remark}{\omnameRemark}{\omnameRemarks}
+\Crefname{remark}{\omnameRemark}{\omnameRemarks}
+\crefname{chapter}{\omnameChapter}{\omnameChapters}
+\Crefname{chapter}{\omnameChapter}{\omnameChapters}
+\crefname{exercise}{\omnameExercise}{\omnameExercises}
+\Crefname{exercise}{\omnameExercise}{\omnameExercises}
+\crefname{problem}{\omnameProblem}{\omnameProblems}
+\Crefname{problem}{\omnameProblem}{\omnameProblems}
+
+% Arabic refers to a numbered statement with the definite article: the heading
+% reads "مبرهنة 3.1" but the reference reads "حسب المبرهنة 3.1". The \omname*
+% strings above are the headings, so override the reference names here rather
+% than putting the article in styles/lang/ar.tex (which would prefix every
+% heading too). Written out attached, because the Arabic article is a bound
+% prefix, not a separate word: prefixing it in prose around \cref would put a
+% link boundary between ال and its noun and break the shaping.
+\ifom@arabic
+  \crefname{definition}{التعريف}{التعريفات}
+  \Crefname{definition}{التعريف}{التعريفات}
+  \crefname{theorem}{المبرهنة}{المبرهنات}
+  \Crefname{theorem}{المبرهنة}{المبرهنات}
+  \crefname{proposition}{القضية}{القضايا}
+  \Crefname{proposition}{القضية}{القضايا}
+  \crefname{lemma}{المبرهنة المساعدة}{المبرهنات المساعدة}
+  \Crefname{lemma}{المبرهنة المساعدة}{المبرهنات المساعدة}
+  \crefname{corollary}{النتيجة}{النتائج}
+  \Crefname{corollary}{النتيجة}{النتائج}
+  \crefname{method}{الطريقة}{الطرائق}
+  \Crefname{method}{الطريقة}{الطرائق}
+  \crefname{example}{المثال}{الأمثلة}
+  \Crefname{example}{المثال}{الأمثلة}
+  \crefname{notation}{الترميز}{الترميزات}
+  \Crefname{notation}{الترميز}{الترميزات}
+  \crefname{remark}{الملاحظة}{الملاحظات}
+  \Crefname{remark}{الملاحظة}{الملاحظات}
+  \crefname{chapter}{الفصل}{الفصول}
+  \Crefname{chapter}{الفصل}{الفصول}
+  \crefname{exercise}{التمرين}{التمارين}
+  \Crefname{exercise}{التمرين}{التمارين}
+  \crefname{problem}{المسألة}{المسائل}
+  \Crefname{problem}{المسألة}{المسائل}
+  % cleveref's conjunctions are English built-ins and babel does not localise
+  % them here, so a multi-reference printed "التمارين 1.1 and 1.2" and a range
+  % "1.1 to 1.3" in the middle of Arabic prose. The conjunction و is a bound
+  % prefix: it is written attached to the word that follows it, hence the
+  % space before it and none after.
+  % Deferred to the END of begindocument: cleveref creates these macros in
+  % its own \AtBeginDocument, so a \renewcommand at package-load time errors
+  % with "Command \crefpairconjunction undefined", and a plain
+  % \AtBeginDocument is only reliably later if ours was registered after
+  % cleveref's -- which held in one style file and not the other.
+  \AddToHook{begindocument/end}{%
+    \renewcommand{\crefpairconjunction}{ و}%
+    \renewcommand{\crefmiddleconjunction}{، }%
+    \renewcommand{\creflastconjunction}{ و}%
+    \renewcommand{\crefpairgroupconjunction}{ و}%
+    \renewcommand{\crefmiddlegroupconjunction}{، }%
+    \renewcommand{\creflastgroupconjunction}{ و}%
+    \renewcommand{\crefrangeconjunction}{ إلى }%
+    \renewcommand{\crefrangepreconjunction}{}%
+    \renewcommand{\crefrangepostconjunction}{}%
+  }%
+\fi
+
+% ----------------------------------------------------------------------------
+% Solutions appendix
+% Usage: \begin{solution}{exo:tle:seq:1} ... \end{solution}
+% Prints "Solution of Exercise <n> (page <p>)." / French equivalent.
+% Every solution is also a hyperlink target labelled sol:<key>, so that
+% exercises can link forward to their solutions (see \omsolutionlinks).
+% ----------------------------------------------------------------------------
+% Under \omlinkpadding (below) the sol: anchor is put after \noindent, i.e. into
+% the line of type rather than into the vertical list, which is the only place
+% hyperref can raise it from. A book with no padding keeps the anchor, and so
+% its appendix keeps the page breaks, exactly where they were.
+\newcommand{\om@solutionanchor}[1]{%
+  \ifdim\omlinkpad=\z@
+    \phantomsection\label{sol:#1}\noindent
+  \else
+    \noindent\phantomsection\label{sol:#1}%
+  \fi
+}
+\newenvironment{solution}[1]{%
+  \par\medskip\om@solutionanchor{#1}%
+  \textbf{\omsolutionof~\cref{#1}} (\ompage~\pageref{#1}).\par\nopagebreak\smallskip
+  \noindent\ignorespaces
+}{\par\medskip}
+
+% ----------------------------------------------------------------------------
+% Defined terms: \omterm{def:...}{text} links a term used in the course, an
+% exercise, a problem or a solution back to the definition that introduces it.
+%
+% The wrapping is generated, not hand-written: a term earns a link only if it
+% is introduced as \emph{term}\index{...} inside a definition (the convention
+% in CONTRIBUTING.md), and it is linked at its first use in each chapter and
+% again inside each exercise, problem and solution -- enough for a reader who
+% lands mid-chapter, without turning every paragraph blue. Terms defined twice
+% (\emph{compact} as a space and as an operator) are deliberately not linked:
+% an automatic link would point at the wrong one half the time.
+% ----------------------------------------------------------------------------
+\newcommand{\omterm}[2]{\hyperref[#1]{#2}}
+
+% ----------------------------------------------------------------------------
+% Where a clicked link lands
+%
+% hyperref writes an XYZ destination at exactly the anchor's position and the
+% viewer puts that point at the top of the window, so following \omterm, \cref
+% or a "Solution p. N" pointer used to leave the definition box flush against
+% the top edge, with nothing above it. Every book therefore raises the
+% destination of every statement (and of every solution) by three lines, so the
+% reader lands just above the target instead. \omlinkpadding{<len>} overrides
+% the amount for one book; \omlinkpadding{0pt} restores hyperref's placement.
+%
+% How the raise is applied: hyperref raises an anchor written in HORIZONTAL
+% mode (\Hy@raisedlink smashes it into a \raise'd box, which costs no space)
+% and lets a package add to that raise through \HyperRaiseLinkHook -- so an
+% anchor sitting in a line of type is free to move. In VERTICAL mode it raises
+% nothing, and there is no room to raise anything: a box put into the vertical
+% list to carry the anchor upwards is itself an item in that list, and it
+% breaks the \addvspace glue merging around it (measurably: the contents grew
+% by a page, and \@item's \addvspace stopped absorbing \parskip before every
+% statement).
+%
+% A theorem anchor is written in vertical mode -- \hyper@refstepcounter runs
+% inside amsthm's \trivlist. But amsthm boxes the theorem head immediately
+% afterwards (\sbox\@labels in \deferred@thm@head), in horizontal mode. So the
+% anchor is caught as it is written, held, and released inside that box: it
+% ends up in the head's line of type, where hyperref's own raise carries it up
+% by \HyperRaiseLinkDefault + \omlinkpad and the page does not move at all.
+% Chapter, section and contents anchors are left exactly where hyperref puts
+% them (a heading at the top of the window reads fine, and a raised anchor
+% before a heading's \addvspace risks landing on the previous page).
+% ----------------------------------------------------------------------------
+\newlength{\omlinkpad}
+\setlength{\omlinkpad}{3\baselineskip}
+\newcommand{\omlinkpadding}[1]{\setlength{\omlinkpad}{#1}}
+\renewcommand{\HyperRaiseLinkHook}{\addtolength{\HyperRaiseLinkLength}{\omlinkpad}}
+
+\newif\ifom@holdanchor
+\newcommand{\om@heldanchor}{}
+\newcommand{\om@holdanchor}{\ifdim\omlinkpad=\z@\else\om@holdanchortrue\fi}
+\newcommand{\om@flushanchor}{%
+  \ifdefempty{\om@heldanchor}{}{%
+    \Hy@raisedlink{\om@heldanchor}\gdef\om@heldanchor{}%
+  }%
+}
+\let\om@raisedlink\Hy@raisedlink
+\def\Hy@raisedlink#1{%
+  \ifom@holdanchor
+    \gdef\om@heldanchor{#1}%
+    \om@holdanchorfalse
+  \else
+    \om@raisedlink{#1}%
+  \fi
+}
+% Hold the anchor \refstepcounter writes from the moment a statement opens
+% (\@thm is cleveref's wrapper around amsthm's, so hook its front, not its
+% body) ...
+\pretocmd{\@thm}{\om@holdanchor}{}%
+  {\PackageWarning{onechemistry}{Cannot hold statement anchors: \string\@thm\space
+    not patchable, \string\omlinkpadding\space does nothing for statements}}
+% ... and release it into the head box a moment later. The \om@holdanchorfalse
+% is for the statement that writes no anchor at all (an unnumbered one): the
+% hold must not outlive it and swallow somebody else's anchor.
+\pretocmd{\deferred@thm@head}{\om@holdanchorfalse}{}%
+  {\PackageWarning{onechemistry}{Cannot disarm statement anchor hold}}
+\patchcmd{\deferred@thm@head}{\sbox\@labels{\normalfont#1}}%
+  {\sbox\@labels{\normalfont\om@flushanchor#1}}{}%
+  {\PackageWarning{onechemistry}{Cannot release statement anchors: \string
+    \deferred@thm@head\space not patchable}}
+
+% ----------------------------------------------------------------------------
+% Forward links exercise -> solution (opt-in per book)
+% A book whose entry file calls \omsolutionlinks (after loading this
+% package, before any chapter) gets, at the end of every exercise and
+% problem, a right-aligned pointer "Solution p. <n>" hyperlinked to the
+% sol:<key> target above, where <key> is the first \label written inside
+% the environment. Books that do not opt in are typeset unchanged.
+% ----------------------------------------------------------------------------
+\newif\ifomsollinks
+\newcommand{\omsolutionlinks}{\omsollinkstrue}
+\gdef\omsollink@key{}
+\newcommand{\omsollink@arm}{%
+  \gdef\omsollink@key{}%
+  \let\omsollink@origlabel\label
+  \renewcommand{\label}[1]{%
+    \omsollink@origlabel{##1}%
+    \ifdefempty{\omsollink@key}{\gdef\omsollink@key{##1}}{}%
+  }%
+}
+\newcommand{\omsollink@emit}{%
+  \ifdefempty{\omsollink@key}{}{%
+    \par\nopagebreak\smallskip
+    \noindent\hfill{\footnotesize\itshape
+      \hyperref[sol:\omsollink@key]{\omnameGotoSolution~\pageref{sol:\omsollink@key}}}%
+    \par
+  }%
+}
+\AtBeginEnvironment{exercise}{\ifomsollinks\omsollink@arm\fi}
+\AtEndEnvironment{exercise}{\ifomsollinks\omsollink@emit\fi}
+\AtBeginEnvironment{problem}{\ifomsollinks\omsollink@arm\fi}
+\AtEndEnvironment{problem}{\ifomsollinks\omsollink@emit\fi}
+
+% A list opening as the very first thing in a statement environment used to
+% typeset its first item on the run-in heading's line ("Method 25.6  1. …"):
+% amsthm holds the heading as a pending trivlist label, and the first \item
+% attaches itself to it. While that label is pending @inlabel is true, so
+% \leavevmode there commits the heading to its own paragraph and the list
+% starts on a fresh line; lists that follow normal text are untouched.
+\newcommand{\om@listafterhead}{\if@inlabel\leavevmode\fi}
+\AtBeginEnvironment{enumerate}{\om@listafterhead}
+\AtBeginEnvironment{itemize}{\om@listafterhead}
+\AtBeginEnvironment{description}{\om@listafterhead}
+
+% ----------------------------------------------------------------------------
+% Math macros
+% ----------------------------------------------------------------------------
+% Number sets
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+
+% Delimiters
+\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+
+% Intervals (international convention): \intcc{a}{b} = [a, b], \intoo = (a, b)
+\newcommand{\intcc}[2]{\left[#1,\,#2\right]}
+\newcommand{\intoo}[2]{\left(#1,\,#2\right)}
+\newcommand{\intco}[2]{\left[#1,\,#2\right)}
+\newcommand{\intoc}[2]{\left(#1,\,#2\right]}
+% Integer interval \intint{a}{b} = [[a, b]] = {a, a+1, ..., b}
+\newcommand{\intint}[2]{[\![#1,\,#2]\!]}
+% Triple bar (operator norm) |||u|||
+\newcommand{\vertiii}[1]{{\left\vert\kern-0.3ex\left\vert\kern-0.3ex\left\vert
+  #1 \right\vert\kern-0.3ex\right\vert\kern-0.3ex\right\vert}}
+
+% Calculus
+\newcommand{\dd}{\mathop{}\!\mathrm{d}}
+\newcommand{\eu}{\mathrm{e}}
+\newcommand{\iu}{\mathrm{i}}
+
+% Vectors and geometry
+\newcommand{\vect}[1]{\overrightarrow{#1}}
+\newcommand{\scal}[2]{\vect{#1}\cdot\vect{#2}}
+
+% Complex numbers
+\newcommand{\conj}[1]{\overline{#1}}
+\DeclareMathOperator{\Rea}{Re}
+\DeclareMathOperator{\Ima}{Im}
+\DeclareMathOperator{\Arg}{arg}
+
+% Probability
+\renewcommand{\P}{\mathbb{P}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\V}{\mathbb{V}}
+\newcommand{\pcond}[2]{\P_{#1}\!\left(#2\right)}
+
+% Arithmetic
+\DeclareMathOperator{\lcm}{lcm}
+
+% Quantum notation (Book 2 grade 12 and Books 3–5)
+\newcommand{\ket}[1]{\left|#1\right\rangle}
+\newcommand{\bra}[1]{\left\langle#1\right|}
+\newcommand{\braket}[2]{\left\langle#1\,\middle|\,#2\right\rangle}
+
+% Misc: \st is defined in styles/lang/<lang>.tex
+
+% ----------------------------------------------------------------------------
+% Chemistry additions, Book 2 sync (main session, 2026-10-02). Shared by all
+% books.
+% ----------------------------------------------------------------------------
+% CIP descriptors: \R is the real numbers (above), so never \R for a
+% configuration. \cip{R} prints (R) with the italic letter; for several
+% centres write (2\textit{R},3\textit{S}).
+\newcommand{\cip}[1]{(\textit{#1})}
+
+% Units: \qty{1.85}{\debye}, \qty{7.26}{\ppm}.
+\DeclareSIUnit{\debye}{D}
+\DeclareSIUnit{\ppm}{ppm}
+
+% Quantum boxes, one per orbital, in a row: \omorbs{ud,ud,u,} gives a full,
+% a full, a half-filled and an empty box (u = one electron spin up, d = spin
+% down, ud = a pair, empty = vacant). Sits on the text baseline.
+\newcommand{\om@orbspin}[2]{%
+  \ifdefstring{#1}{ud}{%
+    \draw[-{Straight Barb[left,length=2.2pt]}] (#2+0.32,0.14) -- (#2+0.32,0.86);
+    \draw[-{Straight Barb[left,length=2.2pt]}] (#2+0.68,0.86) -- (#2+0.68,0.14);}{}%
+  \ifdefstring{#1}{u}{%
+    \draw[-{Straight Barb[left,length=2.2pt]}] (#2+0.5,0.14) -- (#2+0.5,0.86);}{}%
+  \ifdefstring{#1}{d}{%
+    \draw[-{Straight Barb[left,length=2.2pt]}] (#2+0.5,0.86) -- (#2+0.5,0.14);}{}}
+\newcommand{\omorbs}[1]{%
+  \tikz[baseline=0.1em,x=1.15em,y=1.15em,line width=0.45pt]{%
+    \foreach \om@s [count=\om@i from 0] in {#1}{%
+      \draw (\om@i,0) rectangle ++(1,1);%
+      \om@orbspin{\om@s}{\om@i}}}}
+
+% Plot styles. Labels are written in the chapter (they are prose, and get
+% translated with it).
+% Energy profile: \begin{axis}[omprofile, xlabel={Reaction coordinate},
+% ylabel={Energy}] ... the curve from figdata ... \end{axis}
+\pgfplotsset{omprofile/.style={axis x line=bottom, axis y line=left,
+  xtick=\empty, ytick=\empty, clip=false, axis line style={-{Stealth}},
+  enlargelimits=false, every axis label/.append style={font=\small}}}
+% Potential-pH diagram: \begin{axis}[omeph, ymin=-1, ymax=1.6] ...
+\pgfplotsset{omeph/.style={xmin=0, xmax=14, xtick={0,2,...,14},
+  xlabel={pH}, ylabel={$E$ (V)}, grid=major,
+  grid style={gray!25, line width=0.3pt}, clip=true,
+  every axis label/.append style={font=\small},
+  tick label style={font=\small}}}
+
+% ----------------------------------------------------------------------------
+% Book 1 sync (main session, 2026-10-02). Shared by all books.
+% ----------------------------------------------------------------------------
+% Circuits (conductivity tests, cells, electrolysis): circuitikz.
+\RequirePackage[european,siunitx]{circuitikz}
+
+% More atoms for ball-and-stick models and ionic lattices (CPK colours);
+% aX is a generic ball: \node[aX={orange!70}{6mm}] {};
+\tikzset{
+  aF/.style={om atom, ball color=green!45!yellow, minimum size=5.4mm},
+  aBr/.style={om atom, ball color=red!55!black, minimum size=7.6mm},
+  aI/.style={om atom, ball color=violet!60!black, minimum size=8.2mm},
+  aP/.style={om atom, ball color=orange!90, minimum size=7.0mm},
+  aMg/.style={om atom, ball color=green!35!black, minimum size=7.6mm},
+  aCa/.style={om atom, ball color=green!25!gray, minimum size=8.0mm},
+  aK/.style={om atom, ball color=violet!50, minimum size=8.4mm},
+  aAl/.style={om atom, ball color=pink!60!gray, minimum size=7.4mm},
+  aX/.style 2 args={om atom, ball color=#1, minimum size=#2},
+}
+
+% The periodic table: \omperiodictable[<keys>], a tikzpicture of 118 cells
+% (atomic number and symbol; the f-block in two rows below, pointed to from
+% group 3). Keys:
+%   cell=0.82cm             side of a cell (default fits \linewidth)
+%   colour=none|metals|blocks|families
+%                           metals: metal / metalloid (B, Si, Ge, As, Sb, Te)
+%                           / non-metal; blocks: s, p, d, f; families: alkali
+%                           metals, alkaline-earth metals, halogens, noble gases
+%   legend=true             a key in the empty space above groups 3-12, its
+%                           labels from the keys `legend metal`, `legend
+%                           metalloid`, `legend nonmetal`, `legend s`, ...,
+%                           `legend alkali`, `legend alkaline`, `legend
+%                           halogen`, `legend noble` (English defaults; a
+%                           translation passes its own)
+%   highlight={Na,K,Cl}     fill these cells with `highlight colour`
+%   values={H/2.20,C/2.55}  print a value under the symbol (any TeX)
+%   upto=20                 draw only Z <= 20 (the first periods)
+%   f block=false           omit the two f-block rows
+%   numbers=false           omit the atomic numbers
+% Element positions are generated from the CIAAW table (Z, symbol); the
+% categories are the conventional ones and are stated in the caption.
+\newif\ifom@pt@f
+\newif\ifom@pt@num
+\newif\ifom@pt@legend
+\newcount\om@pt@id
+\pgfkeys{/omPT/.is family, /omPT,
+  cell/.store in=\om@pt@cell, colour/.store in=\om@pt@colour,
+  upto/.store in=\om@pt@upto, f block/.is if=om@pt@f,
+  numbers/.is if=om@pt@num, legend/.is if=om@pt@legend,
+  highlight colour/.store in=\om@pt@hlcol,
+  highlight/.code={\foreach \x in {#1}{%
+    \expandafter\gdef\csname om@pt@hl@\the\om@pt@id @\x\endcsname{1}}},
+  values/.code={\foreach \x/\v in {#1}{%
+    \expandafter\gdef\csname om@pt@val@\the\om@pt@id @\x\expandafter\endcsname
+      \expandafter{\v}}},
+  legend metal/.store in=\om@pt@Lmetal, legend metalloid/.store in=\om@pt@Lmetalloid,
+  legend nonmetal/.store in=\om@pt@Lnonmetal,
+  legend s/.store in=\om@pt@Ls, legend p/.store in=\om@pt@Lp,
+  legend d/.store in=\om@pt@Ld, legend f/.store in=\om@pt@Lf,
+  legend alkali/.store in=\om@pt@Lalkali, legend alkaline/.store in=\om@pt@Lalkaline,
+  legend halogen/.store in=\om@pt@Lhalogen, legend noble/.store in=\om@pt@Lnoble,
+}
+\def\om@pt@list{%
+  1/H/1/1,2/He/18/1,3/Li/1/2,4/Be/2/2,5/B/13/2,6/C/14/2,7/N/15/2,8/O/16/2,
+  9/F/17/2,10/Ne/18/2,11/Na/1/3,12/Mg/2/3,13/Al/13/3,14/Si/14/3,15/P/15/3,
+  16/S/16/3,17/Cl/17/3,18/Ar/18/3,19/K/1/4,20/Ca/2/4,21/Sc/3/4,22/Ti/4/4,
+  23/V/5/4,24/Cr/6/4,25/Mn/7/4,26/Fe/8/4,27/Co/9/4,28/Ni/10/4,29/Cu/11/4,
+  30/Zn/12/4,31/Ga/13/4,32/Ge/14/4,33/As/15/4,34/Se/16/4,35/Br/17/4,
+  36/Kr/18/4,37/Rb/1/5,38/Sr/2/5,39/Y/3/5,40/Zr/4/5,41/Nb/5/5,42/Mo/6/5,
+  43/Tc/7/5,44/Ru/8/5,45/Rh/9/5,46/Pd/10/5,47/Ag/11/5,48/Cd/12/5,49/In/13/5,
+  50/Sn/14/5,51/Sb/15/5,52/Te/16/5,53/I/17/5,54/Xe/18/5,55/Cs/1/6,56/Ba/2/6,
+  57/La/3/9,58/Ce/4/9,59/Pr/5/9,60/Nd/6/9,61/Pm/7/9,62/Sm/8/9,63/Eu/9/9,
+  64/Gd/10/9,65/Tb/11/9,66/Dy/12/9,67/Ho/13/9,68/Er/14/9,69/Tm/15/9,
+  70/Yb/16/9,71/Lu/17/9,72/Hf/4/6,73/Ta/5/6,74/W/6/6,75/Re/7/6,76/Os/8/6,
+  77/Ir/9/6,78/Pt/10/6,79/Au/11/6,80/Hg/12/6,81/Tl/13/6,82/Pb/14/6,
+  83/Bi/15/6,84/Po/16/6,85/At/17/6,86/Rn/18/6,87/Fr/1/7,88/Ra/2/7,89/Ac/3/10,
+  90/Th/4/10,91/Pa/5/10,92/U/6/10,93/Np/7/10,94/Pu/8/10,95/Am/9/10,
+  96/Cm/10/10,97/Bk/11/10,98/Cf/12/10,99/Es/13/10,100/Fm/14/10,101/Md/15/10,
+  102/No/16/10,103/Lr/17/10,104/Rf/4/7,105/Db/5/7,106/Sg/6/7,107/Bh/7/7,
+  108/Hs/8/7,109/Mt/9/7,110/Ds/10/7,111/Rg/11/7,112/Cn/12/7,113/Nh/13/7,
+  114/Fl/14/7,115/Mc/15/7,116/Lv/16/7,117/Ts/17/7,118/Og/18/7}
+\colorlet{omPTmetal}{blue!9}\colorlet{omPTmetalloid}{green!22}
+\colorlet{omPTnonmetal}{yellow!30}
+\colorlet{omPTs}{red!14}\colorlet{omPTp}{yellow!30}\colorlet{omPTd}{blue!12}
+\colorlet{omPTf}{green!18}
+\colorlet{omPTalkali}{red!22}\colorlet{omPTalkaline}{orange!28}
+\colorlet{omPThalogen}{green!25}\colorlet{omPTnoble}{cyan!18}
+\foreach \z in {5,14,32,33,51,52}{\expandafter\gdef\csname om@pt@cat@\z\endcsname{metalloid}}
+\foreach \z in {1,2,6,7,8,9,10,15,16,17,18,34,35,36,53,54,86}{%
+  \expandafter\gdef\csname om@pt@cat@\z\endcsname{nonmetal}}
+\foreach \z in {3,11,19,37,55,87}{\expandafter\gdef\csname om@pt@fam@\z\endcsname{alkali}}
+\foreach \z in {4,12,20,38,56,88}{\expandafter\gdef\csname om@pt@fam@\z\endcsname{alkaline}}
+\foreach \z in {9,17,35,53,85}{\expandafter\gdef\csname om@pt@fam@\z\endcsname{halogen}}
+\foreach \z in {2,10,18,36,54,86}{\expandafter\gdef\csname om@pt@fam@\z\endcsname{noble}}
+% fill colour of element \z at column \c, row \r, into \om@pt@fill
+\def\om@pt@pickfill#1#2#3#4{% Z, symbol, col, row
+  \def\om@pt@fill{white}%
+  \ifdefstring{\om@pt@colour}{metals}{%
+    \ifcsname om@pt@cat@#1\endcsname
+      \edef\om@pt@fill{omPT\csname om@pt@cat@#1\endcsname}%
+    \else\def\om@pt@fill{omPTmetal}\fi}{}%
+  \ifdefstring{\om@pt@colour}{blocks}{%
+    \ifnum#4>7 \def\om@pt@fill{omPTf}%
+    \else\ifnum#1=2 \def\om@pt@fill{omPTs}%
+    \else\ifnum#3<3 \def\om@pt@fill{omPTs}%
+    \else\ifnum#3>12 \def\om@pt@fill{omPTp}%
+    \else\def\om@pt@fill{omPTd}\fi\fi\fi\fi}{}%
+  \ifdefstring{\om@pt@colour}{families}{%
+    \ifcsname om@pt@fam@#1\endcsname
+      \edef\om@pt@fill{omPT\csname om@pt@fam@#1\endcsname}\fi}{}%
+  \ifcsname om@pt@hl@\the\om@pt@id @#2\endcsname
+    \def\om@pt@fill{\om@pt@hlcol}\fi}
+\newcommand{\om@pt@swatch}[3]{% n, colour, label
+  \fill[#2, draw=black!50, line width=0.3pt]
+    (3, -0.2-0.68*#1) rectangle ++(0.5,-0.5);
+  \node[anchor=west, font=\footnotesize, inner sep=1pt] at (3.6,-0.45-0.68*#1) {#3};}
+\newcommand{\omperiodictable}[1][]{%
+  \global\advance\om@pt@id by 1
+  \pgfkeys{/omPT, cell=0.82cm, colour=none, upto=118, f block=true,
+    numbers=true, legend=false, highlight colour=orange!45,
+    legend metal=metals, legend metalloid=metalloids, legend nonmetal=non-metals,
+    legend s=s block, legend p=p block, legend d=d block, legend f=f block,
+    legend alkali=alkali metals, legend alkaline=alkaline-earth metals,
+    legend halogen=halogens, legend noble=noble gases, #1}%
+  \begin{tikzpicture}[x=\om@pt@cell, y=\om@pt@cell, line width=0.35pt]
+    \foreach \z/\s/\c/\r in \om@pt@list {%
+      \ifnum\z>\om@pt@upto\relax\else
+      \ifom@pt@f\def\om@pt@show{1}\else
+        \ifnum\r>7 \def\om@pt@show{0}\else\def\om@pt@show{1}\fi\fi
+      \ifnum\om@pt@show=1
+        \om@pt@pickfill{\z}{\s}{\c}{\r}%
+        \pgfmathsetmacro\om@pt@yy{\ifnum\r>7 -(\r-0.65)\else -\r\fi}%
+        \fill[\om@pt@fill, draw=black!55] (\c-1,\om@pt@yy+1) rectangle ++(1,-1);
+        \ifom@pt@num
+          \node[anchor=north west, inner sep=1.2pt, font=\fontsize{5}{5}\selectfont]
+            at (\c-1,\om@pt@yy+1) {\z};\fi
+        \ifcsname om@pt@val@\the\om@pt@id @\s\endcsname
+          \node[font=\footnotesize\bfseries, inner sep=0pt, anchor=base] at (\c-0.5,\om@pt@yy+0.36) {\s};
+          \node[font=\fontsize{5}{5}\selectfont, inner sep=0pt, anchor=base] at (\c-0.5,\om@pt@yy+0.1)
+            {\csname om@pt@val@\the\om@pt@id @\s\endcsname};
+        \else
+          \node[font=\footnotesize\bfseries, inner sep=0pt, anchor=base] at (\c-0.5,\om@pt@yy+0.28) {\s};
+        \fi
+      \fi\fi}
+    \ifom@pt@f\ifnum\om@pt@upto>56
+      \def\om@pt@fill{white}%
+      \ifdefstring{\om@pt@colour}{metals}{\def\om@pt@fill{omPTmetal}}{}%
+      \ifdefstring{\om@pt@colour}{blocks}{\def\om@pt@fill{omPTf}}{}%
+      \foreach \r/\t in {6/57--71, 7/89--103}{%
+        \fill[\om@pt@fill, draw=black!55] (2,-\r+1) rectangle ++(1,-1);
+        \node[font=\fontsize{4.5}{5}\selectfont, inner sep=0pt] at (2.5,-\r+0.5) {\t};}
+    \fi\fi
+    \ifom@pt@legend
+      \ifdefstring{\om@pt@colour}{metals}{%
+        \om@pt@swatch{0}{omPTmetal}{\om@pt@Lmetal}%
+        \om@pt@swatch{1}{omPTmetalloid}{\om@pt@Lmetalloid}%
+        \om@pt@swatch{2}{omPTnonmetal}{\om@pt@Lnonmetal}}{}%
+      \ifdefstring{\om@pt@colour}{blocks}{%
+        \om@pt@swatch{0}{omPTs}{\om@pt@Ls}\om@pt@swatch{1}{omPTp}{\om@pt@Lp}%
+        \om@pt@swatch{2}{omPTd}{\om@pt@Ld}\om@pt@swatch{3}{omPTf}{\om@pt@Lf}}{}%
+      \ifdefstring{\om@pt@colour}{families}{%
+        \om@pt@swatch{0}{omPTalkali}{\om@pt@Lalkali}%
+        \om@pt@swatch{1}{omPTalkaline}{\om@pt@Lalkaline}%
+        \om@pt@swatch{2}{omPThalogen}{\om@pt@Lhalogen}%
+        \om@pt@swatch{3}{omPTnoble}{\om@pt@Lnoble}}{}%
+    \fi
+  \end{tikzpicture}}
+
+% ----------------------------------------------------------------------------
+% Book 2 (shared pics): molecular projections, crystal cells, electrochemistry
+% and organic apparatus. Written by the Book 2 writer (sync S1, 2026-10-02);
+% shared by every book -- keep the interfaces below stable. All in cm, drawn
+% with the glassware line style (om glass). Like the glassware pics, in a
+% scaled tikzpicture every pic needs \pic[transform shape].
+%
+% Named points: a pic placed as \pic (n) at (x,y) {omnewman={0}{60}}; exposes
+% its points as (n-f1), (n-b2), ... for labels and bonds.
+%
+% Molecular projections
+%   pic {omnewman={<front angle>}{<back angle>}}
+%       Newman projection centred on the origin: front bonds from the centre
+%       at <front>, +120, +240 degrees (length 1.1), back bonds from the rim
+%       of a circle of radius 0.55 at <back>, +120, +240. Points: (-c) the
+%       centre, (-f1..3) and (-b1..3) label positions at radius 1.45.
+%       Eclipsed: <back> = <front> + small offset (e.g. 0 and 8).
+%   pic {omchair} / pic {omchairflip}
+%       Cyclohexane chair (ring only), about 3.1 x 0.9 cm, centred on the
+%       origin; omchairflip is the ring-flipped chair (mirror image left-right).
+%       Points: ring atoms (-c1..6); ends of the axial bonds (-a1..6) and of
+%       the equatorial bonds (-e1..6), length 0.75: draw a substituent bond
+%       as \draw (n-c1) -- (n-a1); and its label at the end. c1, c3, c5 are
+%       the "up" carbons (axial up), c2, c4, c6 "down"; c4 is the left tip,
+%       c1 the right tip. Every equatorial bond is parallel to the ring bonds
+%       once removed.
+%
+% SUPERSEDED (main session, 2026-10-02): omcube/omhexprism dash the wrong
+% edges for the usual views; use omcubeo/omhexprismo from the addendum below
+% (view {60}{100} for cubic cells, {70}{113} for the HCP prism). Kept for the
+% record only:
+% Crystal cells (tikz-3dplot): set \tdplotsetmaincoords{70}{110} and draw in
+% [tdplot_main_coords]; the hidden edges are dashed for that view only.
+%   pic {omcube={<a>}}          cube of side <a> from (0,0,0) to (a,a,a);
+%                               the edges meeting at (0,a,0) are dashed.
+%   pic {omhexprism={<a>}{<c>}} hexagonal prism, hexagon side <a> centred on
+%                               the z axis, base z = 0, height <c>; the three
+%                               edges at the back vertex (120 degrees) dashed.
+%   node styles cellA=<size> (large grey ball, default 7mm), cellB=<size>
+%   (small red ball, default 4mm), cellC=<size> (blue, default 5mm) and
+%   cellsite=<size> (hollow dashed circle marking an interstitial site,
+%   default 3mm): \node[cellA=5mm] at (1,1,0) {};
+%
+% Electrochemistry
+%   pic {electrode={<colour>}}  metal strip 0.3 x 2.4 cm, bottom at the
+%                               origin; point (-top) is the clip at the top.
+%   pic {saltbridge={<span>}}   inverted U tube: legs end at (0,0) and
+%                               (<span>,0), top bar at height 2.6.
+%   pic {meter={<display>}}     instrument box 1.5 x 0.9 centred on the
+%                               origin, showing <display> (V, pH, mS/m);
+%                               terminals (-a) and (-b) under the box.
+%   pic {probe}                 combined glass electrode, bulb bottom at the
+%                               origin, 3.0 cm tall; (-top) is its cap.
+%   pic {stirrer}               magnetic stirrer whose top surface is y = 0,
+%                               with a stir bar drawn just above it (inside
+%                               a vessel standing on the stirrer).
+%
+% Organic apparatus (origin at the bottom centre unless said otherwise)
+%   pic {threeneck={<level>}{<colour>}}  round-bottom flask (radius 1) with a
+%       central neck to 3.0 and two side necks leaning out by 25 degrees;
+%       points (-c), (-l), (-r) are the tops of the necks.
+%   pic {dropfunnel={<level>}{<colour>}} pressure-equalising addition
+%       funnel, stem tip at the origin, 3.6 cm tall, side tube on the right.
+%   pic {guardtube}                drying tube with its granules, bottom
+%       joint at the origin, 1.8 cm tall.
+%   pic {deanstark={<lower>}{<lower colour>}{<upper colour>}}  Dean--Stark
+%       trap: vertical vapour tube from the origin (flask joint) to (0,3.4)
+%       (condenser joint); graduated collector on the right (x = 0.6) with a
+%       stopcock; <lower> is the height fraction of the lower (denser) layer
+%       in the collector, the upper layer fills it to the return arm.
+%   pic {stillhead}                distillation head: joint at the origin,
+%       vertical body to 1.4 with a thermometer port; side arm going down to
+%       the right at 20 degrees below horizontal; (-arm) is its end, (-top)
+%       the port.
+%   pic {thermometer}              3.2 cm thermometer, bulb bottom at the
+%       origin; in a still head put the bulb level with the side arm:
+%       \pic at ($(s-top)+(0,-0.75)$) {thermometer};
+%   pic {liebig={<length>}}        straight condenser drawn along +x from
+%       the origin (inlet) to (<length>,0) with its water jacket and two
+%       hose connectors (water in at the low end); rotate the pic itself
+%       (\pic[rotate=-20]) to incline it.
+%   pic {adapter}                  receiver adapter: from the origin a short
+%       tube along +x then a drip tip down to (0.5,-0.8) = (-tip).
+%   pic {heatingmantle}            heating mantle cradling a round flask of
+%       radius 1 whose bottom is the origin.
+%   pic {buchner={<cake colour or none>}}  Buchner funnel, stem tip at the
+%       origin, plate at 1.2, rim at 1.9.
+%   pic {filterflask={<level>}{<colour>}}  filter (side-arm) flask, 2.8 cm
+%       tall, side arm to the right at 2.2; (-arm) is its end.
+% ----------------------------------------------------------------------------
+\tikzset{
+  pics/omnewman/.style 2 args={code={
+    \coordinate (-c) at (0,0);
+    \foreach \k in {0,1,2} {
+      \draw[line width=0.8pt] ({#2+120*\k}:0.55) -- ({#2+120*\k}:1.1);
+    }
+    \fill[white] (0,0) circle (0.55);
+    \draw[line width=0.8pt] (0,0) circle (0.55);
+    \foreach \k in {0,1,2} {
+      \draw[line width=0.8pt] (0,0) -- ({#1+120*\k}:1.1);
+    }
+    \coordinate (-f1) at ({#1}:1.45);     \coordinate (-b1) at ({#2}:1.45);
+    \coordinate (-f2) at ({#1+120}:1.45); \coordinate (-b2) at ({#2+120}:1.45);
+    \coordinate (-f3) at ({#1+240}:1.45); \coordinate (-b3) at ({#2+240}:1.45);
+  }},
+  pics/omchair/.style={code={
+    \begin{scope}[scale=1.2]
+    \coordinate (-c1) at (1.3,0.15);  \coordinate (-c2) at (0.75,0.05);
+    \coordinate (-c3) at (-0.4,0.35);\coordinate (-c4) at (-1.3,-0.15);
+    \coordinate (-c5) at (-0.75,-0.05);\coordinate (-c6) at (0.4,-0.35);
+    \draw[line width=0.8pt, line join=round] (-c1) -- (-c2) -- (-c3) -- (-c4)
+      -- (-c5) -- (-c6) -- cycle;
+    \coordinate (-a1) at ($(-c1)+(0,0.62)$);  \coordinate (-a2) at ($(-c2)+(0,-0.62)$);
+    \coordinate (-a3) at ($(-c3)+(0,0.62)$);  \coordinate (-a4) at ($(-c4)+(0,-0.62)$);
+    \coordinate (-a5) at ($(-c5)+(0,0.62)$);  \coordinate (-a6) at ($(-c6)+(0,-0.62)$);
+    \coordinate (-e1) at ($(-c1)+(0.600,-0.156)$); \coordinate (-e2) at ($(-c2)+(0.542,0.301)$);
+    \coordinate (-e3) at ($(-c3)+(-0.610,-0.111)$); \coordinate (-e4) at ($(-c4)+(-0.600,0.156)$);
+    \coordinate (-e5) at ($(-c5)+(-0.542,-0.301)$); \coordinate (-e6) at ($(-c6)+(0.610,0.111)$);
+    \end{scope}
+  }},
+  pics/omchairflip/.style={code={
+    \begin{scope}[scale=1.2]
+    \coordinate (-c1) at (-1.3,0.15);  \coordinate (-c2) at (-0.75,0.05);
+    \coordinate (-c3) at (0.4,0.35);  \coordinate (-c4) at (1.3,-0.15);
+    \coordinate (-c5) at (0.75,-0.05); \coordinate (-c6) at (-0.4,-0.35);
+    \draw[line width=0.8pt, line join=round] (-c1) -- (-c2) -- (-c3) -- (-c4)
+      -- (-c5) -- (-c6) -- cycle;
+    \coordinate (-a1) at ($(-c1)+(0,0.62)$);  \coordinate (-a2) at ($(-c2)+(0,-0.62)$);
+    \coordinate (-a3) at ($(-c3)+(0,0.62)$);  \coordinate (-a4) at ($(-c4)+(0,-0.62)$);
+    \coordinate (-a5) at ($(-c5)+(0,0.62)$);  \coordinate (-a6) at ($(-c6)+(0,-0.62)$);
+    \coordinate (-e1) at ($(-c1)+(-0.600,-0.156)$); \coordinate (-e2) at ($(-c2)+(-0.542,0.301)$);
+    \coordinate (-e3) at ($(-c3)+(0.610,-0.111)$); \coordinate (-e4) at ($(-c4)+(0.600,0.156)$);
+    \coordinate (-e5) at ($(-c5)+(0.542,-0.301)$); \coordinate (-e6) at ($(-c6)+(-0.610,0.111)$);
+    \end{scope}
+  }},
+  % crystal cells
+  pics/omcube/.style={code={
+    \def\om@a{#1}
+    \draw[black!70, line width=0.5pt] (0,0,0) -- (\om@a,0,0) -- (\om@a,0,\om@a)
+      -- (0,0,\om@a) -- cycle;
+    \draw[black!70, line width=0.5pt] (\om@a,0,0) -- (\om@a,\om@a,0)
+      -- (\om@a,\om@a,\om@a) -- (0,\om@a,\om@a) -- (0,0,\om@a)
+      (\om@a,0,\om@a) -- (\om@a,\om@a,\om@a);
+    \draw[black!55, line width=0.5pt, dashed] (0,\om@a,0) -- (0,0,0)
+      (0,\om@a,0) -- (\om@a,\om@a,0) (0,\om@a,0) -- (0,\om@a,\om@a);
+  }},
+  pics/omhexprism/.style 2 args={code={
+    \foreach \k in {0,60,...,300} {
+      \pgfmathsetmacro\om@ka{\k+60}
+      \ifnum\k=60 \tikzset{om@hx/.style={dashed, black!55}}
+      \else\ifnum\k=120 \tikzset{om@hx/.style={dashed, black!55}}
+      \else \tikzset{om@hx/.style={black!70}}\fi\fi
+      \draw[om@hx, line width=0.5pt] ({#1*cos(\k)},{#1*sin(\k)},0)
+        -- ({#1*cos(\om@ka)},{#1*sin(\om@ka)},0);
+      \draw[black!70, line width=0.5pt] ({#1*cos(\k)},{#1*sin(\k)},#2)
+        -- ({#1*cos(\om@ka)},{#1*sin(\om@ka)},#2);
+      \ifnum\k=120 \tikzset{om@hv/.style={dashed, black!55}}
+      \else \tikzset{om@hv/.style={black!70}}\fi
+      \draw[om@hv, line width=0.5pt] ({#1*cos(\k)},{#1*sin(\k)},0)
+        -- ({#1*cos(\k)},{#1*sin(\k)},#2);
+    }
+  }},
+  cellA/.style={om atom, ball color=black!30, minimum size=#1},
+  cellA/.default=7mm,
+  cellB/.style={om atom, ball color=red!75, minimum size=#1},
+  cellB/.default=4mm,
+  cellC/.style={om atom, ball color=blue!60, minimum size=#1},
+  cellC/.default=5mm,
+  cellsite/.style={circle, inner sep=0pt, minimum size=#1, draw=omDef,
+    dashed, line width=0.5pt, fill=white, fill opacity=0.6},
+  cellsite/.default=3mm,
+  % electrochemistry
+  pics/electrode/.style={code={
+    \fill[#1] (-0.15,0) rectangle (0.15,2.4);
+    \draw[black!70, line width=0.5pt] (-0.15,0) rectangle (0.15,2.4);
+    \fill[black!70] (-0.2,2.4) rectangle (0.2,2.55);
+    \coordinate (-top) at (0,2.55);
+  }},
+  pics/saltbridge/.style={code={
+    \draw[omGlass, line width=4.2pt] (0,0) -- (0,2.6) -- (#1,2.6) -- (#1,0);
+    \draw[white!85!omWater, line width=2.8pt] (0,0.05) -- (0,2.6) -- (#1,2.6)
+      -- (#1,0.05);
+    \fill[black!25] (-0.07,0) rectangle (0.07,0.18);
+    \fill[black!25] (#1-0.07,0) rectangle (#1+0.07,0.18);
+  }},
+  pics/meter/.style={code={
+    \draw[black!75, fill=black!8, rounded corners=1.5pt, line width=0.6pt]
+      (-0.75,-0.45) rectangle (0.75,0.45);
+    \draw[black!60, fill=white] (-0.55,-0.05) rectangle (0.55,0.3);
+    \node[font=\footnotesize] at (0,0.125) {#1};
+    \fill[red!70!black] (-0.4,-0.27) circle (0.06);
+    \fill[black] (0.4,-0.27) circle (0.06);
+    \coordinate (-a) at (-0.4,-0.45); \coordinate (-b) at (0.4,-0.45);
+  }},
+  pics/probe/.style={code={
+    \fill[omWater] (0,0.18) circle (0.18);
+    \draw[om glass] (-0.15,0.3) -- (-0.15,3.0) (0.15,0.3) -- (0.15,3.0);
+    \draw[om glass] (-0.15,0.3) arc[start angle=146, end angle=394, radius=0.18];
+    \draw[black!50, line width=0.4pt] (0,0.3) -- (0,2.7);
+    \fill[black!70] (-0.18,2.75) rectangle (0.18,3.1);
+    \coordinate (-top) at (0,3.1);
+  }},
+  pics/stirrer/.style={code={
+    \fill[black!12] (-1.2,-0.5) rectangle (1.2,0);
+    \draw[omGlass, line width=0.6pt] (-1.2,-0.5) rectangle (1.2,0);
+    \draw[omGlass, fill=white] (0.85,-0.25) circle (0.12);
+    \draw[omGlass] (0.85,-0.25) -- (0.85,-0.14);
+    \fill[black!65, rounded corners=0.8pt] (-0.3,0.06) rectangle (0.3,0.17);
+  }},
+  % organic apparatus
+  pics/threeneck/.style 2 args={code={
+    \begin{scope}
+      \clip (-0.2,3) -- (-0.2,1.98) arc[start angle=101.54, end angle=438.46,
+        radius=1] -- (0.2,3) -- cycle;
+      \fill[#2] (-1,0) rectangle (1,{2*(#1)});
+    \end{scope}
+    \draw[om glass] (-0.25,3.05) -- (-0.2,3) -- (-0.2,1.98)
+      arc[start angle=101.54, end angle=438.46, radius=1] -- (0.2,3) -- (0.25,3.05);
+    \foreach \s in {-1,1} {
+      \begin{scope}[shift={({\s*0.62},{1+0.78})}, rotate={-\s*25}]
+        \fill[white] (-0.16,-0.05) rectangle (0.16,0.95);
+        \draw[om glass] (-0.16,-0.05) -- (-0.16,0.95) -- (-0.21,1.0)
+          (0.16,-0.05) -- (0.16,0.95) -- (0.21,1.0);
+        \coordinate (-n\s) at (0,1.0);
+      \end{scope}
+    }
+    \coordinate (-l) at (-n-1); \coordinate (-r) at (-n1);
+    \coordinate (-c) at (0,3.05);
+  }},
+  pics/dropfunnel/.style 2 args={code={
+    \begin{scope}
+      \clip (-0.32,1.0) rectangle (0.32,3.1);
+      \fill[#2] (-0.32,1.0) rectangle (0.32,{1.0+2.1*(#1)});
+    \end{scope}
+    \draw[om glass] (-0.06,0) -- (-0.06,0.75) -- (-0.32,1.0) -- (-0.32,3.1)
+      -- (-0.12,3.3) -- (-0.12,3.5) (0.06,0) -- (0.06,0.75) -- (0.32,1.0)
+      -- (0.32,3.1) -- (0.12,3.3) -- (0.12,3.5);
+    \fill[omGlass] (-0.2,3.5) rectangle (0.2,3.62);
+    \fill[omGlass] (-0.24,0.42) rectangle (0.24,0.5);
+    \draw[om glass] (0.06,0.2) -- (0.55,0.2) -- (0.55,3.2) -- (0.25,3.2);
+  }},
+  pics/guardtube/.style={code={
+    \draw[om glass] (-0.08,0) -- (-0.08,0.5) -- (-0.22,0.65) -- (-0.22,1.5)
+      -- (-0.12,1.6) -- (-0.12,1.8) (0.08,0) -- (0.08,0.5) -- (0.22,0.65)
+      -- (0.22,1.5) -- (0.12,1.6) -- (0.12,1.8);
+    \foreach \x/\y in {-0.1/0.8,0.08/0.85,-0.05/1.0,0.12/1.05,-0.12/1.2,
+        0.04/1.22,0.1/1.38,-0.08/1.38}
+      \fill[black!40] (\x,\y) circle (0.055);
+  }},
+  pics/deanstark/.style n args={3}{code={
+    \begin{scope}
+      \clip (0.45,0.75) rectangle (0.75,2.45);
+      \fill[#2] (0.45,0.75) rectangle (0.75,{0.75+1.7*(#1)});
+      \fill[#3] (0.45,{0.75+1.7*(#1)}) rectangle (0.75,2.45);
+    \end{scope}
+    \draw[om glass] (-0.12,0) -- (-0.12,3.4) (0.12,0) -- (0.12,1.75)
+      (0.12,1.95) -- (0.12,2.9) (0.12,3.05) -- (0.12,3.4);
+    \draw[om glass] (0.12,1.75) -- (0.45,2.3) (0.12,1.95) -- (0.45,2.5);
+    \draw[om glass] (0.12,2.9) -- (0.6,2.9) -- (0.6,2.75) (0.12,3.05)
+      -- (0.75,3.05) -- (0.75,2.75);
+    \draw[om glass] (0.45,2.75) -- (0.45,0.75) -- (0.55,0.6) -- (0.55,0.3)
+      (0.75,2.75) -- (0.75,0.75) -- (0.65,0.6) -- (0.65,0.3);
+    \fill[omGlass] (0.42,0.42) rectangle (0.78,0.5);
+    \foreach \y in {1.0,1.25,...,2.25} \draw[omGlass, line width=0.35pt]
+      (0.45,\y) -- (0.55,\y);
+  }},
+  pics/stillhead/.style={code={
+    \draw[om glass] (-0.15,0) -- (-0.15,1.4) -- (-0.2,1.45) (0.15,0) -- (0.15,0.75)
+      ($(0.15,0.75)+(-20:1.3)$) -- (0.15,0.75) ;
+    \draw[om glass] (0.15,1.05) -- ($(0.15,1.05)+(-20:1.3)$) (0.15,1.05) -- (0.15,1.4)
+      -- (0.2,1.45);
+    \coordinate (-arm) at ($(0.15,0.9)+(-20:1.3)$);
+    \coordinate (-top) at (0,1.45);
+  }},
+  pics/thermometer/.style={code={
+    \fill[red!70!black] (0,0.12) circle (0.1);
+    \draw[black!60, line width=0.4pt] (0,0.12) circle (0.1);
+    \draw[black!60, line width=0.4pt] (-0.05,0.2) -- (-0.05,3.2) (0.05,0.2)
+      -- (0.05,3.2) (-0.05,3.2) -- (0.05,3.2);
+    \draw[red!70!black, line width=0.8pt] (0,0.2) -- (0,1.4);
+  }},
+  pics/liebig/.style={code={
+    \fill[omWater] (0.4,-0.3) rectangle (#1-0.4,0.3);
+    \fill[white] (0.4,-0.12) rectangle (#1-0.4,0.12);
+    \draw[om glass] (0.4,-0.3) rectangle (#1-0.4,0.3);
+    \draw[om glass] (0,-0.12) -- (#1,-0.12) (0,0.12) -- (#1,0.12);
+    \fill[omWater] (#1-0.75,-0.3) rectangle (#1-0.55,-0.65);
+    \draw[om glass] (#1-0.75,-0.3) -- (#1-0.75,-0.65) (#1-0.55,-0.3)
+      -- (#1-0.55,-0.65);
+    \fill[omWater] (0.55,0.3) rectangle (0.75,0.65);
+    \draw[om glass] (0.55,0.3) -- (0.55,0.65) (0.75,0.3) -- (0.75,0.65);
+  }},
+  pics/adapter/.style={code={
+    \draw[om glass] (0,0.12) -- (0.5,0.12) to[out=0, in=90] (0.62,-0.1)
+      -- (0.58,-0.8) (0,-0.12) -- (0.3,-0.12) to[out=0, in=90] (0.42,-0.3)
+      -- (0.46,-0.8);
+    \coordinate (-tip) at (0.52,-0.8);
+  }},
+  pics/heatingmantle/.style={code={
+    \fill[black!25] ($(0,1)+(200:1.05)$) arc[start angle=200, end angle=340,
+      radius=1.05] -- ($(0,1)+(340:1.35)$) arc[start angle=340, end angle=200,
+      radius=1.35] -- cycle;
+    \draw[omGlass, line width=0.6pt] ($(0,1)+(200:1.35)$) arc[start angle=200,
+      end angle=340, radius=1.35];
+    \fill[black!12] (-1.4,-0.75) rectangle (1.4,-0.4);
+    \draw[omGlass, line width=0.6pt] (-1.4,-0.75) rectangle (1.4,-0.4);
+    \draw[omGlass, fill=white] (1.0,-0.575) circle (0.1);
+  }},
+  pics/buchner/.style={code={
+    \draw[om glass] (-0.08,0) -- (-0.08,0.7) -- (-0.8,1.2) -- (-0.8,1.9)
+      (0.08,0) -- (0.08,0.7) -- (0.8,1.2) -- (0.8,1.9);
+    \draw[omGlass, line width=0.5pt] (-0.8,1.2) -- (0.8,1.2);
+    \foreach \x in {-0.6,-0.4,...,0.6} \fill[white] (\x,1.2) circle (0.025);
+    \def\om@tmp{#1}\def\om@none{none}%
+    \ifx\om@tmp\om@none\else
+      \fill[#1] (-0.8,1.22) rectangle (0.8,1.42);
+    \fi
+  }},
+  pics/buchner/.default=none,
+  pics/filterflask/.style 2 args={code={
+    \begin{scope}
+      \clip (-1,0) -- (-0.3,1.9) -- (-0.3,2.8) -- (0.3,2.8) -- (0.3,1.9)
+        -- (1,0) -- cycle;
+      \fill[#2] (-1,0) rectangle (1,{2.6*(#1)});
+    \end{scope}
+    \draw[om glass] (-0.36,2.86) -- (-0.3,2.8) -- (-0.3,1.9) -- (-1,0)
+      -- (1,0) -- (0.3,1.9) -- (0.3,2.1) (0.3,2.3) -- (0.3,2.8) -- (0.36,2.86);
+    \draw[om glass] (0.3,2.1) -- (0.75,2.1) (0.3,2.3) -- (0.75,2.3);
+    \coordinate (-arm) at (0.75,2.2);
+  }},
+}
+
+% ----------------------------------------------------------------------------
+% Book 1 (shared pics): volumetric glassware, gas collection, burners, a
+% balance and a stand. Written by the Book 1 writer (sync S1b, 2026-10-02);
+% shared by every book -- keep the interfaces below stable. Same conventions
+% as the glassware above: drawn in cm, origin at the bottom centre unless said
+% otherwise, liquids filled by clipping to the vessel's outline, and in a
+% scaled tikzpicture every pic needs \pic[transform shape].
+%
+%   pic {volflask={<level>}{<colour>}}   volumetric flask, 3.6 cm tall: flat
+%       base 1.2 cm wide, bulb up to 1.75, neck 0.28 cm wide up to 3.6, the
+%       calibration mark at 2.9 ((-mark) is its right end). <level> 1 =
+%       filled exactly to the mark, 0.5 = half that height.
+%   pic {pipette={<level>}{<colour>}}    volumetric pipette, tip at the
+%       origin, 5.0 cm tall, bulb between 1.3 and 2.7, mark at 4.2 ((-mark));
+%       <level> 1 = filled to the mark.
+%   pic {gradcyl={<level>}{<colour>}}    graduated cylinder on its foot,
+%       3.6 cm tall, tube 0.6 cm wide from 0.15 to 3.5, ticks every 0.3 cm;
+%       <level> is the fraction of the tube's height.
+%   pic {cuvette={<level>}{<colour>}}    spectrophotometer cell (1 cm path),
+%       side view 0.6 x 1.8 cm; <level> is the fraction of its height.
+%       (-beam) is the mid-height point where a light beam crosses it.
+%   pic {condcell}                       conductimetry cell: a dipping probe
+%       3.2 cm tall, the open bell's rim at the origin, two parallel plates
+%       inside the bell; (-top) is the cable end.
+%   pic {bunsen={<air>}}                 Bunsen burner, base at the origin,
+%       barrel mouth at (0,2.0) = (-top), gas inlet on the left; <air> =
+%       open (blue flame with its inner cone), closed (tall yellow flame) or
+%       off (no flame).
+%   pic {gasjar={<level>}{<colour>}}     gas jar 1.0 x 2.6 cm closed by its
+%       glass cover plate; <level>, <colour> fill it from the bottom (water,
+%       a coloured gas); level 0 = empty.
+%   pic {gasjaropen={<level>}{<colour>}} the same jar without its plate (to
+%       stand inverted in a trough: \pic[rotate=180] ...).
+%   pic {deliverytube={<dx>}{<dy>}}      bent delivery tube from the origin
+%       (inside a stopper) up, across by <dx> and down to (<dx>,<dy>) =
+%       (-end); it rises 0.6 cm above the higher of its two ends.
+%   pic {trough={<colour>}}              pneumatic trough 3.4 x 1.2 cm, water
+%       (<colour>) up to 0.9.
+%   pic {evapdish={<colour or none>}}    evaporating dish 1.7 cm wide and
+%       0.55 cm high, with a layer of <colour> (none: empty) up to 0.2.
+%   pic {utube={<level>}{<colour>}}      U-tube 1.7 cm wide and 2.8 cm tall,
+%       bottom of the bend at the origin; arms centred at x = -0.7 and 0.7,
+%       (-l) and (-r) are the arm mouths; <level> is a fraction of 2.8.
+%   pic {balance}                        electronic balance 2.4 x 0.8 cm, the
+%       top of its pan at y = 0.8 = (-pan); a blank display, no digits.
+%   pic {stand={<clamp height>}{<reach>}} retort stand: rod at x = 0 from the
+%       base (y = 0) up to 6.0, base plate from -0.4 to 1.6; a boss at
+%       <clamp height> and an arm ending in a clamp whose jaws are centred on
+%       (<reach>, <clamp height>) = (-clamp), 0.34 cm apart (a burette fits).
+% ----------------------------------------------------------------------------
+\tikzset{
+  pics/volflask/.style 2 args={code={
+    \def\om@vfpath{(-0.14,3.6) -- (-0.14,1.75) .. controls (-0.14,1.55)
+      and (-0.25,1.5) .. (-0.5,1.35) .. controls (-0.95,0.95) and
+      (-0.95,0.15) .. (-0.6,0) -- (0.6,0) .. controls (0.95,0.15) and
+      (0.95,0.95) .. (0.5,1.35) .. controls (0.25,1.5) and (0.14,1.55) ..
+      (0.14,1.75) -- (0.14,3.6)}%
+    \begin{scope}
+      \clip \om@vfpath -- cycle;
+      \fill[#2] (-1,0) rectangle (1,{2.9*(#1)});
+    \end{scope}
+    \draw[om glass] (-0.19,3.65) -- \om@vfpath -- (0.19,3.65);
+    \draw[black!80, line width=0.55pt] (-0.14,2.9) -- (0.14,2.9);
+    \coordinate (-mark) at (0.14,2.9);
+  }},
+  pics/pipette/.style 2 args={code={
+    \def\om@pppath{(-0.06,5.0) -- (-0.06,2.68) .. controls (-0.3,2.55) and
+      (-0.3,1.45) .. (-0.06,1.32) -- (-0.06,0.3) -- (-0.03,0) -- (0.03,0)
+      -- (0.06,0.3) -- (0.06,1.32) .. controls (0.3,1.45) and (0.3,2.55)
+      .. (0.06,2.68) -- (0.06,5.0)}%
+    \begin{scope}
+      \clip \om@pppath -- cycle;
+      \fill[#2] (-0.4,0) rectangle (0.4,{4.2*(#1)});
+    \end{scope}
+    \draw[om glass] \om@pppath;
+    \draw[black!80, line width=0.55pt] (-0.11,4.2) -- (0.11,4.2);
+    \coordinate (-mark) at (0.11,4.2);
+  }},
+  pics/gradcyl/.style 2 args={code={
+    \begin{scope}
+      \clip (-0.3,0.15) rectangle (0.3,3.5);
+      \fill[#2] (-0.3,0.15) rectangle (0.3,{0.15+3.35*(#1)});
+    \end{scope}
+    \fill[black!15] (-0.55,0) rectangle (0.55,0.15);
+    \draw[omGlass, line width=0.6pt] (-0.55,0) rectangle (0.55,0.15);
+    \draw[om glass] (-0.36,3.56) -- (-0.3,3.5) -- (-0.3,0.15) (0.3,0.15)
+      -- (0.3,3.5) -- (0.4,3.62);
+    \foreach \k in {0,...,9} \draw[omGlass, line width=0.35pt]
+      (-0.3,{0.45+0.3*\k}) -- ({-0.3+(mod(\k,3)==2 ? 0.2 : 0.11)},{0.45+0.3*\k});
+  }},
+  pics/cuvette/.style 2 args={code={
+    \fill[#2] (-0.3,0) rectangle (0.3,{1.8*(#1)});
+    \draw[om glass] (-0.3,1.8) -- (-0.3,0) -- (0.3,0) -- (0.3,1.8);
+    \draw[omGlass, line width=0.3pt] (-0.24,0.06) -- (-0.24,1.8)
+      (0.24,0.06) -- (0.24,1.8);
+    \coordinate (-beam) at (0,0.6);
+  }},
+  pics/condcell/.style={code={
+    \fill[black!70] (-0.08,0.15) rectangle (-0.03,0.62);
+    \fill[black!70] (0.03,0.15) rectangle (0.08,0.62);
+    \draw[black!50, line width=0.3pt] (-0.055,0.62) -- (-0.055,2.95)
+      (0.055,0.62) -- (0.055,2.95);
+    \draw[om glass] (-0.35,0) -- (-0.35,0.75) -- (-0.14,0.95) -- (-0.14,2.95)
+      (0.35,0) -- (0.35,0.75) -- (0.14,0.95) -- (0.14,2.95);
+    \fill[black!70] (-0.17,2.95) rectangle (0.17,3.2);
+    \coordinate (-top) at (0,3.2);
+  }},
+  pics/bunsen/.style={code={
+    \def\om@bbair{#1}\def\om@bbopen{open}\def\om@bbclosed{closed}%
+    \ifx\om@bbair\om@bbopen
+      \fill[blue!25, opacity=0.85] (-0.12,2.0) .. controls (-0.2,2.5) and
+        (-0.05,2.9) .. (0,3.15) .. controls (0.05,2.9) and (0.2,2.5) ..
+        (0.12,2.0) -- cycle;
+      \fill[cyan!45!blue] (-0.08,2.0) .. controls (-0.07,2.25) and (-0.02,2.45)
+        .. (0,2.55) .. controls (0.02,2.45) and (0.07,2.25) .. (0.08,2.0) -- cycle;
+    \fi
+    \ifx\om@bbair\om@bbclosed
+      \fill[yellow!75!orange] (-0.12,2.0) .. controls (-0.38,2.6) and
+        (-0.12,3.2) .. (0.04,3.75) .. controls (0.12,3.25) and (0.38,2.6) ..
+        (0.12,2.0) -- cycle;
+      \fill[orange!80!red] (-0.08,2.0) .. controls (-0.2,2.35) and (-0.05,2.6)
+        .. (0,2.85) .. controls (0.08,2.6) and (0.2,2.35) .. (0.08,2.0) -- cycle;
+    \fi
+    \fill[black!25] (-0.6,0) rectangle (0.6,0.18);
+    \draw[black!65, line width=0.5pt] (-0.6,0) rectangle (0.6,0.18);
+    \fill[black!12] (-0.12,0.18) rectangle (0.12,2.0);
+    \draw[black!65, line width=0.5pt] (-0.12,0.18) rectangle (0.12,2.0);
+    \fill[black!12] (-0.55,0.25) rectangle (-0.12,0.35);
+    \draw[black!65, line width=0.5pt] (-0.55,0.25) -- (-0.12,0.25)
+      (-0.55,0.35) -- (-0.12,0.35);
+    \fill[black!40] (-0.17,0.45) rectangle (0.17,0.75);
+    \draw[black!65, line width=0.5pt] (-0.17,0.45) rectangle (0.17,0.75);
+    \ifx\om@bbair\om@bbclosed\else
+      \fill[white] (-0.06,0.53) rectangle (0.06,0.67);
+      \draw[black!65, line width=0.4pt] (-0.06,0.53) rectangle (0.06,0.67);
+    \fi
+    \coordinate (-top) at (0,2.0);
+  }},
+  pics/bunsen/.default=open,
+  pics/gasjar/.style 2 args={code={
+    \begin{scope}
+      \clip (-0.5,0) rectangle (0.5,2.6);
+      \fill[#2] (-0.5,0) rectangle (0.5,{2.6*(#1)});
+    \end{scope}
+    \draw[om glass, rounded corners=2pt] (-0.5,2.6) -- (-0.5,0) -- (0.5,0)
+      -- (0.5,2.6);
+    \draw[om glass] (-0.58,2.6) -- (-0.5,2.6) (0.5,2.6) -- (0.58,2.6);
+    \fill[omWater!60] (-0.68,2.62) rectangle (0.68,2.7);
+    \draw[omGlass, line width=0.4pt] (-0.68,2.62) rectangle (0.68,2.7);
+  }},
+  pics/gasjaropen/.style 2 args={code={
+    \begin{scope}
+      \clip (-0.5,0) rectangle (0.5,2.6);
+      \fill[#2] (-0.5,0) rectangle (0.5,{2.6*(#1)});
+    \end{scope}
+    \draw[om glass, rounded corners=2pt] (-0.5,2.6) -- (-0.5,0) -- (0.5,0)
+      -- (0.5,2.6);
+    \draw[om glass] (-0.58,2.6) -- (-0.5,2.6) (0.5,2.6) -- (0.58,2.6);
+  }},
+  pics/deliverytube/.style 2 args={code={
+    \pgfmathsetmacro\om@dttop{max(0,#2)+0.6}
+    \draw[omGlass, line width=2.4pt, rounded corners=4pt] (0,0) -- (0,\om@dttop)
+      -- (#1,\om@dttop) -- (#1,#2);
+    \draw[white, line width=1.0pt, rounded corners=4pt] (0,0.02)
+      -- (0,\om@dttop) -- (#1,\om@dttop) -- (#1,#2+0.02);
+    \coordinate (-end) at (#1,#2);
+  }},
+  pics/trough/.style={code={
+    \fill[#1] (-1.7,0) rectangle (1.7,0.9);
+    \draw[om glass, rounded corners=2pt] (-1.7,1.2) -- (-1.7,0) -- (1.7,0)
+      -- (1.7,1.2);
+  }},
+  pics/trough/.default=omWater!70,
+  pics/evapdish/.style={code={
+    \def\om@edpath{(-0.85,0.55) .. controls (-0.75,0.1) and (-0.45,0) ..
+      (0,0) .. controls (0.45,0) and (0.75,0.1) .. (0.85,0.55)}%
+    \def\om@tmp{#1}\def\om@none{none}%
+    \ifx\om@tmp\om@none\else
+      \begin{scope}
+        \clip \om@edpath -- cycle;
+        \fill[#1] (-1,0) rectangle (1,0.2);
+      \end{scope}
+    \fi
+    \draw[om glass] (-0.92,0.6) -- \om@edpath -- (0.92,0.6);
+  }},
+  pics/evapdish/.default=none,
+  pics/utube/.style 2 args={code={
+    \begin{scope}
+      \clip (-0.85,2.8) -- (-0.85,0.85) arc[start angle=180, end angle=360,
+        radius=0.85] -- (0.85,2.8) -- (0.55,2.8) -- (0.55,0.85)
+        arc[start angle=0, end angle=-180, radius=0.55] -- (-0.55,2.8) -- cycle;
+      \fill[#2] (-1,0) rectangle (1,{2.8*(#1)});
+    \end{scope}
+    \draw[om glass] (-0.9,2.85) -- (-0.85,2.8) -- (-0.85,0.85)
+      arc[start angle=180, end angle=360, radius=0.85] -- (0.85,2.8) -- (0.9,2.85);
+    \draw[om glass] (-0.5,2.85) -- (-0.55,2.8) -- (-0.55,0.85)
+      arc[start angle=180, end angle=360, radius=0.55] -- (0.55,2.8) -- (0.5,2.85);
+    \coordinate (-l) at (-0.7,2.8); \coordinate (-r) at (0.7,2.8);
+  }},
+  pics/balance/.style={code={
+    \fill[black!10] (-1.2,0) -- (1.2,0) -- (1.1,0.55) -- (-1.1,0.55) -- cycle;
+    \draw[black!65, line width=0.5pt] (-1.2,0) -- (1.2,0) -- (1.1,0.55)
+      -- (-1.1,0.55) -- cycle;
+    \fill[omDef!8] (-0.95,0.12) rectangle (-0.2,0.42);
+    \draw[black!55, line width=0.4pt] (-0.95,0.12) rectangle (-0.2,0.42);
+    \foreach \x in {0.45,0.8} \draw[black!55, fill=black!30, line width=0.3pt]
+      (\x,0.27) circle (0.07);
+    \fill[black!40] (-0.1,0.55) rectangle (0.1,0.7);
+    \fill[black!22] (-0.85,0.7) rectangle (0.85,0.8);
+    \draw[black!65, line width=0.5pt] (-0.85,0.7) rectangle (0.85,0.8);
+    \coordinate (-pan) at (0,0.8);
+  }},
+  pics/stand/.style 2 args={code={
+    \fill[black!30] (-0.4,0) rectangle (1.6,0.18);
+    \draw[black!60, line width=0.5pt] (-0.4,0) rectangle (1.6,0.18);
+    \fill[black!18] (-0.05,0.18) rectangle (0.05,6.0);
+    \draw[black!60, line width=0.4pt] (-0.05,0.18) rectangle (0.05,6.0);
+    \draw[black!55, line width=1.6pt] (0,#1) -- ({#2-0.27},#1);
+    \fill[black!60] (-0.12,{#1-0.1}) rectangle (0.12,{#1+0.1});
+    \fill[black!50] ({#2-0.27},{#1-0.16}) rectangle ({#2-0.17},{#1+0.16});
+    \fill[black!50] ({#2+0.17},{#1-0.16}) rectangle ({#2+0.27},{#1+0.16});
+    \draw[black!50, line width=0.6pt] ({#2-0.22},{#1+0.16}) -- ({#2-0.22},{#1+0.24})
+      -- ({#2+0.22},{#1+0.24}) -- ({#2+0.22},{#1+0.16});
+    \coordinate (-clamp) at (#2,#1);
+  }},
+}
+
+% Book 2 (shared pics), addendum 2026-10-02: crystal cells with the hidden
+% edges of the real view. For tikz-3dplot main coords {theta}{phi} with
+% 0 < theta < 90 and 90 < phi < 180 (for example {60}{100}, which separates
+% face and body diagonals of a cube in projection), the viewer looks from
+% +x, +y, +z: the farthest cube vertex is the ORIGIN, and the farthest prism
+% vertices are those at 180 and 240 degrees. omcube and omhexprism above
+% dash the wrong edges for these views; use these instead. Depth for
+% drawing atoms back to front: sin(theta)sin(phi) x - sin(theta)cos(phi) y
+% + cos(theta) z, smallest first.
+%   pic {omcubeo={<a>}}           cube (0,0,0)-(a,a,a), edges at the origin dashed.
+%   pic {omhexprismo={<a>}{<c>}}  hexagonal prism as omhexprism, bottom edges
+%                                 120-180-240-300 and vertical edges at 180
+%                                 and 240 degrees dashed.
+\tikzset{
+  pics/omcubeo/.style={code={
+    \def\om@a{#1}
+    \draw[black!70, line width=0.5pt] (\om@a,0,0) -- (\om@a,\om@a,0) -- (\om@a,\om@a,\om@a)
+      -- (\om@a,0,\om@a) -- cycle;
+    \draw[black!70, line width=0.5pt] (\om@a,\om@a,0) -- (0,\om@a,0) -- (0,\om@a,\om@a)
+      -- (\om@a,\om@a,\om@a) (0,\om@a,\om@a) -- (0,0,\om@a) -- (\om@a,0,\om@a);
+    \draw[black!55, line width=0.5pt, dashed] (0,0,0) -- (\om@a,0,0)
+      (0,0,0) -- (0,\om@a,0) (0,0,0) -- (0,0,\om@a);
+  }},
+  pics/omhexprismo/.style 2 args={code={
+    \foreach \k in {0,60,...,300} {
+      \pgfmathsetmacro\om@ka{\k+60}
+      \ifnum\k=120 \tikzset{om@hb/.style={dashed, black!55}}
+      \else\ifnum\k=180 \tikzset{om@hb/.style={dashed, black!55}}
+      \else\ifnum\k=240 \tikzset{om@hb/.style={dashed, black!55}}
+      \else \tikzset{om@hb/.style={black!70}}\fi\fi\fi
+      \ifnum\k=180 \tikzset{om@hv/.style={dashed, black!55}}
+      \else\ifnum\k=240 \tikzset{om@hv/.style={dashed, black!55}}
+      \else \tikzset{om@hv/.style={black!70}}\fi\fi
+      \draw[om@hb, line width=0.5pt] ({#1*cos(\k)},{#1*sin(\k)},0)
+        -- ({#1*cos(\om@ka)},{#1*sin(\om@ka)},0);
+      \draw[black!70, line width=0.5pt] ({#1*cos(\k)},{#1*sin(\k)},#2)
+        -- ({#1*cos(\om@ka)},{#1*sin(\om@ka)},#2);
+      \draw[om@hv, line width=0.5pt] ({#1*cos(\k)},{#1*sin(\k)},0)
+        -- ({#1*cos(\k)},{#1*sin(\k)},#2);
+    }
+  }},
+}
+
+% ----------------------------------------------------------------------------
+% Book 3 sync (main session, 2026-10-02). Shared by all books. Axis labels are
+% prose and are written in the chapter, never here.
+% ----------------------------------------------------------------------------
+% Binary phase diagrams: composition 0..1 on x, T on y. Liquidus / bubble
+% curve in omDef, solidus / dew curve in omThm, tie lines dashed.
+\pgfplotsset{omphase/.style={xmin=0, xmax=1, axis x line=bottom,
+  axis y line=left, every axis label/.append style={font=\small},
+  tick label style={font=\small}, clip=false, enlarge y limits=false}}
+\tikzset{omliquidus/.style={omDef, thick}, omsolidus/.style={omThm, thick},
+  tieline/.style={densely dashed, gray!70, line width=0.5pt}}
+% Current-potential curves: E to the right, i up, through the origin.
+% Anodic branches omThm, cathodic omDef, solvent walls dashed.
+\pgfplotsset{omie/.style={axis lines=middle, xtick=\empty, ytick=\empty,
+  clip=false, every axis label/.append style={font=\small}}}
+\tikzset{omanodic/.style={omThm, thick}, omcathodic/.style={omDef, thick},
+  omwall/.style={gray, densely dashed, thick}}
+% Ellingham diagrams: T in K, Delta_r G in kJ per mol O2.
+\pgfplotsset{omellingham/.style={xmin=0, xmax=2500, grid=major,
+  grid style={gray!25, line width=0.3pt}, clip=true,
+  every axis label/.append style={font=\small}, tick label style={font=\small}}}
+% Chromatograms (time axis, no y ticks) and mass spectra (bars, 0..105 %).
+\pgfplotsset{omchrom/.style={axis x line=bottom, axis y line=left, ytick=\empty,
+  ymin=0, every axis label/.append style={font=\small},
+  tick label style={font=\small}},
+  omms/.style={ycomb, ymin=0, ymax=105, axis x line=bottom, axis y line=left,
+  cycle list={{black, thick, mark=none}},
+  every axis label/.append style={font=\small}, tick label style={font=\small}},
+  omnmr/.style={x dir=reverse, axis x line=bottom, axis y line=none, ytick=\empty,
+  every axis label/.append style={font=\small}, tick label style={font=\small}},
+  omir/.style={x dir=reverse, axis x line=bottom, axis y line=left,
+  every axis label/.append style={font=\small}, tick label style={font=\small}}}
+% Retrosynthetic arrow (TikZ; inside chemfig schemes use \arrow{=>}).
+\tikzset{omretro/.style={double, double distance=2pt, -{Implies}, thick}}
+% Catalytic cycles: nodes on a circle, arcs between them, substrates in and
+% products out as side arrows.
+\tikzset{cyclenode/.style={draw=black!60, rounded corners=2pt, fill=white,
+    font=\small, inner sep=3pt, align=center},
+  cyclearc/.style={-{Stealth}, thick, black!70},
+  cyclein/.style={-{Stealth}, omDef, thick},
+  cycleout/.style={-{Stealth}, omThm, thick},
+  cyclelabel/.style={font=\footnotesize, align=center}}
+% Tick labels print thousands with a thin space (1 000), never a comma: the
+% pgfplots default is a comma, which the sister quant series shipped in 157
+% charts before it was caught. Series-wide.
+\pgfplotsset{/pgf/number format/1000 sep={\,}}
+
+% ----------------------------------------------------------------------------
+% Book 4 sync (main session, 2026-10-02). Shared by all books.
+% ----------------------------------------------------------------------------
+\RequirePackage{array}
+\usetikzlibrary{decorations.pathreplacing}
+% Units and notations: \qty{-1.1167}{\hartree}, \qty{1.4}{\bohr};
+% \termsym{3}{P}{2} gives ^3P_2; \kv{V}{O}{\bullet\bullet} gives the
+% Kroger-Vink symbol V_O with two dots.
+\DeclareSIUnit{\hartree}{\ensuremath{E_\mathrm{h}}}
+\DeclareSIUnit{\bohr}{\ensuremath{a_0}}
+\newcommand{\termsym}[3]{\ensuremath{{}^{#1}\mathrm{#2}_{#3}}}
+\newcommand{\kv}[3]{\ensuremath{\mathrm{#1}_{\mathrm{#2}}^{#3}}}
+% Character tables, in math mode; one row per irreducible representation,
+% every row ending with \\ (a test parses them):
+%   \begin{omchartable}{C_{2v}}{cccc}{E & C_2 & \sigma_v(xz) & \sigma_v'(yz)}
+%   A_1 & 1 & 1 & 1 & 1 & z & x^2, y^2, z^2 \\
+%   ...
+%   \end{omchartable}
+% Arguments: the group, the column spec of the classes, the class headers.
+% The last two columns (linear and rotations; quadratic) are left-aligned.
+\newenvironment{omchartable}[3]{%
+  \begin{center}\small\renewcommand{\arraystretch}{1.15}%
+  $\begin{array}{l|#2|l|l}\hline
+  #1 & #3 & & \\ \hline}{%
+  \hline\end{array}$\end{center}}
+% Jablonski diagrams: states and vibrational sublevels, radiative arrows
+% (absorption omDef, fluorescence omThm, phosphorescence omProp), wavy
+% non-radiative arrows, dashed wavy intersystem crossing.
+\tikzset{omstate/.style={very thick, black!80},
+  omvib/.style={thin, black!45},
+  omabs/.style={-{Stealth}, thick, omDef},
+  omfluo/.style={-{Stealth}, thick, omThm},
+  omphos/.style={-{Stealth}, thick, omProp},
+  omnonrad/.style={-{Stealth}, decorate, decoration={snake, amplitude=0.4mm,
+    segment length=2mm, post length=1.5mm}},
+  omisc/.style={omnonrad, densely dashed},
+  % single-electron curly arrow (fishhook), for \chemmove
+  omfishhook/.style={-{Straight Barb[left]}},
+  % minimum-energy path and saddle point on a potential-energy surface
+  ompath/.style={very thick, densely dashed, omThm},
+  omsaddle/.style={cross out, draw=black, thick, minimum size=2.2mm, inner sep=0pt},
+  % Tanabe-Sugano: spin-changed (forbidden) states drawn thin and grey
+  omtsforbidden/.style={thin, gray!70}}
+% Tanabe-Sugano diagrams, potential-energy surfaces (contours prepared by
+% figdata, no gnuplot), cyclic voltammograms (E to the right, anodic current
+% positive); omscan=<pos> puts a scan-direction arrow on a curve.
+\pgfplotsset{omts/.style={axis x line=bottom, axis y line=left, xmin=0, ymin=0,
+    clip=false, every axis label/.append style={font=\small},
+    tick label style={font=\small}},
+  ompes/.style={view={0}{90}, axis equal image, colormap/viridis,
+    every axis label/.append style={font=\small}, tick label style={font=\small}},
+  omcv/.style={axis x line=bottom, axis y line=left,
+    every axis label/.append style={font=\small}, tick label style={font=\small}}}
+\tikzset{omscan/.style={postaction={decorate}, decoration={markings,
+  mark=at position #1 with {\arrow{Stealth}}}}}
+
+
+% ----------------------------------------------------------------------------
+% Book 4 (shared pics): crystallographic symmetry glyphs and stereographic
+% projections, in the conventions of the International Tables for
+% Crystallography (filled glyphs = axes perpendicular to the drawing plane).
+% Written by the Book 4 writer (sync S3, 2026-10-02); shared by every book --
+% keep the interfaces stable. All sizes in cm, centred on the origin of the
+% pic. The glyphs keep their size whatever the picture's x/y unit vectors (so
+% a cell drawn with x=3cm, y=3cm gets normal-size glyphs); to enlarge them,
+% scale the whole drawing with [scale=..., every pic/.style={transform shape}].
+%
+%   pic {omtwofold}          twofold rotation axis: filled lens, 0.16 x 0.34
+%   pic {omtwoone}           twofold screw axis 2_1: the lens with two tails
+%   pic {omthreefold}        threefold axis: filled equilateral triangle
+%                            (circumradius 0.17), a vertex up
+%   pic {omfourfold}         fourfold axis: filled square, side 0.24
+%   pic {omsixfold}          sixfold axis: filled regular hexagon, radius 0.16
+%   pic {ominv}              centre of inversion: small open circle (r 0.05)
+%   ommirror (style)         mirror plane seen edge-on: a thick line
+%   omglide (style)          glide plane seen edge-on (glide in the drawing
+%                            plane): a thick dashed line
+%   pic {omgenpos={<sign>}{<comma>}}  a general position of a space-group
+%                            diagram: open circle (r 0.12) with <sign> (+ or
+%                            $-$, or a fraction such as $\tfrac12{+}$) on its
+%                            right; <comma> = 1 adds a comma inside,
+%                            marking the enantiomorph (mirror-image) copy
+%   pic {omstereo={<R>}}     stereographic projection: circle of radius <R>
+%                            with its horizontal and vertical diameters
+%   pic {omup} / {omdown}    pole above the equator (filled dot) / below it
+%                            (cross), for the points of a stereogram
+% ----------------------------------------------------------------------------
+\tikzset{
+  pics/omtwofold/.style={code={\tikzset{x=1cm, y=1cm}
+    \fill[black] (0,0.17) .. controls (0.11,0.06) and (0.11,-0.06) .. (0,-0.17)
+      .. controls (-0.11,-0.06) and (-0.11,0.06) .. (0,0.17);}},
+  pics/omtwoone/.style={code={\tikzset{x=1cm, y=1cm}
+    \fill[black] (0,0.17) .. controls (0.11,0.06) and (0.11,-0.06) .. (0,-0.17)
+      .. controls (-0.11,-0.06) and (-0.11,0.06) .. (0,0.17);
+    \draw[black, line width=0.7pt] (0,0.17) .. controls (0.05,0.24) .. (0.13,0.24);
+    \draw[black, line width=0.7pt] (0,-0.17) .. controls (-0.05,-0.24) .. (-0.13,-0.24);}},
+  pics/omthreefold/.style={code={\tikzset{x=1cm, y=1cm}
+    \fill[black] (90:0.17) -- (210:0.17) -- (330:0.17) -- cycle;}},
+  pics/omfourfold/.style={code={\tikzset{x=1cm, y=1cm}\fill[black] (-0.12,-0.12) rectangle (0.12,0.12);}},
+  pics/omsixfold/.style={code={\tikzset{x=1cm, y=1cm}
+    \fill[black] (0:0.16) -- (60:0.16) -- (120:0.16) -- (180:0.16) -- (240:0.16)
+      -- (300:0.16) -- cycle;}},
+  pics/ominv/.style={code={\tikzset{x=1cm, y=1cm}\draw[black, fill=white, line width=0.5pt] (0,0) circle (0.05);}},
+  ommirror/.style={black, line width=1.3pt},
+  omglide/.style={black, line width=1.1pt, dashed},
+  pics/omgenpos/.style 2 args={code={\tikzset{x=1cm, y=1cm}
+    \draw[black, line width=0.5pt] (0,0) circle (0.12);
+    \node[font=\scriptsize, inner sep=0.5pt, anchor=west] at (0.14,0) {#1};
+    \ifnum#2=1 \node[font=\scriptsize, inner sep=0pt] at (0,0.02) {,};\fi}},
+  pics/omstereo/.style={code={
+    \draw[black, line width=0.6pt] (0,0) circle (#1);
+    \draw[black!50, line width=0.4pt] (-#1,0) -- (#1,0) (0,-#1) -- (0,#1);}},
+  pics/omup/.style={code={\tikzset{x=1cm, y=1cm}\fill[black] (0,0) circle (0.06);}},
+  pics/omdown/.style={code={\tikzset{x=1cm, y=1cm}\draw[black, line width=0.7pt] (-0.07,-0.07) -- (0.07,0.07)
+    (-0.07,0.07) -- (0.07,-0.07);}},
+}
+
+% ----------------------------------------------------------------------------
+% Book 3 (shared pics): orbital energy levels and correlation lines, orbital
+% lobes (s, p, single lobes, the five d), coordination geometries, and three
+% pieces of synthesis/analysis apparatus. Written by the Book 3 writer
+% (2026-10-03); shared by every book (Book 4 reuses them for correlation
+% diagrams, ligand fields and Jablonski-type level drawings) -- keep the
+% interfaces stable. All sizes in cm; like the glassware pics, in a scaled
+% tikzpicture use \pic[transform shape].
+%
+% Energy levels
+%   pic {omlevel={<e>}{<length>}}  a horizontal level of the given length,
+%       centred on the origin; <e> = ud (two paired electrons), u (one up),
+%       d (one down) or empty. Points (-l) and (-r): the two ends, for
+%       correlation lines; (-c) the centre. Example:
+%       \pic (a) at (0,1.2) {omlevel={ud}{1.0}};
+%       \draw[omcorr] (a-r) -- (b-l);
+%   omcorr (style)           correlation line between levels (thin, grey)
+%   omcorrforbidden (style)  correlation that crosses / is symmetry-forbidden
+%                            (thin, dashed, dark red)
+%   omsymlabel (style)       small symmetry label (S, A, a1, t2g...) put at a
+%                            level end: \node[omsymlabel, right] at (a-r) {S};
+%
+% Orbital lobes (phases: omphasepos = blue fill, omphaseneg = orange fill; a
+% book may restyle both). Sizes are proportional to |c|, the coefficient of
+% the orbital on that atom (|c| = 1 gives a lobe 0.8 cm long, an s circle of
+% radius 0.32 cm); c = 0 draws a small open node marker.
+%   pic {oms={<c>}}              s orbital: circle, colour by the sign of c
+%   pic {omlobe={<c>}{<angle>}}  one lobe from the origin towards <angle>
+%                                (degrees), colour by the sign of c (hybrids,
+%                                fragment orbitals)
+%   pic {omp={<c>}{<angle>}}     p orbital: two lobes along <angle>; the lobe
+%                                pointing at <angle> has the sign of c, the
+%                                other the opposite sign (Huckel drawings:
+%                                \pic at (x,y) {omp={0.60}{90}};)
+%   pic {omdxy} {omdxz} {omdyz} {omdx2y2} {omdz2}
+%       the five d orbitals, 2D drawings about 1.5 cm across, with their two
+%       labelled axes (x right, y or z up; for dxz, x right and z up; dyz, y
+%       right and z up); dz2 = two lobes along z and a ring of the other sign.
+%
+% Coordination geometries (ball and stick, metal at the origin, M-L bonds of
+% length 1; ligands node style omligand, metal ommetal; back bonds dashed).
+% Points (-M) and (-L1)..(-Ln) for labels:
+%   pic {omoctahedron}   L1 up, L2 down, L3 right, L4 left, L5 front, L6 back
+%   pic {omtetrahedron}  L1 up, L2 front, L3 right, L4 back-left
+%   pic {omsquareplanar} L1 right, L2 left, L3 front, L4 back
+%   pic {omtbp}          trigonal bipyramid: L1 up, L2 down (axial),
+%                        L3 right, L4 front-left, L5 back-left (equatorial)
+%
+% Apparatus (origin and points as stated, glassware line style om glass)
+%   pic {chromcolumn={<bed height>}}  chromatography column 0.7 cm wide and
+%       5.0 cm tall above a stopcock; tip at the origin; silica bed filled
+%       from 0.5 cm to <bed height> (cm) with a sand layer on top; points
+%       (-tip), (-bed) top of the bed (centre), (-top) mouth.
+%   pic {bubbler}         oil bubbler, 2.6 cm tall: inlet (-in) at the top
+%       left, gas dipping into the oil, outlet (-out) at the top right;
+%       origin at the bottom centre.
+%   pic {septum}          rubber septum folded over a neck of width 0.4 whose
+%       top is the origin; (-top) is where a needle enters.
+% \setmodiagram below: series defaults for modiagram's MOdiagram
+% environment (square levels, dashed grey correlation lines, small labels).
+% ----------------------------------------------------------------------------
+\tikzset{
+  omcorr/.style={thin, black!50},
+  omcorrforbidden/.style={thin, densely dashed, omThm},
+  omsymlabel/.style={font=\scriptsize, inner sep=1.5pt},
+  omphasepos/.style={fill=omDef!40, draw=omDef!80!black, line width=0.5pt},
+  omphaseneg/.style={fill=omProp!35, draw=omProp!80!black, line width=0.5pt},
+  omligand/.style={circle, fill=black!35, draw=black!70, inner sep=0pt,
+    minimum size=2.6mm},
+  ommetal/.style={circle, fill=omProp!70, draw=black!70, inner sep=0pt,
+    minimum size=3.6mm},
+  % levels
+  pics/omlevel/.style 2 args={code={
+    \draw[very thick, black!85] ({-(#2)/2},0) -- ({(#2)/2},0);
+    \coordinate (-l) at ({-(#2)/2},0);
+    \coordinate (-r) at ({(#2)/2},0);
+    \coordinate (-c) at (0,0);
+    \def\om@lev{#1}\def\om@ud{ud}\def\om@u{u}\def\om@d{d}%
+    \ifx\om@lev\om@ud
+      \draw[-{Stealth[length=1.6mm]}, thick] (-0.09,-0.16) -- (-0.09,0.18);
+      \draw[-{Stealth[length=1.6mm]}, thick] (0.09,0.18) -- (0.09,-0.16);
+    \else\ifx\om@lev\om@u
+      \draw[-{Stealth[length=1.6mm]}, thick] (0,-0.16) -- (0,0.18);
+    \else\ifx\om@lev\om@d
+      \draw[-{Stealth[length=1.6mm]}, thick] (0,0.18) -- (0,-0.16);
+    \fi\fi\fi
+  }},
+  % lobes
+  pics/oms/.style={code={
+    \pgfmathsetmacro\om@r{0.32*abs(#1)}%
+    \pgfmathparse{abs(#1)<0.001 ? 1 : 0}%
+    \ifnum\pgfmathresult=1
+      \draw[black!60] (0,0) circle (0.04);
+    \else
+      \pgfmathparse{(#1)>=0 ? 1 : 0}%
+      \ifnum\pgfmathresult=1 \path[omphasepos] (0,0) circle (\om@r);
+      \else \path[omphaseneg] (0,0) circle (\om@r);\fi
+    \fi
+  }},
+  pics/omlobe/.style 2 args={code={
+    \pgfmathsetmacro\om@s{0.8*abs(#1)}%
+    \pgfmathparse{abs(#1)<0.001 ? 1 : 0}%
+    \ifnum\pgfmathresult=1
+      \draw[black!60] (0,0) circle (0.04);
+    \else
+      \pgfmathparse{(#1)>=0 ? 1 : 0}%
+      \ifnum\pgfmathresult=1 \def\om@ph{omphasepos}\else\def\om@ph{omphaseneg}\fi
+      \path[\om@ph, rotate=(#2)-90] (0,0) .. controls (0.42*\om@s,0.42*\om@s)
+        and (0.36*\om@s,\om@s) .. (0,\om@s) .. controls (-0.36*\om@s,\om@s)
+        and (-0.42*\om@s,0.42*\om@s) .. (0,0) -- cycle;
+    \fi
+  }},
+  pics/omp/.style 2 args={code={
+    \pgfmathsetmacro\om@c{#1}%
+    \pgfmathsetmacro\om@mc{-(#1)}%
+    \pic {omlobe={\om@c}{#2}};
+    \pic {omlobe={\om@mc}{(#2)+180}};
+  }},
+  % d orbitals: four lobes of alternating sign at <start> + k*90 degrees
+  pics/om@dfour/.style n args={3}{code={
+    \pic {omlobe={1}{#1}}; \pic {omlobe={-1}{(#1)+90}};
+    \pic {omlobe={1}{(#1)+180}}; \pic {omlobe={-1}{(#1)+270}};
+    \draw[->, black!55, thin] (-0.95,0) -- (0.95,0) node[right, font=\tiny] {#2};
+    \draw[->, black!55, thin] (0,-0.95) -- (0,0.95) node[above, font=\tiny] {#3};
+  }},
+  pics/omdxy/.style={code={\pic {om@dfour={45}{$x$}{$y$}};}},
+  pics/omdxz/.style={code={\pic {om@dfour={45}{$x$}{$z$}};}},
+  pics/omdyz/.style={code={\pic {om@dfour={45}{$y$}{$z$}};}},
+  pics/omdx2y2/.style={code={\pic {om@dfour={0}{$x$}{$y$}};}},
+  pics/omdz2/.style={code={
+    \path[omphaseneg] (0,0) ellipse (0.48 and 0.14);
+    \pic {omlobe={1}{90}}; \pic {omlobe={1}{270}};
+    \draw[->, black!55, thin] (-0.95,0) -- (0.95,0) node[right, font=\tiny] {$x$};
+    \draw[->, black!55, thin] (0,-0.95) -- (0,0.95) node[above, font=\tiny] {$z$};
+  }},
+  % coordination geometries
+  pics/omoctahedron/.style={code={
+    \coordinate (-M) at (0,0);
+    \coordinate (-L1) at (0,1); \coordinate (-L2) at (0,-1);
+    \coordinate (-L3) at (1,0); \coordinate (-L4) at (-1,0);
+    \coordinate (-L5) at (-0.42,-0.36); \coordinate (-L6) at (0.42,0.36);
+    \draw[thick, black!70, dashed] (0,0) -- (0.42,0.36);
+    \draw[thick, black!70] (0,1) -- (0,-1) (-1,0) -- (1,0) (0,0) -- (-0.42,-0.36);
+    \node[omligand] at (0.42,0.36) {};
+    \node[ommetal] at (0,0) {};
+    \foreach \p in {(0,1),(0,-1),(1,0),(-1,0),(-0.42,-0.36)} \node[omligand] at \p {};
+  }},
+  pics/omtetrahedron/.style={code={
+    % a regular tetrahedron (one vertex up) in the oblique view
+    % x' = x + 0.35 z, y' = y - 0.25 z, z towards the reader
+    \coordinate (-M) at (0,0);
+    \coordinate (-L1) at (0,1); \coordinate (-L2) at (-0.19,-0.54);
+    \coordinate (-L3) at (0.94,-0.33); \coordinate (-L4) at (-0.76,-0.13);
+    \draw[thick, black!70, dashed] (0,0) -- (-0.76,-0.13);
+    \node[omligand] at (-0.76,-0.13) {};
+    \draw[thick, black!70] (0,0) -- (0,1) (0,0) -- (-0.19,-0.54) (0,0) -- (0.94,-0.33);
+    \node[ommetal] at (0,0) {};
+    \foreach \p in {(0,1),(-0.19,-0.54),(0.94,-0.33)} \node[omligand] at \p {};
+  }},
+  pics/omsquareplanar/.style={code={
+    \coordinate (-M) at (0,0);
+    \coordinate (-L1) at (1,0); \coordinate (-L2) at (-1,0);
+    \coordinate (-L3) at (-0.42,-0.36); \coordinate (-L4) at (0.42,0.36);
+    \draw[thick, black!70, dashed] (0,0) -- (0.42,0.36);
+    \node[omligand] at (0.42,0.36) {};
+    \draw[thick, black!70] (-1,0) -- (1,0) (0,0) -- (-0.42,-0.36);
+    \node[ommetal] at (0,0) {};
+    \foreach \p in {(1,0),(-1,0),(-0.42,-0.36)} \node[omligand] at \p {};
+  }},
+  pics/omtbp/.style={code={
+    \coordinate (-M) at (0,0);
+    \coordinate (-L1) at (0,1); \coordinate (-L2) at (0,-1);
+    \coordinate (-L3) at (1,-0.05); \coordinate (-L4) at (-0.62,-0.34);
+    \coordinate (-L5) at (-0.42,0.30);
+    \draw[thick, black!70, dashed] (0,0) -- (-0.42,0.30);
+    \node[omligand] at (-0.42,0.30) {};
+    \draw[thick, black!70] (0,1) -- (0,-1) (0,0) -- (1,-0.05) (0,0) -- (-0.62,-0.34);
+    \node[ommetal] at (0,0) {};
+    \foreach \p in {(0,1),(0,-1),(1,-0.05),(-0.62,-0.34)} \node[omligand] at \p {};
+  }},
+  % apparatus
+  pics/chromcolumn/.style={code={
+    \coordinate (-tip) at (0,0);
+    \coordinate (-top) at (0,5.6);
+    \coordinate (-bed) at (0,#1);
+    \begin{scope}
+      \clip (-0.35,0.5) rectangle (0.35,5.6);
+      \fill[black!8] (-0.35,0.5) rectangle (0.35,#1);
+      \fill[yellow!35!brown!40] (-0.35,#1) rectangle (0.35,{#1+0.18});
+    \end{scope}
+    \draw[om glass] (-0.06,0) -- (-0.06,0.25) -- (-0.35,0.5) -- (-0.35,5.6)
+      (0.06,0) -- (0.06,0.25) -- (0.35,0.5) -- (0.35,5.6);
+    \fill[white, draw=black!60] (-0.12,0.12) rectangle (0.12,0.30);
+    \draw[black!70, line width=0.8pt] (-0.28,0.21) -- (0.28,0.21);
+    \fill[white, draw=black!40] (-0.3,0.5) .. controls (0,0.62) .. (0.3,0.5);
+  }},
+  pics/bubbler/.style={code={
+    \begin{scope}
+      \clip (-0.6,0) -- (-0.6,1.7) -- (0.6,1.7) -- (0.6,0) -- cycle;
+      \fill[yellow!25] (-0.6,0) rectangle (0.6,0.6);
+    \end{scope}
+    \draw[om glass] (-0.6,1.9) -- (-0.6,0.15) arc[start angle=180, end angle=360,
+      x radius=0.6, y radius=0.15] -- (0.6,1.9);
+    \draw[om glass] (-0.65,1.9) -- (0.65,1.9);
+    \draw[om glass] (-0.25,2.6) -- (-0.25,0.25) (-0.15,2.6) -- (-0.15,0.25);
+    \draw[om glass] (0.25,1.9) -- (0.25,2.6) (0.35,1.9) -- (0.35,2.6);
+    \foreach \y in {0.32,0.46} \draw[black!50] (-0.12,\y) circle (0.05);
+    \coordinate (-in) at (-0.2,2.6);
+    \coordinate (-out) at (0.3,2.6);
+  }},
+  pics/septum/.style={code={
+    \fill[omThm!70!black] (-0.24,-0.05) rectangle (0.24,0.28);
+    \fill[omThm!70!black] (-0.3,-0.32) -- (-0.3,0.0) -- (-0.24,0.0) -- (-0.24,-0.32) -- cycle;
+    \fill[omThm!70!black] (0.24,-0.32) -- (0.24,0.0) -- (0.3,0.0) -- (0.3,-0.32) -- cycle;
+    \coordinate (-top) at (0,0.28);
+  }},
+}
+\setmodiagram{style=square, lines={black!45, densely dashed}, labels-fs=\footnotesize,
+  names-style={font=\small}}
+
+% ----------------------------------------------------------------------------
+% Final reconciliation (main session, 2026-10-03)
+% ----------------------------------------------------------------------------
+% Ragged bottom, series-wide: with the book class's \flushbottom, a float that
+% did not fit stretched the glue of its page into gaps of up to a third of a
+% page (Book 1 p. 121, Book 3). Books 3 and 4 had set it in their entry files.
+\raggedbottom
+

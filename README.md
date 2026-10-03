@@ -2,8 +2,7 @@
 
 ## License
 
-© 2026 Benjamin Virrion.
-
+- **How to credit**: One Chemistry Book, One Course (one-course.com).
 - **Book content** — the LaTeX sources, figures, and the PDF and HTML editions — is licensed under
   [Creative Commons Attribution-NonCommercial-ShareAlike 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
   (CC BY-NC-SA 4.0): you may share and adapt it, including translating it, with credit to
@@ -12,4 +11,4 @@
 - **Third-party material** (photographs, public-domain images, bundled fonts) keeps its own licence, as listed in
   the books' image-credit pages.
 - **Names and logos**: "One Course" and "One Chemistry Book" are not covered by these licences.
-- **Commercial use** (print editions, licences for schools, publishers or companies): contact the author.
+- **Commercial use** (print editions, licences for schools, publishers or companies): contact One Course via [one-course.com/contact](https://one-course.com/contact).
