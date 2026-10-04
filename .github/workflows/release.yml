@@ -1,88 +1,129 @@
 name: Build and Release PDFs
 
+# Every edition builds in its own job, all in parallel; a final job collects
+# the PDFs and creates the release. One after another in a single job, the 18
+# editions took about 70 minutes (3 LaTeX passes of ~75 s each); in parallel
+# the run takes about as long as the slowest edition. A new edition is
+# registered in CI by adding its slug to `matrix.edition` below and nowhere
+# else in this file.
+#
+# A manual run (Actions tab, or `gh workflow run release.yml --ref main`)
+# builds every edition and keeps the PDFs as run artifacts, without making a
+# release: the way to test a build before tagging.
+
 on:
   push:
     tags:
       - 'v*'            # triggers on tags like v0.0.1, v1.2.3
+  workflow_dispatch:
 
 permissions:
-  contents: write       # needed to create releases and upload assets
+  contents: read
 
 jobs:
   build:
+    name: build (${{ matrix.edition }})
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      # Let every edition finish: one run then reports all broken editions,
+      # instead of the first one hiding the rest.
+      fail-fast: false
+      matrix:
+        # One entry file per edition, without .tex, in latexmkrc's order.
+        edition:
+          - one_chemistry_book_1_school
+          - one_chemistry_book_2_university_year_1
+          - one_chemistry_book_3_university_year_2
+          - one_chemistry_book_4_university_year_3
+          - one_chemistry_book_1_school_fr
+          - one_chemistry_book_1_school_nl
+          - one_chemistry_book_1_school_es
+          - one_chemistry_book_1_school_pt
+          - one_chemistry_book_1_school_hi
+          - one_chemistry_book_1_school_ar
+          - one_chemistry_book_1_school_id
+          - one_chemistry_book_2_university_year_1_fr
+          - one_chemistry_book_2_university_year_1_nl
+          - one_chemistry_book_2_university_year_1_es
+          - one_chemistry_book_2_university_year_1_pt
+          - one_chemistry_book_2_university_year_1_hi
+          - one_chemistry_book_2_university_year_1_ar
+          - one_chemistry_book_2_university_year_1_id
     steps:
+      # No "free disk space" step: it cost 2m20s and was needed only while
+      # every PDF of the series piled up on one runner (run 34020589660,
+      # 2026-09-06, "No space left on device"). A job now holds the texlive
+      # image plus one edition, well inside the runner's ~14 GB free. Bring
+      # the step back if the image ever outgrows the disk (see `df` below).
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0            # need the tag's metadata for its date
 
-      - name: Free runner disk space
-        run: |
-          # The texlive image plus the biology series' 26 PDFs (twice named) once filled the
-          # runner's ~14 GB and killed the job with "No space left on device"
-          # (run 34020589660, 2026-09-06). Drop toolchains this job never uses
-          # (~20 GB) and log the headroom so the next disk problem is visible.
-          df -h /
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
-                      /opt/hostedtoolcache/CodeQL /usr/local/.ghcup
-          df -h /
-
       - name: Generate version info
         run: |
           DATE=$(git for-each-ref --format='%(creatordate:short)' "refs/tags/${GITHUB_REF_NAME}")
+          # A manual run is not on a tag: stamp the commit date instead.
+          DATE=${DATE:-$(git log -1 --format=%cs)}
           printf '\\renewcommand{\\bookdate}{%s}\n'    "$DATE"            >  version.tex
           printf '\\renewcommand{\\bookversion}{%s}\n' "$GITHUB_REF_NAME" >> version.tex
 
       - name: Compile LaTeX
         uses: xu-cheng/latex-action@v3
         with:
-          # One entry file per book of the series.
-          root_file: |
-            one_chemistry_book_1_school.tex
-            one_chemistry_book_2_university_year_1.tex
-            one_chemistry_book_3_university_year_2.tex
-            one_chemistry_book_4_university_year_3.tex
-            one_chemistry_book_1_school_fr.tex
-            one_chemistry_book_1_school_nl.tex
-            one_chemistry_book_1_school_es.tex
-            one_chemistry_book_1_school_pt.tex
-            one_chemistry_book_1_school_hi.tex
-            one_chemistry_book_1_school_ar.tex
-            one_chemistry_book_1_school_id.tex
-            one_chemistry_book_2_university_year_1_fr.tex
-            one_chemistry_book_2_university_year_1_nl.tex
-            one_chemistry_book_2_university_year_1_es.tex
-            one_chemistry_book_2_university_year_1_pt.tex
-            one_chemistry_book_2_university_year_1_hi.tex
-            one_chemistry_book_2_university_year_1_ar.tex
-            one_chemistry_book_2_university_year_1_id.tex
+          root_file: ${{ matrix.edition }}.tex
           latexmk_use_lualatex: false
           # latexmkrc dispatches the engine per source file: XeLaTeX for
           # *_hi.tex, LuaLaTeX for *_ar.tex, pdflatex for every other book.
 
       - name: Check for undefined references
         run: |
-          ! grep -E "(Reference|Citation).*undefined" build/*.log
+          ! grep -E "(Reference|Citation).*undefined" "build/${{ matrix.edition }}.log"
+
+      - name: Keep the PDF for the release job
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.edition }}
+          path: build/${{ matrix.edition }}.pdf
+          if-no-files-found: error
+          compression-level: 0      # PDFs are already compressed
+          retention-days: 7
+
+      - name: Disk headroom
+        if: always()
+        run: df -h /
+
+  release:
+    needs: build
+    # Every edition must build: one failure means no release at all.
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write       # needed to create releases and upload assets
+    steps:
+      - name: Collect the PDFs
+        uses: actions/download-artifact@v4
+        with:
+          path: pdfs
+          pattern: one_chemistry_book_*
+          merge-multiple: true
 
       - name: Name the PDFs with the version
         run: |
           # Glob, not a hardcoded slug list: a new edition is then picked up by
-          # registering it in root_file: above and nowhere else.
+          # registering it in matrix.edition above and nowhere else.
           # Each PDF is attached twice: once versioned, once under its plain
           # slug — the plain name is what makes the README's
           # releases/latest/download/<slug>.pdf links permanent.
           # Move + hard link, never copy: copying tripled the disk footprint
           # of the series and filled the runner.
-          # The LaTeX step runs in a container as root, so build/ comes back
-          # root-owned: mv out of it (and ln, under protected_hardlinks) are
-          # "Permission denied" for the runner user until we own the files.
-          sudo chown -R "$(id -u):$(id -g)" build
-          for pdf in build/one_chemistry_book_*.pdf
+          for pdf in pdfs/one_chemistry_book_*.pdf
           do
             slug="$(basename "$pdf" .pdf)"
             mv "$pdf" "${slug}_${GITHUB_REF_NAME}.pdf"
             ln "${slug}_${GITHUB_REF_NAME}.pdf" "${slug}.pdf"
           done
+          ls -la one_chemistry_book_*.pdf
           df -h /
 
       - name: Create release and attach PDFs

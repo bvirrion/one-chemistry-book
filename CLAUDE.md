@@ -163,6 +163,10 @@ System `python3` has no numpy and no `ensurepip`; the repo venv is made with
     M").
   - A TikZ node name with a decimal (`oa-1.25`) breaks pgf.
   - `\pgfplotsset` inside a picture is local.
+  - pgfplots guesses whether a table's first row is a header, and the guess
+    changes between versions (CI's newer TeX Live read `ddg eeA eeB eeC` as
+    data). `styles/onechemistry.sty` sets `table/header=has colnames`, so
+    every `figdata/out/*.dat` file must keep a header row.
   - `booktabs` and the `groupplots` library are not loaded.
   - Thin legend lines look black at 130 dpi: zoom to 300 dpi before
     "fixing" a colour.
