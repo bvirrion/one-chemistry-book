@@ -8,6 +8,21 @@ $out_dir = 'build';
     'one_chemistry_book_2_university_year_1.tex',
     'one_chemistry_book_3_university_year_2.tex',
     'one_chemistry_book_4_university_year_3.tex',
+    # Language editions of Books 1 and 2 (2026-10-04).
+    'one_chemistry_book_1_school_fr.tex',
+    'one_chemistry_book_1_school_nl.tex',
+    'one_chemistry_book_1_school_es.tex',
+    'one_chemistry_book_1_school_pt.tex',
+    'one_chemistry_book_1_school_hi.tex',
+    'one_chemistry_book_1_school_ar.tex',
+    'one_chemistry_book_1_school_id.tex',
+    'one_chemistry_book_2_university_year_1_fr.tex',
+    'one_chemistry_book_2_university_year_1_nl.tex',
+    'one_chemistry_book_2_university_year_1_es.tex',
+    'one_chemistry_book_2_university_year_1_pt.tex',
+    'one_chemistry_book_2_university_year_1_hi.tex',
+    'one_chemistry_book_2_university_year_1_ar.tex',
+    'one_chemistry_book_2_university_year_1_id.tex',
 );
 # Hindi editions (*_hi.tex) need XeLaTeX for OpenType Devanagari, and Arabic
 # editions (*_ar.tex) need LuaLaTeX for babel's Lua bidi engine (bidi=basic); every other
@@ -34,8 +49,16 @@ $lualatex = 'internal op_compile %O %S';
 sub op_compile {
     my @args = @_;
     my $source = pop @args;
+    # XeTeX has the same fixed main memory as pdfTeX (5M words), and the
+    # chemistry books' pgfplots/chemfig figures exhaust it: the first Hindi
+    # probe died "TeX capacity exceeded [main memory size=5000000]" at an
+    # \end{axis} (2026-10-04). LuaTeX allocates dynamically and needs nothing.
     my @engine = $source =~ /_hi\.tex$/
-        ? ('xelatex', '-interaction=nonstopmode', '-halt-on-error')
+        ? ('xelatex',
+           '-cnf-line=main_memory=12000000',
+           '-cnf-line=extra_mem_top=6000000',
+           '-cnf-line=extra_mem_bot=6000000',
+           '-interaction=nonstopmode', '-halt-on-error')
         : $source =~ /_ar\.tex$/
         ? ('lualatex', '-interaction=nonstopmode', '-halt-on-error')
         : ('pdflatex',

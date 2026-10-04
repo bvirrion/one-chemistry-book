@@ -16,11 +16,11 @@ ENTRY = {
     4: "one_chemistry_book_4_university_year_3.tex",
 }
 
-# English only until the whole English series is written; a translation adds
-# its code here (and its tools/term_config/book<N>_<lang>.py).
+# Books 1 and 2 are translated (2026-10-04); Books 3 and 4 are English only. A
+# translation adds its code here (and its tools/term_config/book<N>_<lang>.py).
 LANGS = {
-    1: ("en",),
-    2: ("en",),
+    1: ("en", "fr", "nl", "es", "pt", "hi", "ar", "id"),
+    2: ("en", "fr", "nl", "es", "pt", "hi", "ar", "id"),
     3: ("en",),
     4: ("en",),
 }

@@ -724,6 +724,14 @@
 % arrow for the conservation of atoms and of charge.
 % ----------------------------------------------------------------------------
 \RequirePackage[version=4]{mhchem}
+% Hindi and Arabic (fontspec, Unicode text faces): chemgreek then maps \delta,
+% \alpha, ... in \ce{} to Unicode TEXT Greek in the current face, and Noto Sans
+% Devanagari and Noto Naskh Arabic have no Greek at all -- so the partial
+% charges of \ce{A^{\delta+}-B^{\delta-}} silently vanished from the PDF (the
+% log said only "Missing character": 96 times in Hindi Book 2). The default
+% mapping takes math Greek, which is also what the pdfTeX editions print.
+% Found by the Hindi chemistry Book 2 agent, 2026-10-04.
+\ifom@unicodeface\selectchemgreekmapping{default}\fi
 \RequirePackage{chemfig}
 \setchemfig{atom sep=2.2em, bond offset=1pt, double bond sep=2.6pt}
 
@@ -975,6 +983,8 @@
 \Crefname{remark}{\omnameRemark}{\omnameRemarks}
 \crefname{chapter}{\omnameChapter}{\omnameChapters}
 \Crefname{chapter}{\omnameChapter}{\omnameChapters}
+\crefname{section}{\omnameSection}{\omnameSections}
+\Crefname{section}{\omnameSection}{\omnameSections}
 \crefname{exercise}{\omnameExercise}{\omnameExercises}
 \Crefname{exercise}{\omnameExercise}{\omnameExercises}
 \crefname{problem}{\omnameProblem}{\omnameProblems}
@@ -988,6 +998,8 @@
 % prefix, not a separate word: prefixing it in prose around \cref would put a
 % link boundary between ال and its noun and break the shaping.
 \ifom@arabic
+  \crefname{section}{القسم}{الأقسام}
+  \Crefname{section}{القسم}{الأقسام}
   \crefname{definition}{التعريف}{التعريفات}
   \Crefname{definition}{التعريف}{التعريفات}
   \crefname{theorem}{المبرهنة}{المبرهنات}
@@ -1272,6 +1284,49 @@
       \draw (\om@i,0) rectangle ++(1,1);%
       \om@orbspin{\om@s}{\om@i}}}}
 
+% Arabic editions: chemistry is written left to right, as one block.
+% Found on the scaffolding probe of the first chemistry translations
+% (2026-10-04), before any Arabic text existed: under babel's bidi=basic an
+% inline \ce{2H2 + O2 -> 2H2O} is several runs (math, boxes, the arrow), and
+% the paragraph's RTL resolution laid them out right to left, so the reaction
+% printed as "2H2O --> O2 + 2H2" -- the arrow still pointing right, i.e. a
+% chemically WRONG equation -- while the state symbols' brackets were mirrored
+% ("Cu(s)" became ")s(Cu"). A chemfig scheme lost its arrows and ran
+% right to left. Neither shows in the log. The cure is babel's own
+% \babelsublr around every \ce in text (in math it is already one math run)
+% and a babel LTR group around every scheme, the same \bbl@textdir the
+% tikzpicture hook above uses. mhchem's \ce is a robust wrapper around the
+% inner macro "\ce " (with a space): redefine that one, not \ce itself --
+% \NewCommandCopy plus \RenewDocumentCommand died with "Argument of \ce has an
+% extra }". Inline \chemfig and \omorbs are pictures and were already right.
+\ifom@arabic
+  \AtBeginDocument{%
+    \expandafter\long\expandafter\def\csname ce \endcsname#1{%
+      \ifmmode\mhchem@cee{#1}\else\babelsublr{\mhchem@cee{#1}}\fi}%
+  }
+  % The scheme's closing group is appended to chemfig's INTERNAL end macro:
+  % \schemestop is only \let to \CF_schemestop inside a scheme, so a cmd hook
+  % on \schemestop never fires, the group leaks, and the first scheme inside a
+  % minipage died with "Extra }, or forgotten \endgroup" (Book 2 probe).
+  \AddToHook{cmd/schemestart/before}{\leavevmode\begingroup\bbl@textdir\z@}
+  \expandafter\apptocmd\csname CF_schemestop\endcsname{\endgroup}{}%
+    {\PackageError{onechemistry}{could not patch chemfig's \string\CF_schemestop}{}}
+  % Statement heads: amsthm sets the head in a list-item label box, and babel's
+  % bidi=basic never mirrors the brackets in there (the body's brackets ARE
+  % mirrored) -- so every "Exercise 40.1 (**)." and "Remark 40.10 (title)."
+  % printed with its brackets facing OUTWARD, hundreds of times per book. Found
+  % by the Arabic chemistry Book 1 agent, 2026-10-04; the shipped biology
+  % Arabic PDFs show the same defect. Setting the head's direction (raw or via
+  % \bbl@textdir, or \foreignlanguage) changes nothing, as probed; writing the
+  % brackets swapped does, because no mirroring ever happens in that box.
+  % amsthm's own \thmhead@plain, with ")#3(" for "(#3)" (\patchcmd cannot
+  % retokenise it, hence the full redefinition).
+  \def\thmhead@plain#1#2#3{%
+    \thmname{#1}\thmnumber{\@ifnotempty{#1}{ }\@upn{#2}}%
+    \thmnote{ {\the\thm@notefont)#3(}}}%
+  \let\thmhead\thmhead@plain
+\fi
+
 % Plot styles. Labels are written in the chapter (they are prose, and get
 % translated with it).
 % Energy profile: \begin{axis}[omprofile, xlabel={Reaction coordinate},
@@ -1406,10 +1461,14 @@
   \global\advance\om@pt@id by 1
   \pgfkeys{/omPT, cell=0.82cm, colour=none, upto=118, f block=true,
     numbers=true, legend=false, highlight colour=orange!45,
-    legend metal=metals, legend metalloid=metalloids, legend nonmetal=non-metals,
-    legend s=s block, legend p=p block, legend d=d block, legend f=f block,
-    legend alkali=alkali metals, legend alkaline=alkaline-earth metals,
-    legend halogen=halogens, legend noble=noble gases, #1}%
+    % Legend defaults are language strings (styles/lang/<lang>.tex): they were
+    % English literals here, which no edition could translate, because the
+    % macro's options are frozen chemistry (found by the French Book 1 agent).
+    legend metal=\omnamePTmetal, legend metalloid=\omnamePTmetalloid,
+    legend nonmetal=\omnamePTnonmetal,
+    legend s=\omnamePTs, legend p=\omnamePTp, legend d=\omnamePTd, legend f=\omnamePTf,
+    legend alkali=\omnamePTalkali, legend alkaline=\omnamePTalkaline,
+    legend halogen=\omnamePThalogen, legend noble=\omnamePTnoble, #1}%
   \begin{tikzpicture}[x=\om@pt@cell, y=\om@pt@cell, line width=0.35pt]
     \foreach \z/\s/\c/\r in \om@pt@list {%
       \ifnum\z>\om@pt@upto\relax\else

@@ -24,6 +24,22 @@ AMBIG_POLICY = "drop"
 # NOTE: multi-word patterns use \s+ between words -- a phrase wrapped across
 # a source line break must still be protected.
 EXTRA_PROTECT = [
+    # Wrong-sense links found by the Dutch, Spanish and Hindi Book 2 agents
+    # (2026-10-04): the zinc anode BLOCKS of ch. 14 and "three groups block
+    # it" (ch. 19) are not the periodic-table block; an induction PERIOD
+    # (ch. 9) is not a period of the table; "makes the electron exchange
+    # quantitative" (ch. 13) and "quantitative measurement" (ch. 15) are not
+    # the defined quantitative REACTION.
+    r"(?<=zinc\s)blocks?",
+    r"blocks?(?=\s+of\s+zinc)",
+    r"(?<=grey\s)blocks?",
+    r"(?<=groups\s)block(?=\s+it)",
+    r"(?<=induction\s)period",
+    r"(?<=exchange\s)quantitative",
+    r"quantitative(?=\s+measurement)",
+    # "made quantitative by the theories": an adverbial sense, not the defined
+    # quantitative REACTION (found by the French Book 2 agent, 2026-10-04)
+    r"(?<=made\s)quantitative",
     # "group" is the periodic-table group only before a number (group 16,
     # groups 1 and 2); "methyl group", "OH group", "the group" stay plain.
     # The four linkable "... group" terms are excluded by the look-behinds.

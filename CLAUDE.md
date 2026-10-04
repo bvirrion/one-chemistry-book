@@ -10,12 +10,13 @@ Structure, theme and tooling mirror `one-biology-book` (scaffolded from it on
 2026-10-02): same One Course brand, environments, label conventions,
 term-link engine.
 
-**All four books are written in English (2026-10-02/03), uncommitted:**
+**All four books are written in English (2026-10-02/03), uncommitted; Books 1 and 2
+also ship in `fr`, `nl`, `es`, `pt`, `hi`, `ar`, `id` (2026-10-04, see "Language editions"):**
 
 | Book | Entry file | Years | Ch. | Pages | Figures | AI | Photos | Ledger rows | Links | figdata |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 1 Grades 1–12 | `one_chemistry_book_1_school.tex` | `grade-1`…`grade-12` | 49 | 432 | 260 | 102 | 23 | 229 | 5,775 | 10 |
-| 2 University Year 1 | `one_chemistry_book_2_university_year_1.tex` | `bachelor-1` | 29 | 293 | 148 | 20 | ~30 | 635 | 2,471 | 20 |
+| 1 Grades 1–12 | `one_chemistry_book_1_school.tex` | `grade-1`…`grade-12` | 49 | 432 | 260 | 102 | 23 | 229 | 5,773 | 10 |
+| 2 University Year 1 | `one_chemistry_book_2_university_year_1.tex` | `bachelor-1` | 29 | 293 | 148 | 20 | ~30 | 635 | 2,462 | 20 |
 | 3 University Year 2 | `one_chemistry_book_3_university_year_2.tex` | `bachelor-2` | 35 | 373 | 188 | 23 | ~40 | 490 | 1,733 | 27 |
 | 4 University Year 3 | `one_chemistry_book_4_university_year_3.tex` | `bachelor-3` | 33 | 405 | 199 | 20 | ~22 | 286 | 1,632 | 64 |
 
@@ -180,6 +181,67 @@ System `python3` has no numpy and no `ensurepip`; the repo venv is made with
   - HSDB's water density at 25 °C (0.9950) is wrong: use IAPWS-95
     (0.99705).
   - NBS C514's 78.54 for water's permittivity is superseded by IAPWS 78.4.
+
+## Language editions (Books 1–2, 2026-10-04)
+
+**Books 1 and 2 ship in eight languages** — English plus `fr`, `nl`, `es`,
+`pt` (Brazilian), `hi`, `ar`, `id`: fourteen editions, one agent per edition,
+four waves of at most four (user rule), 96/100 each except Arabic at 95. Books
+3–4 are English only. Run file `sources/TRANSLATION_BOOKS_1-2.md`; what each
+wave found, and what the next wave was told, in `sources/WAVE{1,2,3}_FINDINGS.md`.
+Read the workspace-root `translation_instruction.md` before touching any of
+this — its "Lessons from the first chemistry translations" section is the
+generic half of what follows.
+
+| | B1 pages | B1 links / targets | B2 pages | B2 links / targets |
+|---|---:|---:|---:|---:|
+| `en` | 432 | 5,773 / 172 | 293 | 2,462 / 144 |
+| `fr` | 451 | 6,010 / 173 | 305 | 2,715 / 149 |
+| `nl` | 444 | 5,062 / 174 | 302 | 2,493 / 146 |
+| `es` | 447 | 5,962 / 173 | 304 | 2,591 / 146 |
+| `pt` | 440 | 5,885 / 172 | 300 | 2,587 / 146 |
+| `hi` | 425 | 5,957 / 174 | 287 | 2,670 / 145 |
+| `ar` | 418 | 5,341 / 166 | 281 | 2,376 / 145 |
+| `id` | 450 | 6,308 / 174 | 305 | 2,682 / 144 |
+
+Every edition reaches every English target except Arabic (B1 misses 7, B2 2,
+each a target English links once or twice). Dutch is lower in links because it
+welds compounds the linker does not enter. Every edition: 0 errors, 0
+undefined, 0 overfull, `nullfont` 0, 0 "Missing character", `.fls` = files on
+disk, `check_translation.sh` green for every year, linker idempotent.
+
+- **Toolchain** (ported from biology, then taught chemistry): `id_apply.py`
+  has a `chem` census — every `\ce`, `\chemfig`, scheme, `\ghs`,
+  `\omperiodictable` byte-identical, word-only scheme arrow labels (any
+  script) blanked so they can be translated. `check_translation.sh` adds
+  **gate 12** (`tools/check_chem_twin.py`: the chemistry sequence and the
+  `% ledger:` ids equal the English twin, on disk) and **gate 13** (every
+  equation balances). The prose gates treat chemistry markup as non-prose; the
+  Indonesian one has a chemistry word block.
+- **Style-file fixes made for the editions** (`styles/onechemistry.sty`, the
+  Arabic block and around mhchem): inline `\ce` and chemfig schemes forced LTR
+  in Arabic (an RTL paragraph printed `2H2O → O2 + 2H2`); amsthm statement-head
+  brackets written swapped for Arabic (they printed `)★(`, and do in the
+  shipped biology Arabic PDFs); chemgreek's `default` (math Greek) mapping for
+  hi/ar, whose faces have no Greek; `\crefname{section}` (every edition printed
+  English "Section"); the periodic-table legend as `\omnamePT*` language
+  strings; `latexmkrc` raises XeTeX's memory as it does pdfTeX's.
+- **Arabic-only source idioms** (`sources/WAVE2_FINDINGS.md`): a redox couple
+  is wrapped in `$…$`, an inline scheme in `\babelsublr`, mixed node text in
+  `\foreignlanguage{arabic}` + `\babelsublr`, math-mode `<=>` set in text mode,
+  relation chains between items boxed LTR. Check direction with
+  `pdftotext -bbox`, never by eye; the logs never show it.
+- **Canon defects found by translators and fixed** (about 30; lists in the
+  WAVE files): a "blank" that was a positive control, a boiling point the
+  solutions used but never printed, "(ledger)" in visible prose, "42 times"
+  for 41, "day" inside `\qty` units, `\ce{aA -> products}`, a false 2.7 V,
+  "chiral as a whole" for a racemate, figure collisions, and some twenty
+  wrong-sense links (zinc **blocks** and an induction **period** on the
+  periodic table, ethene **hydration** on ion hydration, adjectival
+  **quantitative** on the quantitative reaction).
+- Local TeX Live has no `french`/`spanish`/`dutch` `.ldf` (Indonesian's is
+  there): local Latin-script builds hyphenate in English, CI's full TeX Live
+  does not. Expect CI's overfull count to differ.
 
 ## Style file additions (`styles/onechemistry.sty`)
 

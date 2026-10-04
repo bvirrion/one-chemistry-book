@@ -22,7 +22,14 @@ for f in "$d"/[0-9]*.tex; do
 done
 # 2. duplicate labels across the whole tree (reported for this year's labels
 #    only, so another book's work in progress never fails this year)
-dups=$(grep -rho 'label{[^}]*}' parts/ | sort | uniq -d | grep ":$pfx:")
+# English canon only: a language edition repeats every label under
+# parts/<year>/<lang>/ BY DESIGN, so including those directories reported every
+# label as duplicated once any translation existed (pt Book 1 agent, 2026-10-04).
+# Editions are checked by tools/check_translation.sh gate 5.
+dups=$(find parts -name '*.tex' -not -path '*/fr/*' -not -path '*/nl/*' \
+         -not -path '*/es/*' -not -path '*/pt/*' -not -path '*/hi/*' \
+         -not -path '*/ar/*' -not -path '*/id/*' -print0 \
+       | xargs -0 grep -ho 'label{[^}]*}' | sort | uniq -d | grep ":$pfx:")
 [ -n "$dups" ] && { say "duplicate labels: $dups"; fail=1; }
 # 3. typo classes
 grep -rn 'end{[a-z]*>' "$d" && { say "\\end{...> typo"; fail=1; }

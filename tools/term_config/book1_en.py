@@ -42,6 +42,10 @@ MAX_TERM_CHARS = 40
 # NOTE: multi-word patterns use \s+ between words -- a phrase wrapped
 # across a source line break must still be protected.
 EXTRA_PROTECT = [
+    # Coordinator, 2026-10-04 (found by the Indonesian Book 1 agent): the
+    # capitalised, colon-led head of g12 solutions/11 exo 1 is the hydration of
+    # ETHENE (an addition), not the hydration of ions it linked to.
+    r"Hydration(?=:)",
     # "group" is the periodic-table group only before a number (group 1,
     # groups 13 to 18); "functional group", "methyl group", "acid group"
     # stay plain. The linkable "... group" terms are excluded.
