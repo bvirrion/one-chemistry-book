@@ -425,6 +425,14 @@
     label style={execute at begin node={\pardir TRT\textdir TRT}},%
     title style={execute at begin node={\pardir TRT\textdir TRT}},%
   }}%
+  % 5. LuaTeX overflows a heap buffer when a box report (underfull/overfull)
+  %    prints a glyph whose name is a raw control byte, e.g. cmsy's \times.
+  %    glibc hides it; musl, i.e. the Alpine CI image, segfaults, which killed
+  %    the Arabic Book 1 release build at page 377 with nothing in the log.
+  %    The Lua file wraps luaotfload's glyph_info callback to hand those
+  %    bytes back already escaped; it explains the bug in full. Loaded at
+  %    \begin{document} so that luaotfload has registered the callback.
+  \AtBeginDocument{\directlua{dofile('styles/onechemistry-glyphinfo.lua')}}%
 \fi
 
 \setlist[enumerate]{itemsep=1pt,topsep=3pt}

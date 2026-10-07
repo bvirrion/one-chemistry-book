@@ -73,6 +73,14 @@ System `python3` has no numpy and no `ensurepip`; the repo venv is made with
 `make venv` (`python3 -m venv --without-pip` + the user's `~/.local/bin/pip
 --python`). `requirements.txt` pins numpy and pytest.
 
+- `tools/build_html_*.py`, `tools/build_html_book.sh`, `tools/htmlbook/` —
+  the one-course.com HTML reader converter (2026-10-07; copy shared with the
+  math, physics, biology and quant repos — keep the shared files identical,
+  see `../one_course_html_online_reader.md`). Only `htmlbook/tikz2svg.py` is
+  chemistry-specific: figures compile against `styles/onechemistry.sty`
+  itself, so a new style macro needs no converter change. `npm ci` in
+  `tools/htmlbook/` once (KaTeX + mhchem).
+
 - `tools/chem.py` — parser for mhchem formulas and equations (standard
   library only, so the gates run under system `python3`).
 - `tools/check_ce_balance.py <dir|file>` — every `\ce{...}` with an arrow
@@ -257,6 +265,15 @@ dropped glyph.
   the orphan gate skipping `\pgfplotsset`/`\tikzset`/`\chemmove` bodies, gating
   *and/so/its* (it found a live "so" in shipped Book 1 French), and refusing an
   unusable path instead of passing over nothing.
+- **CI segfault on Arabic Book 1 (fixed 2026-10-07).** The v0.0.2 and v0.0.3
+  releases failed on `one_chemistry_book_1_school_ar` alone: LuaTeX
+  segfaulted at page 377 while printing an underfull-box report that
+  contained `\times`. The bug is a heap overflow in LuaTeX's `tprint()`,
+  fatal only under musl, which is what CI's Alpine image uses. The fix is
+  `styles/onechemistry-glyphinfo.lua`, loaded by item 5 of the Arabic
+  runtime fixes; it is confirmed in the CI image itself. A local glibc
+  build never shows the crash. The details and the Docker-free recipe for
+  reproducing it are in the root `translation_instruction.md`.
 - **Arabic right-to-left fixes no log reports**: `MOdiagram` drew every MO
   diagram mirrored (central `env/MOdiagram` LTR hook); character tables mirrored
   inside every cell, "₂ᵥC" for C₂ᵥ (central `env/omchartable` hook); inline
