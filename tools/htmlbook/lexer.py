@@ -1202,6 +1202,8 @@ class Parser:
         pending_rule = False
         booktabs = bool(re.search(r"\\(toprule|midrule|bottomrule)\b", body))
         for raw in rows_raw:
+            # \\[8pt] row spacing leaves its [length] on the next row
+            raw = re.sub(r"^\s*\[-?[\d.]+\s*(?:pt|ex|em|mm|cm)\]", "", raw)
             # booktabs (quant books): \midrule separates like \hline (after
             # the first row it marks the header); the outer \toprule /
             # \bottomrule and partial \cmidrule are print-only

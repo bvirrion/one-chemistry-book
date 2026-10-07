@@ -99,9 +99,9 @@ def _run(cmd, cwd, env=None):
 
 
 # A dense spectrum (thousands of pgfplots points) boxed whole by preview
-# overflows pdfTeX's default main memory; extra_mem_bot extends it at run
-# time (no format rebuild). XeTeX/LuaTeX ignore or do not need it.
-TEX_ENV = dict(os.environ, extra_mem_bot="20000000")
+# overflows the default main memory (pdfTeX, and XeTeX for the Hindi
+# NMR panels); extra_mem_bot extends it at run time (no format rebuild).
+TEX_ENV = dict(os.environ, extra_mem_bot="100000000")
 
 
 def build_svg(tikz):
@@ -135,6 +135,22 @@ def build_svg(tikz):
             # come from the .aux of a first run (which may complain)
             res = _run([engine, "-interaction=nonstopmode", "fig.tex"], tmp,
                        TEX_ENV)
+        if engine == "xelatex" and "TeX capacity exceeded" in res.stdout:
+            # XeTeX's fixed memory overflows on the Hindi NMR panel grid
+            # (pdfTeX copes with the Latin twin): LuaTeX allocates memory
+            # dynamically; its HarfBuzz renderer shapes Devanagari as
+            # XeTeX does (the default node mode breaks the conjuncts)
+            engine = "lualatex"
+            (tmp / "fig.tex").write_text(
+                preamble.replace("\\newcommand{\\booklang}{hi}",
+                                 "\\newcommand{\\booklang}{hi}\n"
+                                 "\\usepackage{fontspec}\n"
+                                 "\\defaultfontfeatures{Renderer=HarfBuzz}")
+                + tikz + POSTAMBLE, encoding="utf-8")
+            for _ in range(2 if re.search(r"\\chemmove|remember picture",
+                                          tikz) else 1):
+                res = _run([engine, "-interaction=nonstopmode", "fig.tex"],
+                           tmp, TEX_ENV)
         if res.returncode != 0 or not (tmp / "fig.pdf").exists():
             tail = res.stdout[-2500:]
             raise ParseError(f"{engine} failed for a figure:\n{tail}")
