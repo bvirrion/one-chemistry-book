@@ -23,6 +23,21 @@ $out_dir = 'build';
     'one_chemistry_book_2_university_year_1_hi.tex',
     'one_chemistry_book_2_university_year_1_ar.tex',
     'one_chemistry_book_2_university_year_1_id.tex',
+    # Language editions of Books 3 and 4 (2026-10-06).
+    'one_chemistry_book_3_university_year_2_fr.tex',
+    'one_chemistry_book_3_university_year_2_nl.tex',
+    'one_chemistry_book_3_university_year_2_es.tex',
+    'one_chemistry_book_3_university_year_2_pt.tex',
+    'one_chemistry_book_3_university_year_2_hi.tex',
+    'one_chemistry_book_3_university_year_2_ar.tex',
+    'one_chemistry_book_3_university_year_2_id.tex',
+    'one_chemistry_book_4_university_year_3_fr.tex',
+    'one_chemistry_book_4_university_year_3_nl.tex',
+    'one_chemistry_book_4_university_year_3_es.tex',
+    'one_chemistry_book_4_university_year_3_pt.tex',
+    'one_chemistry_book_4_university_year_3_hi.tex',
+    'one_chemistry_book_4_university_year_3_ar.tex',
+    'one_chemistry_book_4_university_year_3_id.tex',
 );
 # Hindi editions (*_hi.tex) need XeLaTeX for OpenType Devanagari, and Arabic
 # editions (*_ar.tex) need LuaLaTeX for babel's Lua bidi engine (bidi=basic); every other

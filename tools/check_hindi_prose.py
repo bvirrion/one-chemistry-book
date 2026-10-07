@@ -384,10 +384,13 @@ TITLED_ENVS = {
 
 # Environments whose body is drawing code, not prose. Node text and axis
 # labels are pulled out of them separately.
+# MOdiagram (modiagram: \atom{left}{1s = {0;up}}) is drawing code and omchartable
+# (a character table) is mathematics; both first met in chemistry Books 3-4,
+# where the hi/ar/id gates fired on "left", "pair", "up" (2026-10-06).
 DRAWING_ENVS = {"tikzpicture", "axis", "semilogxaxis", "semilogyaxis",
-                "loglogaxis", "groupplot", "scope", "circuitikz"}
+                "loglogaxis", "groupplot", "scope", "circuitikz", "MOdiagram"}
 
-MATH_ENVS = {"equation", "equation*", "align", "align*", "gather", "gather*",
+MATH_ENVS = {"omchartable", "equation", "equation*", "align", "align*", "gather", "gather*",
              "multline", "multline*", "eqnarray", "eqnarray*", "array",
              "cases", "split", "aligned", "gathered", "pmatrix", "bmatrix",
              "vmatrix", "matrix", "smallmatrix"}
@@ -975,6 +978,36 @@ def main() -> int:
             if len(hits) > args.max_detail:
                 print(f"        ... {len(hits) - args.max_detail} more")
     return 1
+
+
+# chemfig's \schemestart[<angle>][<anchor>] takes a TikZ anchor ("west",
+# chemistry Book 3 ch. 21) that this gate reads as visible text; it is an
+# option, never printed (hi Book 3 agent, 2026-10-06).
+ALLOWED_WORDS |= {"west"}
+# DIBAL-H (diisobutylaluminium hydride, Book 3 ch. 24): a reagent acronym
+# printed in Latin in every script, like HPLC; too long for the 4-letter
+# uppercase escape (hi Book 3 agent, 2026-10-06).
+ALLOWED_WORDS |= {"dibal-h"}
+# ICP-OES / ICP-MS (Book 3 ch. 32): instrument acronyms, Latin in every script;
+# the hyphen welds them past the 4-letter uppercase escape (hi Book 3 agent).
+ALLOWED_WORDS |= {"icp-oes", "icp-ms"}
+# pgf math, not prose: Book 4 ch. 20's ferrocene drawing places ring atoms at
+# ({cos(\a)},{1.0+0.3*sin(\a)}) inside a \foreach body that must stay
+# byte-identical to English; the reduction reads the braced coordinate as
+# visible text. Same gate bug as "sin" above, its missing twin (hi Book 4
+# agent, 2026-10-06).
+ALLOWED_WORDS |= {"cos"}
+# Baldwin's ring-closure descriptors (Book 4 ch. 27): tet/trig/dig and the
+# hyphenated 4-exo-tet, 5-endo-trig, 5-exo-dig... are international notation,
+# printed in Latin in every script exactly as the bare "exo"/"endo" this gate
+# already lets through; the hyphen welds them into tokens it reads as English
+# (hi Book 4 agent, 2026-10-07).
+ALLOWED_WORDS |= {"tet", "trig", "dig", "exo-tet", "exo-trig", "exo-dig",
+                  "endo-tet", "endo-trig", "endo-dig"}
+# qNMR (quantitative NMR, Book 4 ch. 33): an instrument-method acronym printed
+# in Latin in every script, like HRMS and ICP-MS; its lowercase "q" defeats the
+# uppercase-acronym escape (hi Book 4 agent, 2026-10-07).
+ALLOWED_WORDS |= {"qnmr"}
 
 
 if __name__ == "__main__":

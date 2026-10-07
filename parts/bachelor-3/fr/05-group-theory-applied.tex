@@ -1,0 +1,678 @@
+\chapter{La théorie des groupes en action}\label{ch:b3:group-theory-applied}
+
+Le dioxyde de carbone ne représente que quelques centaines de molécules
+par million dans l'air, le diazote et le dioxygène presque tout le
+reste~; pourtant c'est le dioxyde de carbone, et non le diazote ou le
+dioxygène, qui absorbe le rayonnement infrarouge que le sol chaud envoie
+vers l'espace. Une molécule n'absorbe l'infrarouge que par une vibration
+qui fait varier son moment dipolaire, et c'est la seule symétrie qui
+décide si une vibration le fait~: l'unique vibration du diazote ne le
+peut pas, deux des quatre vibrations du dioxyde de carbone le peuvent. Ce
+chapitre fait des \omterm{def:b3:point-groups:irrep}{tables de caractères} du \cref{ch:b3:point-groups} des
+outils~: il réduit les représentations, construit des orbitales adaptées
+à la symétrie, dénombre et nomme les vibrations, et établit les règles de
+sélection des spectroscopies infrarouge et Raman.
+
+\begin{recall}
+Le \Cref{ch:b3:point-groups} a défini les \omterm{def:b3:point-groups:operation}{opérations de symétrie}, les
+\omterm{def:b3:point-groups:point-group}{groupes ponctuels}, les classes, les représentations, les \omterm{def:b3:point-groups:representation}{caractères} et
+les \omterm{def:b3:point-groups:irrep}{tables de caractères}. Le volume de deuxième année a construit les
+orbitales moléculaires de \ce{H2O}, \ce{NH3} et \ce{CH4} à partir
+d'orbitales de fragment et de combinaisons des orbitales $1s$ des
+hydrogènes adaptées à la symétrie, en les désignant par des symboles
+établis ici. Le volume de première année a lu des spectres infrarouges
+en nombres d'onde et défini la polarisabilité d'une molécule.
+\end{recall}
+
+\section{Réduire une représentation}
+
+Tout ensemble de fonctions ou de vecteurs attaché à une molécule porte une
+représentation de son \omterm{def:b3:point-groups:point-group}{groupe ponctuel}. La plupart sont réductibles.
+
+\begin{definition}[Représentation réductible, représentation totalement symétrique]\label{def:b3:group-theory-applied:reducible}
+Une \emph{représentation réductible}\index{representation reductible@représentation réductible} est une
+représentation dont toutes les matrices peuvent être mises, par un même
+changement de base, sous la même forme diagonale par blocs~; c'est alors
+une somme de \omterm{def:b3:point-groups:irrep}{représentations irréductibles},
+notée $\Gamma = \sum_in_i\Gamma_i$. La \omterm{def:b3:point-groups:irrep}{représentation irréductible} dont
+tous les \omterm{def:b3:point-groups:representation}{caractères} valent 1 est la \emph{représentation totalement
+symétrique}\index{representation totalement symetrique@représentation totalement symétrique} ($A_1$, $A_{1g}$,
+$A_1'$\dots).
+\end{definition}
+
+\begin{theorem}[Grand théorème d'orthogonalité]\label{thm:b3:group-theory-applied:great-orthogonality}
+Pour deux \omterm{def:b3:point-groups:irrep}{représentations irréductibles} $\Gamma_i$, $\Gamma_j$ de
+dimensions $d_i$,
+$d_j$ d'un groupe d'ordre $h$, écrites avec des matrices unitaires,
+\[
+\sum_R D_i(R)_{mn}^*\,D_j(R)_{m'n'} = \frac{h}{d_i}\,\delta_{ij}\,\delta_{mm'}\,\delta_{nn'}.
+\]
+\end{theorem}
+\admitted
+
+La démonstration, par les lemmes de Schur, relève de cours plus avancés~;
+ce sont ses conséquences pour les \omterm{def:b3:point-groups:representation}{caractères} que la chimie utilise, et
+chaque \omterm{def:b3:point-groups:irrep}{table de caractères} de ce livre est vérifiée à leur aune.
+
+\begin{corollary}[Orthogonalité des caractères]\label{cor:b3:group-theory-applied:characters}
+En notant $g_c$ le nombre d'opérations de la classe $c$,
+\[
+\sum_cg_c\,\chi_i(c)^*\chi_j(c) = h\,\delta_{ij},
+\]
+et le nombre de \omterm{def:b3:point-groups:irrep}{représentations irréductibles} est égal au nombre de
+classes,
+avec $\sum_id_i^2 = h$.
+\end{corollary}
+
+\begin{proof}
+Posons $m = n$ et $m' = n'$ dans le théorème et sommons sur $m$ et $m'$~:
+le membre de gauche devient $\sum_R\chi_i(R)^*\chi_j(R)$, celui de droite $\frac{h}{d_i}\delta_{ij}
+\sum_{m}\delta_{mm} = h\delta_{ij}$~; regroupons les opérations par
+classe. Les lignes de la table sont donc des vecteurs orthogonaux d'un
+espace dont la dimension est le nombre de classes, de sorte qu'il y a au
+plus autant de \omterm{def:b3:point-groups:irrep}{représentations irréductibles} que de classes~; l'égalité
+et $\sum d_i^2 = h$ s'obtiennent en appliquant le théorème à la
+représentation régulière (exercice 10).
+\end{proof}
+
+\begin{theorem}[La formule de réduction]\label{thm:b3:group-theory-applied:reduction}
+Une représentation $\Gamma$ de \omterm{def:b3:point-groups:representation}{caractères} $\chi(c)$ contient la
+\omterm{def:b3:point-groups:irrep}{représentation irréductible} $\Gamma_i$ exactement
+\[
+n_i = \frac1h\sum_cg_c\,\chi(c)\,\chi_i(c)^*
+\]
+fois. C'est la \emph{formule de réduction}\index{formule de reduction@formule de réduction}.
+\end{theorem}
+
+\begin{proof}
+Comme $\Gamma = \sum_jn_j\Gamma_j$, ses \omterm{def:b3:point-groups:representation}{caractères} sont $\chi(c) = \sum_jn_j\chi_j(c)$.
+Multiplions par $g_c\chi_i(c)^*$, sommons sur les classes et utilisons le
+corollaire~:
+$\sum_cg_c\chi(c)\chi_i(c)^* = \sum_jn_jh\delta_{ij} = hn_i$.
+\end{proof}
+
+\begin{example}[Les orbitales des hydrogènes de l'ammoniac]\label{ex:b3:group-theory-applied:nh3}
+Prenons pour base les trois orbitales $1s$ des hydrogènes de \ce{NH3}.
+$E$ les laisse toutes trois en place ($\chi = 3$), $C_3$ les déplace
+toutes trois ($\chi = 0$), un
+$\sigma_v$ en laisse une en place et échange les deux autres
+($\chi = 1$). Avec la table de $C_{3v}$~:
+$n_{A_1} = \frac16(3 + 0 + 3\times1) = 1$, $n_{A_2} = \frac16(3 + 0 - 3) = 0$,
+$n_E = \frac16(6 + 0 + 0) = 1$. Donc $\Gamma_{\mathrm H} = A_1 + E$~: les
+trois hydrogènes donnent une combinaison totalement symétrique et une
+paire dégénérée.
+\end{example}
+
+\begin{method}[Réduire une représentation]\label{met:b3:group-theory-applied:reduce}
+\begin{enumerate}
+  \item Pour chaque classe, trouver le \omterm{def:b3:point-groups:representation}{caractère}~: pour un ensemble de
+        fonctions centrées sur les atomes, le nombre de fonctions laissées
+        en place, chacune comptée avec le signe qu'elle acquiert.
+  \item Appliquer la \omterm{thm:b3:group-theory-applied:reduction}{formule de réduction} avec la ligne de chaque
+        \omterm{def:b3:point-groups:irrep}{représentation irréductible}, en pondérant chaque classe par son
+        effectif.
+  \item Vérifier~: les résultats sont des entiers positifs ou nuls, et
+        $\sum_in_id_i$ est égal au \omterm{def:b3:point-groups:representation}{caractère} sous $E$ (la taille de la
+        base).
+\end{enumerate}
+\end{method}
+
+\section{Orbitales adaptées à la symétrie}
+
+\begin{definition}[Opérateur de projection]\label{def:b3:group-theory-applied:projection}
+L'\emph{opérateur de projection}\index{operateur de projection@opérateur de projection} sur la
+\omterm{def:b3:point-groups:irrep}{représentation irréductible} $\Gamma_i$ est
+\[
+\hat P_i = \frac{d_i}{h}\sum_R\chi_i(R)^*\,\hat R,
+\]
+où $\hat R$ applique l'opération $R$ à une fonction.
+\end{definition}
+
+\begin{proposition}[Ce que fait l'opérateur de projection]\label{prop:b3:group-theory-applied:projection}
+Appliqué à une fonction quelconque $f$, $\hat P_if$ est soit nul, soit une
+fonction qui se transforme comme $\Gamma_i$ (une combinaison adaptée à
+la symétrie)~; pour une représentation $\Gamma_i$ de dimension un, elle
+est inchangée, au signe $\chi_i(S)$ près, par chaque
+opération $S$.
+\end{proposition}
+
+\begin{proof}[Démonstration partielle]
+Pour $d_i = 1$~: $\hat S\hat P_if = \frac1h\sum_R\chi_i(R)\hat S\hat Rf$.
+Posons $R' = SR$,
+qui parcourt tout le groupe quand $R$ le parcourt~; $\chi_i(R) = \chi_i(S^{-1}R') =
+\chi_i(S)\chi_i(R')$ pour une représentation de dimension un (les
+\omterm{def:b3:point-groups:representation}{caractères} sont les matrices elles-mêmes). Donc $\hat S\hat P_if = \chi_i(S)\hat P_if$.
+Le cas général utilise le grand théorème d'orthogonalité et est admis.
+\end{proof}
+
+\begin{method}[Construire des combinaisons adaptées à la symétrie]\label{met:b3:group-theory-applied:salc}
+\begin{enumerate}
+  \item Choisir une fonction de l'ensemble, $h_1$, et noter dans un
+        tableau la fonction sur laquelle chaque opération l'envoie.
+  \item Pour chaque \omterm{def:b3:point-groups:irrep}{représentation irréductible}, multiplier chaque image
+        par le \omterm{def:b3:point-groups:representation}{caractère} de l'opération, additionner et normer (en
+        négligeant le recouvrement entre fonctions atomiques).
+  \item Pour une représentation dégénérée, projeter une seconde fonction
+        pour obtenir un second membre, puis orthogonaliser.
+\end{enumerate}
+\end{method}
+
+\begin{example}[Les combinaisons de l'ammoniac et de l'eau]\label{ex:b3:group-theory-applied:salcs}
+Dans \ce{NH3}, $\hat P_{A_1}h_1 \propto h_1 + h_2 + h_3$ (tous les
+\omterm{def:b3:point-groups:representation}{caractères} valent 1). Pour $E$
+(\omterm{def:b3:point-groups:representation}{caractères} $2, -1, 0$), $\hat P_Eh_1 \propto 2h_1 - h_2 - h_3$~; projeter
+$h_2$ et orthogonaliser donne le partenaire $h_2 - h_3$. Après
+normalisation~: $a_1 =
+\frac{1}{\sqrt3}(h_1 + h_2 + h_3)$, $e = \frac{1}{\sqrt6}(2h_1 - h_2 - h_3)$,
+$\frac{1}{\sqrt2}(h_2 - h_3)$. Dans \ce{H2O}, placée dans le plan $xz$,
+$h_1 + h_2$ est
+$a_1$ et $h_1 - h_2$ est $b_1$ (elle change de signe par $C_2$ et par
+$\sigma_v'(yz)$, qui échangent les hydrogènes). Avec la molécule dans le
+plan $yz$, comme le préfèrent certains ouvrages, les symboles $b_1$ et
+$b_2$ sont échangés partout.
+\end{example}
+
+\begin{omfigure}
+\begin{tikzpicture}[font=\small]
+  \foreach \x/\lab/\ca/\cb/\cc in {0/{$a_1$}/1/1/1, 4/{$e$}/2/-1/-1, 8/{$e$}/0/1/-1}{
+    \begin{scope}[xshift=\x cm]
+      \foreach \a/\c in {90/\ca,210/\cb,330/\cc}{
+        \pgfmathsetmacro{\r}{0.18+0.13*abs(\c)}
+        \ifdim \c pt > 0pt \fill[omDef!55, draw=omDef] (\a:1.0) circle (\r);
+        \else \ifdim \c pt < 0pt \fill[omThm!25, draw=omThm] (\a:1.0) circle (\r);
+        \else \draw[gray, densely dotted] (\a:1.0) circle (0.12); \fi\fi
+      }
+      \node[aN, minimum size=4.6mm] at (0,0) {};
+      \node[anchor=north] at (0,-1.45) {\lab};
+    \end{scope}}
+  \node[anchor=north, font=\footnotesize] at (0,-1.85) {$h_1 + h_2 + h_3$};
+  \node[anchor=north, font=\footnotesize] at (4,-1.85) {$2h_1 - h_2 - h_3$};
+  \node[anchor=north, font=\footnotesize] at (8,-1.85) {$h_2 - h_3$};
+\end{tikzpicture}
+
+{\small Les combinaisons adaptées à la symétrie des trois orbitales $1s$
+des hydrogènes de l'ammoniac, vues selon l'axe $C_3$ ($h_1$ en haut).
+Bleu~: coefficient positif~; rouge~: négatif, la taille de chaque disque
+croissant avec le coefficient~; pointillés~: nul.}
+\end{omfigure}
+
+\begin{example}[Six ligands autour d'un métal]\label{ex:b3:group-theory-applied:ml6}
+Pour six orbitales $\sigma$ de ligands pointant vers un métal depuis les
+sommets d'un octaèdre, les \omterm{def:b3:point-groups:representation}{caractères} sur les classes de $O_h$ ($E$,
+$8C_3$, $6C_2$, $6C_4$,
+$3C_2$, $i$, $6S_4$, $8S_6$, $3\sigma_h$, $6\sigma_d$) sont $6, 0, 0, 2, 2, 0, 0, 0, 4,
+2$, et la réduction donne $\Gamma_\sigma = A_{1g} + E_g + T_{1u}$. Les
+orbitales $s$ du métal
+($a_{1g}$), $d_{z^2}$ et $d_{x^2-y^2}$ ($e_g$) et $p$ ($t_{1u}$) trouvent
+des partenaires parmi les ligands~; ses orbitales $d_{xy}$, $d_{xz}$,
+$d_{yz}$ ($t_{2g}$) n'en trouvent aucun et restent non liantes
+en $\sigma$ --- c'est l'origine de l'éclatement $t_{2g}$/$e_g$ du volume
+de deuxième année, développé aux \cref{ch:b3:organometallic-bonding,ch:b3:complex-spectra-magnetism}.
+\end{example}
+
+\begin{omfigure}
+\begin{tikzpicture}[font=\small, yscale=0.95]
+  % O orbitals (left), MOs (centre), H combinations (right); schematic energies
+  \foreach \y/\l in {0/{$2s\ (a_1)$}}{\draw[omstate] (0,\y) -- (1.2,\y); \node[anchor=east] at (-0.05,\y) {\l};}
+  \draw[omstate] (0,3.0) -- (0.36,3.0) (0.42,3.0) -- (0.78,3.0) (0.84,3.0) -- (1.2,3.0);
+  \node[anchor=east] at (-0.05,3.0) {$2p\ (b_1, a_1, b_2)$};
+  \draw[omstate] (6.8,3.9) -- (8.0,3.9); \node[anchor=west] at (8.05,3.9) {$h_1 - h_2\ (b_1)$};
+  \draw[omstate] (6.8,3.6) -- (8.0,3.6); \node[anchor=west] at (8.05,3.5) {$h_1 + h_2\ (a_1)$};
+  \foreach \y/\l in {-0.6/{$2a_1$}, 1.6/{$1b_1$}, 2.4/{$3a_1$}, 3.0/{$1b_2$}, 5.6/{$4a_1$}, 6.2/{$2b_1$}}{
+    \draw[omstate] (3.4,\y) -- (4.6,\y); \node[anchor=west] at (4.65,\y) {\l};}
+  \foreach \y in {-0.6,1.6,2.4,3.0}{\node[font=\scriptsize] at (4.0,\y+0.16) {$\uparrow\downarrow$};}
+  \draw[densely dotted, gray] (1.2,0) -- (3.4,-0.6) (1.2,3.0) -- (3.4,1.6) (1.2,3.0) -- (3.4,2.4) (1.2,3.0) -- (3.4,3.0)
+     (6.8,3.6) -- (4.6,-0.6) (6.8,3.9) -- (4.6,1.6) (6.8,3.6) -- (4.6,2.4) (1.2,3.0) -- (3.4,6.2) (6.8,3.9) -- (4.6,6.2) (6.8,3.6) -- (4.6,5.6);
+  \node[anchor=north] at (0.6,-1.0) {O};
+  \node[anchor=north] at (4.0,-1.0) {\ce{H2O}};
+  \node[anchor=north] at (7.4,-1.0) {2 H};
+  \draw[->] (-2.3,-0.9) -- (-2.3,6.4) node[above] {$E$};
+\end{tikzpicture}
+
+{\small Orbitales moléculaires de valence de l'eau (énergies
+schématiques, molécule dans le plan $xz$). Seules des orbitales de même
+symétrie se mélangent~: la combinaison $b_1$ des hydrogènes avec $2p_x$,
+la combinaison $a_1$ avec $2s$ et $2p_z$~; $2p_y$ ($b_2$) n'a pas de
+partenaire et reste un doublet non liant, l'orbitale occupée la plus
+haute.}
+\end{omfigure}
+
+\section{Modes de vibration}
+
+\begin{definition}[Mode normal]\label{def:b3:group-theory-applied:normal-mode}
+Un \emph{mode normal}\index{mode normal} d'une molécule est une vibration
+collective dans laquelle tous les atomes oscillent à la même fréquence et
+en phase, selon un vecteur propre de la hessienne pondérée par les masses
+(\cref{prop:b3:computational-chemistry:hessian}). Chaque mode normal se
+transforme selon une \omterm{def:b3:point-groups:irrep}{représentation irréductible} du \omterm{def:b3:point-groups:point-group}{groupe ponctuel}.
+\end{definition}
+
+\begin{proposition}[La représentation de tous les mouvements]\label{prop:b3:group-theory-applied:gamma-3n}
+Attachons trois vecteurs déplacement $x$, $y$, $z$ à chaque atome. Pour
+une opération
+$R$, le \omterm{def:b3:point-groups:representation}{caractère} de cette représentation de dimension $3N$ vaut
+\[
+\chi_{3N}(R) = (\text{nombre d'atomes laissés en place}) \times \chi_{xyz}(R),
+\]
+avec $\chi_{xyz} = 1 + 2\cos\theta$ pour une rotation d'angle $\theta$ et
+$-1 + 2\cos\theta$
+pour une rotation impropre (donc 3 pour $E$, $-1$ pour $C_2$, 0 pour
+$C_3$, 1 pour $\sigma$,
+$-3$ pour $i$).
+\end{proposition}
+
+\begin{proof}
+Un atome envoyé sur une autre position emporte ses vecteurs hors de la
+diagonale de la matrice~: il ne contribue pas à la trace. Un atome laissé
+en place voit ses trois vecteurs transformés par la matrice $3\times3$ de
+$R$, dont la trace se calcule dans un repère où $z$ est porté par
+l'axe~: $\cos\theta + \cos\theta + 1$ pour une rotation, le dernier terme
+devenant $-1$ pour une rotation impropre.
+\end{proof}
+
+\begin{proposition}[Dénombrer les vibrations]\label{prop:b3:group-theory-applied:mode-count}
+$\Gamma_{\mathrm{vib}} = \Gamma_{3N} - \Gamma_{\mathrm{trans}} - \Gamma_{\mathrm{rot}}$, où
+$\Gamma_{\mathrm{trans}}$ est la représentation de $(x, y, z)$ et $\Gamma_{\mathrm{rot}}$ celle
+de $(R_x, R_y, R_z)$~; une molécule non linéaire a $3N - 6$ vibrations,
+une molécule linéaire $3N - 5$.
+\end{proposition}
+
+\begin{proof}
+Les $3N$ déplacements décrivent tous les mouvements~: trois translations
+du centre de masse, trois rotations (deux pour une molécule linéaire,
+puisque la rotation autour de son propre axe ne déplace aucun noyau), et
+les vibrations. Ces sous-espaces ne se mélangent pas sous l'effet des
+opérations, donc leurs représentations s'additionnent.
+\end{proof}
+
+\begin{example}[L'eau]\label{ex:b3:group-theory-applied:water}
+% ledger: vib:H2O.sym, vib:H2O.bend, vib:H2O.asym
+\ce{H2O} dans $C_{2v}$, molécule dans le plan $xz$. Atomes laissés en
+place~: 3, 1, 3, 1~;
+$\chi_{xyz}$~: $3, -1, 1, 1$~; donc $\chi_{3N} = 9, -1, 3, 1$. La
+réduction donne $3A_1 +
+A_2 + 3B_1 + 2B_2$. Une fois retirées les translations $A_1 + B_1 + B_2$
+et les rotations $A_2 + B_1 + B_2$,
+il reste $\Gamma_{\mathrm{vib}} = 2A_1 + B_1$. Les deux modes $a_1$ sont
+l'élongation symétrique
+(\qty{3657}{cm^{-1}}) et la déformation angulaire (\qty{1595}{cm^{-1}})~;
+le mode $b_1$ est l'élongation antisymétrique (\qty{3756}{cm^{-1}}).
+\end{example}
+
+\begin{omfigure}
+\begin{tikzpicture}[font=\small, >=Stealth]
+  \foreach \x/\name/\lab in {0/sym/{$\nu_1$, $a_1$, élongation symétrique}, 4.3/bend/{$\nu_2$, $a_1$, déformation}, 8.6/asym/{$\nu_3$, $b_1$, élongation antisymétrique}}{
+    \begin{scope}[xshift=\x cm]
+      \node[aO] (o\name) at (0,0.35) {};
+      \node[aH] (a\name) at (-0.8,-0.25) {};
+      \node[aH] (b\name) at (0.8,-0.25) {};
+      \begin{scope}[on background layer]\draw[bond] (o\name.center) -- (a\name.center) (o\name.center) -- (b\name.center);\end{scope}
+      \node[anchor=north, align=center, font=\footnotesize] at (0,-0.9) {\lab};
+    \end{scope}}
+  % symmetric stretch: H outward along the bonds, O up a little
+  \draw[->, omThm, thick] (-0.95,-0.36) -- (-1.42,-0.71);
+  \draw[->, omThm, thick] (0.95,-0.36) -- (1.42,-0.71);
+  \draw[->, omThm, thick] (0,0.74) -- (0,0.98);
+  % bend: each H moves perpendicular to its bond, closing the angle; O up
+  \draw[->, omThm, thick] (4.3-0.92,-0.36) -- (4.3-0.62,-0.76);
+  \draw[->, omThm, thick] (4.3+0.92,-0.36) -- (4.3+0.62,-0.76);
+  \draw[->, omThm, thick] (4.3,0.74) -- (4.3,0.98);
+  % antisymmetric stretch: one H out, the other in, O sideways
+  \draw[->, omThm, thick] (8.6-0.95,-0.36) -- (8.6-1.42,-0.71);
+  \draw[->, omThm, thick] (8.6+1.02,0.0) -- (8.6+0.70,0.24);
+  \draw[->, omThm, thick] (8.6-0.05,0.80) -- (8.6+0.25,0.80);
+\end{tikzpicture}
+
+{\small Les trois modes normaux de l'eau (flèches~: déplacements, pas à
+l'échelle). Les deux modes $a_1$ conservent toute la symétrie de la
+molécule~; le mode $b_1$ change de signe par $C_2$.}
+\end{omfigure}
+
+\begin{example}[Quatre autres molécules]\label{ex:b3:group-theory-applied:table}
+La même procédure (calculée et vérifiée dans les données de figure de ce
+chapitre) donne~:
+\begin{center}\small
+\begin{tabular}{llll}
+\hline
+molécule & groupe & $\Gamma_{\mathrm{vib}}$ & modes \\ \hline
+\ce{NH3} & $C_{3v}$ & $2A_1 + 2E$ & 6 \\
+\ce{CH4} & $T_d$ & $A_1 + E + 2T_2$ & 9 \\
+\ce{CO2} & $D_{\infty h}$ (par $D_{2h}$) & $\Sigma_g^+ + \Sigma_u^+ + \Pi_u$ ($A_g + B_{1u} + B_{2u} + B_{3u}$) & 4 \\
+\ce{BF3} & $D_{3h}$ & $A_1' + 2E' + A_2''$ & 6 \\
+\ce{XeF4} & $D_{4h}$ & $A_{1g} + B_{1g} + B_{2g} + A_{2u} + B_{2u} + 2E_u$ & 9 \\
+\ce{SF6} & $O_h$ & $A_{1g} + E_g + T_{2g} + 2T_{1u} + T_{2u}$ & 15 \\ \hline
+\end{tabular}
+\end{center}
+Pour une molécule linéaire, on remplace le groupe infini par son
+\omterm{def:b3:point-groups:class}{sous-groupe} $D_{2h}$,
+dans lequel la déformation dégénérée $\Pi_u$ se scinde en $B_{2u} + B_{3u}$.
+\end{example}
+
+\section{Règles de sélection}
+
+\begin{definition}[Produit direct]\label{def:b3:group-theory-applied:direct-product}
+Le \emph{produit direct}\index{produit direct} $\Gamma_i\otimes\Gamma_j$
+de deux représentations est la représentation portée par les produits de
+leurs fonctions de base~; ses \omterm{def:b3:point-groups:representation}{caractères} sont les produits
+$\chi_i(R)\chi_j(R)$.
+\end{definition}
+
+\begin{theorem}[Intégrales nulles]\label{thm:b3:group-theory-applied:vanishing-integral}
+Une intégrale $\int f_1f_2f_3\,\dd\tau$ sur tout l'espace ne peut être
+non nulle que si le
+\omterm{def:b3:group-theory-applied:direct-product}{produit direct} $\Gamma_1\otimes\Gamma_2\otimes\Gamma_3$ contient la
+\omterm{def:b3:group-theory-applied:reducible}{représentation totalement symétrique}.
+\end{theorem}
+
+\begin{proof}
+Une \omterm{def:b3:point-groups:operation}{opération de symétrie} ne fait que renuméroter les points de l'espace,
+donc la valeur de l'intégrale est inchangée quand l'intégrande est
+transformée par une opération $R$ quelconque. Faisons la moyenne de
+l'intégrande transformée sur le groupe~: la moyenne des composantes de
+l'intégrande appartenant à chaque \omterm{def:b3:point-groups:irrep}{représentation irréductible} est
+$\frac1h\sum_R\hat R(\cdot)$, qui est la projection sur la \omterm{def:b3:group-theory-applied:reducible}{représentation
+totalement symétrique}
+(\cref{def:b3:group-theory-applied:projection} avec tous les
+$\chi = 1$). Toute autre composante a une moyenne nulle~; si le produit
+ne contient aucune partie totalement symétrique, l'intégrale est nulle.
+\end{proof}
+
+\begin{definition}[Actif en IR, actif en Raman]\label{def:b3:group-theory-applied:activity}
+Une vibration fondamentale est \emph{active en IR}\index{actif en IR} si
+elle peut absorber le rayonnement infrarouge, \emph{active en Raman}\index{actif en Raman} si elle
+apparaît dans le spectre Raman (\cref{ch:b3:rovibrational-spectroscopy}).
+\end{definition}
+
+\begin{corollary}[Règles de sélection infrarouge et Raman]\label{cor:b3:group-theory-applied:ir-raman}
+Une transition fondamentale (du niveau fondamental, totalement
+symétrique, à un quantum d'un mode de symétrie $\Gamma$) n'est \omterm{def:b3:group-theory-applied:activity}{active en
+IR} que si $\Gamma$ est la
+représentation de $x$, $y$ ou $z$, et n'est \omterm{def:b3:group-theory-applied:activity}{active en Raman} que si
+$\Gamma$ est la représentation d'une fonction quadratique ($x^2$, $xy$,
+\dots).
+\end{corollary}
+
+\begin{proof}
+L'intensité de l'absorption fait intervenir $\int\psi_0\,\mu_k\,\psi_1\dd\tau$
+avec les composantes du dipôle
+$\mu_k$, qui se transforment comme $x$, $y$, $z$~; $\psi_0$ est
+totalement symétrique
+et $\psi_1$ se transforme comme $\Gamma$. D'après le théorème, l'intégrale
+ne peut être non nulle
+que si $\Gamma\otimes\Gamma_{\mu_k}$ contient $A_1$, ce qui n'arrive que si $\Gamma =
+\Gamma_{\mu_k}$ (le produit de deux \omterm{def:b3:point-groups:irrep}{représentations irréductibles} ne
+contient la \omterm{def:b3:group-theory-applied:reducible}{représentation totalement symétrique} que si elles sont
+égales, pour des \omterm{def:b3:point-groups:representation}{caractères} réels). La diffusion Raman fait intervenir
+les composantes $\alpha_{kl}$ de la polarisabilité, qui se transforment
+comme les produits $kl$.
+\end{proof}
+
+\begin{proposition}[Règle d'exclusion mutuelle]\label{prop:b3:group-theory-applied:mutual-exclusion}
+Dans une molécule possédant un \omterm{def:b3:point-groups:inversion}{centre d'inversion}, aucune transition
+fondamentale n'est à la fois \omterm{def:b3:group-theory-applied:activity}{active en IR} et en Raman~: c'est la
+\emph{règle d'exclusion mutuelle}\index{regle d'exclusion mutuelle@règle d'exclusion mutuelle}.
+\end{proposition}
+
+\begin{proof}
+Avec un \omterm{def:b3:point-groups:inversion}{centre d'inversion}, toute \omterm{def:b3:point-groups:irrep}{représentation irréductible} est $g$ ou
+$u$. Les coordonnées $x$, $y$, $z$ changent de signe par $i$ (elles sont
+$u$)~; les fonctions quadratiques non ($g$). Un mode n'est \omterm{def:b3:group-theory-applied:activity}{actif en IR}
+que s'il est $u$, \omterm{def:b3:group-theory-applied:activity}{actif en Raman} que s'il est
+$g$.
+\end{proof}
+
+\begin{example}[Le dioxyde de carbone et l'effet de serre]\label{ex:b3:group-theory-applied:co2}
+% ledger: vib:CO2.sym, vib:CO2.bend, vib:CO2.asym, ir:CO2.asym.int, ir:CO2.bend.int
+\ce{CO2} possède un \omterm{def:b3:point-groups:inversion}{centre d'inversion}. Son élongation symétrique
+($\Sigma_g^+$,
+\qty{1333}{cm^{-1}}) n'est active qu'en Raman~; l'élongation
+antisymétrique ($\Sigma_u^+$,
+\qty{2349}{cm^{-1}}) et la déformation ($\Pi_u$, \qty{667}{cm^{-1}}) ne
+sont actives qu'en IR.
+La déformation absorbe vers \qty{15}{\micro m}, près du maximum de
+l'émission thermique de la Terre~: c'est pourquoi le dioxyde de carbone
+est un gaz à effet de serre. \ce{N2} et
+\ce{O2} n'ont qu'une vibration, $\Sigma_g^+$~: inactive en IR.
+\end{example}
+
+\begin{omfigure}
+\begin{tikzpicture}
+\begin{axis}[omir, width=0.92\linewidth, height=4.4cm, xmin=400, xmax=2600,
+  ymin=0, ymax=1.3, ytick=\empty, xlabel={nombre d'onde / cm$^{-1}$},
+  ylabel={signal}, legend cell align=left,
+  legend style={font=\small, at={(0.98,0.95)}, anchor=north east, draw=none}]
+\addplot[omDef, thick] table[x=nu, y=ir] {figdata/out/bachelor-3-co2-spectra.dat};
+\addlegendentry{absorption infrarouge}
+\addplot[omThm, thick, dashed] table[x=nu, y=raman] {figdata/out/bachelor-3-co2-spectra.dat};
+\addlegendentry{diffusion Raman}
+\node[font=\small, anchor=south] at (axis cs:2349,1.02) {$\Sigma_u^+$};
+\node[font=\small, anchor=south] at (axis cs:667,0.1) {$\Pi_u$};
+\node[font=\small, anchor=south, omThm] at (axis cs:1333,1.02) {$\Sigma_g^+$};
+\end{axis}
+\end{tikzpicture}
+
+{\small Spectres synthétiques de \ce{CO2} gazeux (positions des bandes et
+intensités infrarouges relatives tirées des valeurs mesurées~; formes
+schématiques, sans structure de rotation). Exclusion mutuelle~: aucune
+bande n'apparaît dans les deux spectres.}
+\end{omfigure}
+
+\begin{method}[Prévoir un spectre de vibration]\label{met:b3:group-theory-applied:vibrations}
+\begin{enumerate}
+  \item Trouver le \omterm{def:b3:point-groups:point-group}{groupe ponctuel}~; calculer $\chi_{3N}$ à partir des
+        atomes laissés en place.
+  \item Réduire, retrancher les translations et les rotations~:
+        $\Gamma_{\mathrm{vib}}$.
+  \item À l'aide des colonnes de droite de la table, marquer chaque mode
+        \omterm{def:b3:group-theory-applied:activity}{actif en IR}
+        ($x$, $y$, $z$) et/ou \omterm{def:b3:group-theory-applied:activity}{actif en Raman} (quadratique)~; un mode qui
+        n'est ni l'un ni l'autre est silencieux.
+  \item Dénombrer les bandes~: une par mode actif, un mode dégénéré ne
+        donnant qu'une bande.
+\end{enumerate}
+\end{method}
+
+\begin{method}[Dénombrer les élongations CO]\label{met:b3:group-theory-applied:co-count}
+Dans un métal carbonyle, prendre pour base les $n$ vecteurs des liaisons
+C--O (un atome laissé en
+place compte pour 1, rien d'autre ne compte)~: réduire pour obtenir
+$\Gamma_{\mathrm{CO}}$, puis appliquer
+les règles IR et Raman. Le nombre de bandes intenses vers
+\qtyrange{1850}{2150}{cm^{-1}} identifie l'isomère.
+\end{method}
+
+\begin{example}[Cis et trans]\label{ex:b3:group-theory-applied:cis-trans}
+cis-\ce{ML4(CO)2}, $C_{2v}$~: \omterm{def:b3:point-groups:representation}{caractères} $2, 0, 2, 0$, $\Gamma_{\mathrm{CO}} = A_1 + B_1$,
+deux bandes IR. trans-\ce{ML4(CO)2}, $D_{4h}$~: $\Gamma_{\mathrm{CO}} = A_{1g} + A_{2u}$,
+une bande IR ($A_{2u}$) et une bande Raman ($A_{1g}$). Une seule bande CO
+en infrarouge signe l'isomère trans.
+\end{example}
+
+\section{Application aux transitions électroniques}
+
+Le même théorème s'applique aux transitions électroniques~: une transition
+électronique entre les états $\Psi_1$ et $\Psi_2$ n'est permise que si
+$\Gamma_1\otimes\Gamma_2$
+contient la représentation de $x$, $y$ ou $z$, et sa lumière est
+polarisée selon cet axe.
+
+\begin{example}[Transitions de l'eau et du méthanal]\label{ex:b3:group-theory-applied:electronic}
+Dans l'eau ($C_{2v}$, plan $xz$), promouvoir un électron de $1b_2$ (le
+doublet non liant) vers $4a_1$ donne un état excité de symétrie
+$B_2\otimes A_1 = B_2$, qui est celle de $y$~:
+transition permise, polarisée perpendiculairement au plan de la molécule.
+Dans le méthanal
+($C_{2v}$), la transition $n\to\pi^*$ part d'un doublet non liant de
+l'oxygène situé dans le plan ($b_1$) vers l'orbitale $\pi^*$, construite
+à partir d'orbitales $p$ perpendiculaires au plan
+($b_2$~; molécule dans le plan $xz$, C=O selon $z$)~: $B_1\otimes B_2 = A_2$,
+qui n'est la symétrie d'aucune des coordonnées $x$, $y$, $z$~: transition
+interdite par la symétrie, et c'est pourquoi sa bande
+(\cref{ch:b3:electronic-spectroscopy}) est si faible.
+\end{example}
+
+\begin{history}[Wigner, Bethe et la symétrie des molécules]
+La théorie des groupes entra en mécanique quantique avec les travaux
+d'Eugene Wigner sur les spectres atomiques (1927--31) et l'article de
+Hans Bethe sur l'éclatement des termes atomiques dans les cristaux
+(1929). E. Bright Wilson l'appliqua aux vibrations moléculaires en
+1934~; Robert Mulliken donna les symboles encore utilisés pour les
+orbitales et les états.
+\end{history}
+
+\begin{inthelab}[Infrarouge et Raman côte à côte]
+Un spectromètre infrarouge mesure la lumière qu'absorbe un échantillon~;
+un spectromètre Raman l'éclaire avec un laser et analyse la faible
+lumière diffusée à des longueurs d'onde décalées. Enregistrer les deux
+spectres d'un même composé est le test classique d'un centre de
+symétrie~: si aucune bande ne coïncide, la molécule est probablement
+centrosymétrique. Les lasers Raman sont de classe 3B ou 4~: le faisceau
+est capoté et les opérateurs portent des lunettes adaptées à sa longueur
+d'onde.
+\end{inthelab}
+
+\section{Exercices}
+
+\begin{exercise}[$\star$]\label{exo:b3:group-theory-applied:1}
+Réduire la représentation de $C_{2v}$ de \omterm{def:b3:point-groups:representation}{caractères} $(5, -1, 3, 1)$ sur $(E, C_2,
+\sigma_v(xz), \sigma_v'(yz))$. Vérifier la dimension.
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:group-theory-applied:2}
+\ce{SO2} est coudée, comme l'eau. Donner $\Gamma_{\mathrm{vib}}$ et dire
+quels modes sont \omterm{def:b3:group-theory-applied:activity}{actifs en IR} et en Raman.
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:group-theory-applied:3}
+Dans $C_{2v}$, calculer les \omterm{def:b3:group-theory-applied:direct-product}{produits directs} $B_1\otimes B_2$ et
+$A_2\otimes B_1$, puis
+$E\otimes E$ dans $C_{3v}$ (réduire ce dernier).
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:group-theory-applied:4}
+% ledger: vib:CH4.nu1, vib:CH4.nu2, vib:CH4.nu3, vib:CH4.nu4
+\ce{CH4} a des transitions fondamentales à 2917 ($a_1$), 1534 ($e$), 3019
+et 1306 (toutes deux $t_2$)
+\unit{cm^{-1}}. Lesquelles apparaissent dans le spectre infrarouge,
+lesquelles dans le spectre Raman~?
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:group-theory-applied:5}
+Pour \ce{BF3}, établir $\Gamma_{\mathrm{vib}} = A_1' + 2E' + A_2''$ à
+partir des atomes laissés en
+place, puis dénombrer les bandes IR et Raman. Quel mode n'apparaît que
+dans un seul des deux spectres, et lequel dans les deux~?
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:group-theory-applied:6}
+Combien de bandes IR et Raman \ce{SF6} présente-t-il~? Quel mode est
+silencieux~? Pourquoi aucune bande n'apparaît-elle dans les deux
+spectres~?
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:group-theory-applied:7}
+Appliquer l'\omterm{def:b3:group-theory-applied:projection}{opérateur de projection} à $h_2$ pour la représentation $E$ de
+$C_{3v}$ et
+montrer qu'orthogonaliser le résultat par rapport à $2h_1 - h_2 - h_3$
+donne $h_2 - h_3$.
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:group-theory-applied:8}
+Prévoir le nombre de bandes CO en IR du fac- et du mer-\ce{ML3(CO)3}, et
+de \ce{M(CO)6}.
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:group-theory-applied:9}
+Montrer que les six orbitales $\sigma$ des ligands d'un complexe
+octaédrique engendrent
+$A_{1g} + E_g + T_{1u}$, et dire quelles orbitales du métal peuvent se
+combiner avec chacune.
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:group-theory-applied:10}
+La représentation régulière a $\chi(E) = h$ et $\chi(R) = 0$ pour
+$R \ne E$. Montrer
+à l'aide de la \omterm{thm:b3:group-theory-applied:reduction}{formule de réduction} qu'elle contient chaque
+\omterm{def:b3:point-groups:irrep}{représentation irréductible} $\Gamma_i$ exactement $d_i$ fois, et en
+déduire $\sum_id_i^2 = h$.
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:group-theory-applied:11}
+L'acétylène \ce{HC#CH} est linéaire. En travaillant dans $D_{2h}$,
+trouver $\Gamma_{\mathrm{vib}}$, le regrouper selon les symboles de
+$D_{\infty h}$ et prévoir les spectres IR et Raman.
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:group-theory-applied:12}
+Dans l'eau (plan $xz$), lesquelles de ces promotions monoélectroniques
+donnent des transitions permises, et avec quelle polarisation~:
+$1b_2 \to 4a_1$, $3a_1 \to 4a_1$,
+$1b_2 \to 2b_1$, $1b_1 \to 4a_1$~?
+\end{exercise}
+
+\section{Problème~: cis ou trans~? Un complexe carbonyle lu dans son spectre}
+
+\begin{problem}[{Problème du week-end --- groupes ponctuels et
+représentations des élongations CO de quatre isomères, leurs bandes
+infrarouges et Raman, et l'identification d'un produit à partir de son
+spectre mesuré}]
+\label{pb:b3:group-theory-applied:1}
+% ledger: ct:C2v, ct:C3v, ct:D4h
+Un métal M octaédrique porte des ligands carbonyle et d'autres ligands L
+(chaque L étant compté comme un point). On considère quatre isomères~:
+le cis- et le
+trans-\ce{ML4(CO)2}, le fac- et le mer-\ce{ML3(CO)3}. On suppose que les
+ligands L n'abaissent pas la symétrie au-delà de ce qu'imposent leurs
+positions. Une synthèse de
+\ce{ML3(CO)3} donne un produit dont le spectre infrarouge présente trois
+bandes intenses à 2048, 1965 et \qty{1938}{cm^{-1}} (données du
+problème)~; son spectre Raman présente trois bandes à des positions
+presque identiques.
+
+\medskip\noindent\textbf{Partie I --- \omterm{def:b3:point-groups:point-group}{Groupes ponctuels}.}
+\begin{enumerate}
+  \item Dessiner les quatre isomères sur un octaèdre.
+  \item Donner le \omterm{def:b3:point-groups:point-group}{groupe ponctuel} du cis-\ce{ML4(CO)2}.
+  \item Du trans-\ce{ML4(CO)2}.
+  \item Du fac-\ce{ML3(CO)3}.
+  \item Du mer-\ce{ML3(CO)3}.
+  \item Lesquels des quatre possèdent un \omterm{def:b3:point-groups:inversion}{centre d'inversion}~?
+\end{enumerate}
+
+\medskip\noindent\textbf{Partie II --- Les élongations CO.}
+\begin{enumerate}[resume]
+  \item Expliquer pourquoi les vecteurs des liaisons C--O portent une
+        représentation dans laquelle une opération contribue pour 1 par
+        CO laissé en place.
+  \item Trouver $\Gamma_{\mathrm{CO}}$ de l'isomère cis.
+  \item De l'isomère trans.
+  \item De l'isomère fac.
+  \item De l'isomère mer.
+  \item Comparer chaque dimension au nombre de ligands CO.
+\end{enumerate}
+
+\medskip\noindent\textbf{Partie III --- Activité.}
+\begin{enumerate}[resume]
+  \item Dénombrer les élongations CO \omterm{def:b3:group-theory-applied:activity}{actives en IR} de chaque isomère.
+  \item Dénombrer celles qui sont \omterm{def:b3:group-theory-applied:activity}{actives en Raman}.
+  \item Quel isomère illustre la \omterm{prop:b3:group-theory-applied:mutual-exclusion}{règle d'exclusion mutuelle}~?
+  \item Dans l'isomère trans, décrire le mode \omterm{def:b3:group-theory-applied:activity}{actif en IR}~: les deux CO
+        vibrent-ils en phase ou en opposition de phase~?
+  \item Dans l'isomère fac, pourquoi les trois CO ne donnent-ils que deux
+        bandes~?
+  \item Que révélerait un décompte de 1 bande (IR)~?
+\end{enumerate}
+
+\medskip\noindent\textbf{Partie IV --- Le produit.}
+\begin{enumerate}[resume]
+  \item Quel isomère le spectre infrarouge du produit désigne-t-il~?
+  \item Le spectre Raman est-il cohérent~?
+  \item La bande la plus haute est l'élongation en phase des groupes CO.
+        À quelle \omterm{def:b3:point-groups:irrep}{représentation irréductible} appartient-elle dans cet
+        isomère~?
+  \item Le spectre pourrait-il provenir d'un mélange des deux isomères~?
+        Quelle mesure supplémentaire trancherait~?
+  \item Énoncer le résultat~: le nombre d'élongations CO \omterm{def:b3:group-theory-applied:activity}{actives en IR} de
+        l'isomère mer, comparé à celui de l'isomère fac.
+\end{enumerate}
+\end{problem}

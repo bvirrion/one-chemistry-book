@@ -1,0 +1,493 @@
+\chapter{Orbitales frontera y reactividad}\label{ch:b2:frontier-orbitals}
+
+Un frasco de ciclopentadieno olvidado en la estantería se convierte lentamente en su dímero:
+dos moléculas del mismo \omterm{def:b2:frontier-orbitals:diels-alder}{dieno} se unen en un compuesto bicíclico con puente, y
+solo se forma uno de los estereoisómeros posibles. Nada en las flechas curvas del
+volumen del primer año predice cuál. Dos orbitales sí lo hacen: el orbital ocupado más alto
+de una molécula y el orbital vacío más bajo de la otra. Este
+capítulo convierte la interacción de dos niveles del \cref{ch:b2:diatomic-mos} en una
+herramienta para la reactividad: qué átomo ataca un nucleófilo, por qué cara y
+por qué un \omterm{def:b2:frontier-orbitals:diels-alder}{dieno} y un alqueno se combinan en un anillo en una sola etapa.
+
+\begin{recall}
+\Cref{ch:b2:diatomic-mos}: dos orbitales que interaccionan, la repulsión a cuatro electrones.
+\Cref{ch:b2:huckel}: niveles y coeficientes de Hückel de los sistemas conjugados.
+El volumen del primer año: nucleófilos y electrófilos, flechas curvas, control
+cinético, reacciones estereoespecíficas, estereoselectivas y regioselectivas,
+adiciones electrófilas a los alquenos, sustitución nucleófila.
+\end{recall}
+
+\section{Dos orbitales, de nuevo}
+
+Cuando dos moléculas se acercan, sus orbitales se solapan e interaccionan. La mayor parte de la
+interacción es débil, porque los orbitales están lejos en energía; basta entonces una forma perturbativa
+del resultado de los dos niveles.
+
+\begin{theorem}[Interacción débil de dos niveles]\label{thm:b2:frontier-orbitals:perturbation}
+Dos orbitales de energías $\varepsilon_1 < \varepsilon_2$, acoplados por una \omterm{def:b2:diatomic-mos:integrals}{integral de resonancia}
+$\beta$ con $|\beta| \ll \Delta\varepsilon = \varepsilon_2 - \varepsilon_1$ (despreciando el solapamiento), se
+desplazan a
+\[
+  \varepsilon_1 - \frac{\beta^2}{\Delta\varepsilon}, \qquad \varepsilon_2 + \frac{\beta^2}{\Delta\varepsilon}
+\]
+al primer orden en $\beta^2/\Delta\varepsilon^2$: el nivel inferior baja y el superior sube en la misma
+cantidad, tanto menor cuanto mayor es la diferencia de energía.
+\end{theorem}
+
+\begin{proof}
+Por el \cref{thm:b2:diatomic-mos:heteronuclear}, los niveles exactos son $\bar\varepsilon \mp
+\sqrt{\Delta\varepsilon^2/4 + \beta^2}$. With $u = 4\beta^2/\Delta\varepsilon^2 \ll 1$, $\sqrt{\Delta\varepsilon^2/4
++ \beta^2} = \frac{\Delta\varepsilon}{2}\sqrt{1 + u} \approx \frac{\Delta\varepsilon}{2}(1 + u/2) =
+\frac{\Delta\varepsilon}{2} + \frac{\beta^2}{\Delta\varepsilon}$, y $\bar\varepsilon \mp \Delta\varepsilon/2 = \varepsilon_1,
+\varepsilon_2$.
+\end{proof}
+
+\begin{proposition}[Dos electrones atraen, cuatro repelen]\label{prop:b2:frontier-orbitals:four-electron}
+Si los dos orbitales que interaccionan contienen dos electrones en total, el sistema se estabiliza
+en unos $2\beta^2/\Delta\varepsilon$. Si contienen cuatro, el sistema se desestabiliza.
+\end{proposition}
+
+\begin{proof}
+Dos electrones van al nivel rebajado: ganancia de $2\beta^2/\Delta\varepsilon$. Con cuatro, el nivel superior
+también se llena; al orden del \cref{thm:b2:frontier-orbitals:perturbation} los dos
+desplazamientos se cancelan y, si se conserva el solapamiento, el nivel superior sube más de lo que
+baja el inferior (\cref{prop:b2:diatomic-mos:asymmetry}): una repulsión neta.
+\end{proof}
+
+\begin{omfigure}
+\begin{tikzpicture}[font=\small]
+  \begin{scope}
+    \pic (a) at (0,0) {omlevel={ud}{0.7}};
+    \pic (b) at (3,1.4) {omlevel={empty}{0.7}};
+    \pic (lo) at (1.5,-0.5) {omlevel={ud}{0.7}};
+    \pic (hi) at (1.5,1.9) {omlevel={empty}{0.7}};
+    \draw[omcorr, densely dashed] (a-r) -- (lo-l) (a-r) -- (hi-l) (b-l) -- (lo-r) (b-l) -- (hi-r);
+    \node[below=6pt] at (1.5,-0.6) {dos electrones: estabilizados};
+    \node[left] at (a-l) {lleno};
+    \node[right] at (b-r) {vacío};
+  \end{scope}
+  \begin{scope}[xshift=7cm]
+    \pic (a) at (0,0) {omlevel={ud}{0.7}};
+    \pic (b) at (3,0.6) {omlevel={ud}{0.7}};
+    \pic (lo) at (1.5,-0.5) {omlevel={ud}{0.7}};
+    \pic (hi) at (1.5,1.25) {omlevel={ud}{0.7}};
+    \draw[omcorr, densely dashed] (a-r) -- (lo-l) (a-r) -- (hi-l) (b-l) -- (lo-r) (b-l) -- (hi-r);
+    \node[below=6pt] at (1.5,-0.6) {cuatro electrones: repulsión};
+    \node[left] at (a-l) {lleno};
+    \node[right] at (b-r) {lleno};
+  \end{scope}
+\end{tikzpicture}
+
+{\small Interacción de dos orbitales de moléculas vecinas. Un orbital lleno
+frente a uno vacío da una estabilización neta; dos orbitales llenos se repelen, pues el
+nivel superior sube más de lo que baja el inferior. Esta repulsión es el origen
+del impedimento estérico entre moléculas.}
+\end{omfigure}
+
+\section{Orbitales frontera}
+
+\begin{definition}[Orbitales frontera]\label{def:b2:frontier-orbitals:frontier}
+El \emph{HOMO}\index{HOMO} (\omterm{def:b2:diatomic-mos:lcao}{orbital molecular} ocupado de mayor energía) y el
+\emph{LUMO}\index{LUMO} (\omterm{def:b2:diatomic-mos:lcao}{orbital molecular} vacío de menor energía) de una molécula son sus
+\emph{orbitales frontera}\index{orbitales frontera}.
+\end{definition}
+
+\begin{proposition}[La interacción dominante]\label{prop:b2:frontier-orbitals:dominant}
+Entre dos moléculas de capa cerrada, las interacciones estabilizantes que más importan
+son las que se dan entre el \omterm{def:b2:frontier-orbitals:frontier}{HOMO} de una y el \omterm{def:b2:frontier-orbitals:frontier}{LUMO} de la otra; de las dos parejas de este tipo, domina
+la de menor diferencia de energía. Un nucleófilo reacciona a través de su \omterm{def:b2:frontier-orbitals:frontier}{HOMO}, y un
+electrófilo, a través de su \omterm{def:b2:frontier-orbitals:frontier}{LUMO}.
+\end{proposition}
+
+\begin{proof}[Argumento]
+Las parejas lleno--lleno se repelen (\cref{prop:b2:frontier-orbitals:four-electron}) y las parejas vacío--vacío
+no contienen electrones: solo las parejas lleno--vacío estabilizan, cada una en $2\beta^2/\Delta\varepsilon$.
+El \omterm{def:b2:frontier-orbitals:frontier}{HOMO} es el nivel lleno más alto y el \omterm{def:b2:frontier-orbitals:frontier}{LUMO} el vacío más bajo, de modo que una
+pareja HOMO--LUMO tiene la menor diferencia de energía entre ellas; según el teorema, la menor diferencia
+da el término mayor.
+\end{proof}
+
+\begin{definition}[Control de carga y control orbital]\label{def:b2:frontier-orbitals:control}
+Una reacción está bajo \emph{control de carga}\index{control de carga} cuando la atracción
+entre las cargas de los dos participantes decide dónde reaccionan, y bajo
+\emph{control orbital}\index{control orbital} cuando lo decide el solapamiento de los \omterm{def:b2:frontier-orbitals:frontier}{orbitales frontera},
+y el ataque tiene lugar donde sus coeficientes son mayores.
+\end{definition}
+
+\begin{definition}[Especies duras y blandas]\label{def:b2:frontier-orbitals:hard-soft}
+Un \emph{nucleófilo duro}\index{nucleofilo duro@nucleófilo duro} o un \emph{electrófilo duro}
+\index{electrofilo duro@electrófilo duro} es pequeño, lleva una carga concentrada y tiene
+un \omterm{def:b2:frontier-orbitals:frontier}{HOMO} (respectivamente, un \omterm{def:b2:frontier-orbitals:frontier}{LUMO}) alejado del de sus participantes: reacciona bajo \omterm{def:b2:frontier-orbitals:control}{control
+de carga}. Un \emph{nucleófilo blando}\index{nucleofilo blando@nucleófilo blando} o un \emph{electrófilo blando}
+\index{electrofilo blando@electrófilo blando} es grande y polarizable, con un \omterm{def:b2:frontier-orbitals:frontier}{HOMO} alto
+(respectivamente, un \omterm{def:b2:frontier-orbitals:frontier}{LUMO} bajo): reacciona bajo \omterm{def:b2:frontier-orbitals:control}{control orbital}. Lo duro reacciona preferentemente
+con lo duro, y lo blando con lo blando.
+\end{definition}
+
+El ion hidróxido y el ion fluoruro son \omterm{def:b2:frontier-orbitals:hard-soft}{nucleófilos duros}, y el yoduro y los tiolatos,
+blandos; un protón y un carbocatión son \omterm{def:b2:frontier-orbitals:hard-soft}{electrófilos duros}, y el carbono de un
+halogenoalcano, blando.
+
+\begin{definition}[Nucleófilo ambidentado]\label{def:b2:frontier-orbitals:ambident}
+Un \emph{nucleófilo ambidentado}\index{nucleofilo ambidentado@nucleófilo ambidentado} tiene dos átomos nucleófilos
+unidos por conjugación, cada uno de los cuales puede atacar a un electrófilo.
+\end{definition}
+
+El ion cianuro es atacado por el nitrógeno, donde la carga negativa es mayor, por los \omterm{def:b2:frontier-orbitals:hard-soft}{electrófilos
+duros}, y por el carbono, donde su \omterm{def:b2:frontier-orbitals:frontier}{HOMO} tiene el coeficiente mayor, por los blandos:
+un halogenoalcano da un nitrilo \ce{R-C#N}. Los iones enolato, que se estudian en el
+\cref{ch:b2:enolates-aldol}, reaccionan del mismo modo por el carbono o por el oxígeno.
+
+\begin{method}[Un análisis de orbitales frontera]\label{met:b2:frontier-orbitals:fmo}
+\begin{enumerate}
+  \item Identifíquense el nucleófilo (\omterm{def:b2:frontier-orbitals:frontier}{HOMO} alto) y el electrófilo (\omterm{def:b2:frontier-orbitals:frontier}{LUMO} bajo).
+  \item Dibújense los dos \omterm{def:b2:frontier-orbitals:frontier}{orbitales frontera} con sus coeficientes y signos.
+  \item La reacción tiene lugar donde el solapamiento es máximo: los átomos con los
+        coeficientes mayores, con lóbulos del mismo signo enfrentados.
+  \item La dirección de aproximación sigue la forma del \omterm{def:b2:frontier-orbitals:frontier}{LUMO} (perpendicular al plano de un
+        \ce{C=O}, por detrás de un enlace \ce{C-X}).
+  \item Una diferencia HOMO--LUMO menor significa una reacción más rápida (en igualdad de condiciones).
+\end{enumerate}
+\end{method}
+
+La dirección del ataque se deduce del \omterm{def:b2:frontier-orbitals:frontier}{LUMO}. El \omterm{def:b2:frontier-orbitals:frontier}{LUMO} de un grupo carbonilo es su orbital
+$\pi^*$, mayor sobre el carbono y perpendicular al plano: los nucleófilos se acercan
+al carbono por encima o por debajo del plano, no a lo largo del eje \ce{C=O}. El \omterm{def:b2:frontier-orbitals:frontier}{LUMO} de un
+halogenoalcano es el orbital $\sigma^*$ del enlace \ce{C-X}, cuyo lóbulo grande sobre el carbono
+apunta en dirección opuesta a X: el nucleófilo ataca por detrás y el carbono se invierte;
+es la estereoquímica de la sustitución bimolecular del volumen del primer año.
+
+\section{La reacción de Diels--Alder}
+
+\begin{definition}[Reacción concertada]\label{def:b2:frontier-orbitals:concerted}
+Una \emph{reacción concertada}\index{reaccion concertada@reacción concertada} forma y rompe todos sus enlaces en
+una sola etapa, a través de un único estado de transición, sin intermedio.
+\end{definition}
+
+\begin{definition}[Reacción de Diels--Alder]\label{def:b2:frontier-orbitals:diels-alder}
+La \emph{reacción de Diels--Alder}\index{reaccion de Diels--Alder@reacción de Diels--Alder} es la adición concertada
+de un \emph{dieno}\index{dieno} conjugado, en su conformación s-cis, a un alqueno o un
+alquino, el \emph{dienófilo}\index{dienofilo@dienófilo}, que forma un anillo de seis eslabones con dos
+nuevos enlaces $\sigma$ y un nuevo enlace $\pi$.
+\end{definition}
+
+\begin{omfigure}
+\begin{tikzpicture}[font=\small, >={Stealth}, scale=1.25]
+  % diene s-cis: C1 (0,1.6) C2 (0.6,2.4) C3 (1.6,2.4) C4 (2.2,1.6); dienophile below
+  \draw[thick] (0,1.6) -- (0.6,2.4) -- (1.6,2.4) -- (2.2,1.6);
+  \draw[thick] (0.2,1.62) -- (0.65,2.22);
+  \draw[thick] (2.0,1.62) -- (1.55,2.22);
+  \draw[thick] (0.2,0) -- (2.0,0); \draw[thick] (0.35,0.14) -- (1.85,0.14);
+  \node[font=\scriptsize, anchor=east] at (-0.05,1.6) {1};
+  \node[font=\scriptsize, anchor=south east] at (0.5,2.42) {2};
+  \node[font=\scriptsize, anchor=south] at (1.6,2.42) {3};
+  \node[font=\scriptsize, anchor=west] at (2.25,1.6) {4};
+  % arrows: dienophile pi -> C1..C(dienophile); C1=C2 pi -> C2-C3; C3=C4 pi -> C4-C
+  \draw[->, thick, omProp] (1.1,0.22) .. controls (0.9,0.9) and (0.3,0.9) .. (0.12,1.42);
+  \draw[->, thick, omProp] (0.45,1.95) .. controls (0.6,2.75) and (1.0,2.8) .. (1.1,2.48);
+  \draw[->, thick, omProp] (1.78,1.92) .. controls (2.5,1.6) and (2.4,0.6) .. (2.05,0.2);
+  \node at (3.3,1.2) {$\longrightarrow$};
+  \begin{scope}[xshift=4.2cm]
+    \draw[thick] (0,1.6) -- (0.6,2.4) -- (1.6,2.4) -- (2.2,1.6) -- (2.0,0) -- (0.2,0) -- cycle;
+    \draw[thick] (0.72,2.26) -- (1.48,2.26);
+  \end{scope}
+\end{tikzpicture}
+
+{\small La \omterm{def:b2:frontier-orbitals:diels-alder}{reacción de Diels--Alder} del butadieno y el eteno, escrita con flechas curvas:
+tres pares de electrones se desplazan a la vez, en una etapa cíclica y concertada; se forman dos enlaces
+$\sigma$ en los extremos del \omterm{def:b2:frontier-orbitals:diels-alder}{dieno}, y el enlace $\pi$ se desplaza a su centro.}
+\end{omfigure}
+
+La interacción dominante es la que se da entre el \omterm{def:b2:frontier-orbitals:frontier}{HOMO} del \omterm{def:b2:frontier-orbitals:diels-alder}{dieno}, $\psi_2$, y el \omterm{def:b2:frontier-orbitals:frontier}{LUMO} del
+\omterm{def:b2:frontier-orbitals:diels-alder}{dienófilo}, $\pi^*$. Sus lóbulos en los extremos del \omterm{def:b2:frontier-orbitals:diels-alder}{dieno} y sobre los dos carbonos del
+\omterm{def:b2:frontier-orbitals:diels-alder}{dienófilo} tienen signos coincidentes cuando el \omterm{def:b2:frontier-orbitals:diels-alder}{dienófilo} se acerca a la cara del \omterm{def:b2:frontier-orbitals:diels-alder}{dieno}:
+ambos enlaces nuevos pueden formarse a la vez, por la misma cara de cada participante.
+
+\begin{omfigure}
+\begin{tikzpicture}[font=\small]
+  \foreach \x/\c in {0/0.602, 1/0.372, 2/-0.372, 3/-0.602} {
+    \pic at (\x,2) {omp={1.5*\c}{90}};
+  }
+  \draw[black!45] (-0.2,2) -- (3.2,2);
+  \node[anchor=west] at (3.6,2) {HOMO del dieno ($\psi_2$)};
+  \pic at (0,0) {omp={-0.85}{90}}; \pic at (3,0) {omp={0.85}{90}};
+  \draw[black!45] (-0.2,0) -- (3.2,0);
+  \node[anchor=west] at (3.6,0) {LUMO del dienófilo ($\pi^*$)};
+  \draw[omProp, thick, densely dashed] (0,1.45) -- (0,0.6);
+  \draw[omProp, thick, densely dashed] (3,1.45) -- (3,0.6);
+  \node[font=\scriptsize, omProp, anchor=east] at (-0.15,1.0) {en fase};
+  \node[font=\scriptsize, omProp, anchor=west] at (3.15,1.0) {en fase};
+\end{tikzpicture}
+
+{\small \omterm{def:b2:frontier-orbitals:frontier}{Orbitales frontera} del butadieno y el eteno, con los lóbulos proporcionales a sus
+coeficientes de Hückel. Enfrentados, los lóbulos de los extremos del \omterm{def:b2:frontier-orbitals:frontier}{HOMO} del \omterm{def:b2:frontier-orbitals:diels-alder}{dieno} y
+los lóbulos del \omterm{def:b2:frontier-orbitals:frontier}{LUMO} del \omterm{def:b2:frontier-orbitals:diels-alder}{dienófilo} tienen los mismos signos en ambos extremos: los dos
+enlaces $\sigma$ pueden formarse juntos, por la misma cara de cada participante.}
+\end{omfigure}
+
+\begin{proposition}[Estereoespecificidad]\label{prop:b2:frontier-orbitals:da-stereospecific}
+La \omterm{def:b2:frontier-orbitals:diels-alder}{reacción de Diels--Alder} es estereoespecífica: los sustituyentes cis en el \omterm{def:b2:frontier-orbitals:diels-alder}{dienófilo} están
+cis en el producto, y los sustituyentes trans siguen siendo trans.
+\end{proposition}
+
+\begin{proof}
+La reacción es concertada y ambos enlaces nuevos se forman por la misma cara del
+\omterm{def:b2:frontier-orbitals:diels-alder}{dienófilo}: sus dos carbonos nunca giran el uno respecto del otro, y las posiciones
+relativas de sus sustituyentes se trasladan al anillo.
+\end{proof}
+
+\begin{proposition}[Regioselectividad]\label{prop:b2:frontier-orbitals:da-regio}
+Con participantes asimétricos, el producto mayoritario une el átomo del \omterm{def:b2:frontier-orbitals:diels-alder}{dieno} con el
+mayor coeficiente en su \omterm{def:b2:frontier-orbitals:frontier}{HOMO} con el átomo del \omterm{def:b2:frontier-orbitals:diels-alder}{dienófilo} con el mayor
+coeficiente en su \omterm{def:b2:frontier-orbitals:frontier}{LUMO}.
+\end{proposition}
+
+\begin{proof}[Argumento]
+En el estado de transición los dos enlaces nuevos aún no están igualmente formados; la
+estabilización $2\beta^2/\Delta\varepsilon$ es mayor cuando se solapan los coeficientes mayores ($\beta$
+crece con el producto de los coeficientes de los átomos que se solapan), de modo que esa
+orientación se alcanza con menos energía.
+\end{proof}
+
+\begin{omfigure}
+\begin{tikzpicture}
+\begin{axis}[ybar, width=0.47\linewidth, height=4.6cm, ymin=-0.8, ymax=0.8,
+  xtick={0,1,2,3,4}, xticklabels={O,C1,C2,C3,C4}, axis x line=bottom, axis y line=left,
+  extra y ticks={0}, extra y tick style={grid=major, grid style={black!50}}, enlarge x limits=0.15,
+  tick label style={font=\scriptsize}, ylabel={coeficiente}, label style={font=\small},
+  title={\small HOMO del 1-metoxibutadieno}, bar width=8pt]
+\addplot[fill=omDef!50, draw=omDef] table[x=atom, y=c] {figdata/out/bachelor-2-huckel-c-diene.dat};
+\end{axis}
+\end{tikzpicture}\hfill
+\begin{tikzpicture}
+\begin{axis}[ybar, width=0.47\linewidth, height=4.6cm, ymin=-0.8, ymax=0.8,
+  xtick={1,2,3,4}, xticklabels={C$\beta$,C$\alpha$,C(O),O}, axis x line=bottom, axis y line=left,
+  extra y ticks={0}, extra y tick style={grid=major, grid style={black!50}}, enlarge x limits=0.15,
+  tick label style={font=\scriptsize}, ylabel={coeficiente}, label style={font=\small},
+  title={\small LUMO del propenal}, bar width=8pt]
+\addplot[fill=omThm!45, draw=omThm] table[x=atom, y=c] {figdata/out/bachelor-2-huckel-c-dienophile.dat};
+\end{axis}
+\end{tikzpicture}
+
+{\small Modelo de Hückel con parámetros de heteroátomo ($\alpha_{\ce{O}} = \alpha + 2\beta$,
+$\beta_{\ce{CO}} = 0.8\beta$ para el oxígeno del éter; $\alpha_{\ce{O}} = \alpha + \beta$, $\beta_{\ce{CO}} =
+\beta$ para el oxígeno del carbonilo; un modelo). El \omterm{def:b2:frontier-orbitals:frontier}{HOMO} del \omterm{def:b2:frontier-orbitals:diels-alder}{dieno} es mayor en C4, el extremo
+alejado del grupo metoxi (0.60 frente a 0.51); el \omterm{def:b2:frontier-orbitals:frontier}{LUMO} del \omterm{def:b2:frontier-orbitals:diels-alder}{dienófilo} es mayor en
+el carbono $\beta$ (0.66). Se enlazan entre sí: los grupos metoxi y aldehído acaban
+en carbonos vecinos del anillo.}
+\end{omfigure}
+
+El grupo dador eleva el \omterm{def:b2:frontier-orbitals:frontier}{HOMO} del \omterm{def:b2:frontier-orbitals:diels-alder}{dieno} ($m = 0.48$ en lugar de 0.62) y el aceptor
+rebaja el \omterm{def:b2:frontier-orbitals:frontier}{LUMO} del \omterm{def:b2:frontier-orbitals:diels-alder}{dienófilo} ($m = -0.35$ en lugar de $-1$): la diferencia se reduce, y esas
+parejas reaccionan mucho más deprisa que el butadieno con el eteno. Un \omterm{def:b2:frontier-orbitals:diels-alder}{dieno} rico en electrones y un
+\omterm{def:b2:frontier-orbitals:diels-alder}{dienófilo} pobre en electrones es la combinación típica.
+
+\begin{definition}[Aductos endo y exo]\label{def:b2:frontier-orbitals:endo}
+Cuando un \omterm{def:b2:frontier-orbitals:diels-alder}{dieno} cíclico se adiciona a un \omterm{def:b2:frontier-orbitals:diels-alder}{dienófilo} que lleva un sustituyente insaturado, el
+\emph{aducto endo}\index{aducto endo} tiene ese sustituyente orientado hacia el doble enlace recién
+formado (bajo el \omterm{def:b2:frontier-orbitals:diels-alder}{dieno} en el estado de transición), y el \emph{aducto
+exo}\index{aducto exo}, en sentido opuesto. La \emph{regla endo}\index{regla endo} establece
+que el aducto endo se forma más deprisa.
+\end{definition}
+
+\begin{proposition}[La regla endo]\label{prop:b2:frontier-orbitals:endo}
+Bajo control cinético, el \omterm{def:b2:frontier-orbitals:endo}{aducto endo} es el producto mayoritario, aunque el \omterm{def:b2:frontier-orbitals:endo}{aducto exo}
+suele ser el más estable.
+\end{proposition}
+
+\admitted
+
+La explicación habitual es un solapamiento secundario, en la aproximación endo, entre los
+lóbulos del sistema $\pi$ del sustituyente y los de los átomos centrales del \omterm{def:b2:frontier-orbitals:frontier}{HOMO} del
+\omterm{def:b2:frontier-orbitals:diels-alder}{dieno}; rebaja el estado de transición endo sin formar ningún enlace. La regla es
+empírica y tiene excepciones; el volumen del tercer año trata estas reacciones con la
+simetría de sus orbitales.
+
+\begin{omfigure}
+\begin{tikzpicture}[font=\small]
+  \foreach \xs/\mode in {0/endo, 5/exo} {
+    \begin{scope}[xshift=\xs cm]
+      % cyclopentadiene seen from the side: C1, C2=C3, C4, CH2 bridge on top
+      \draw[thick] (0,2) -- (0.6,2.5) -- (1.8,2.5) -- (2.4,2);
+      \draw[thick] (0.75,2.38) -- (1.65,2.38);
+      \draw[thick] (0,2) -- (1.2,3.2) -- (2.4,2);
+      \node[font=\scriptsize, anchor=south] at (1.2,3.2) {\ce{CH2}};
+      % dienophile
+      \draw[thick] (0.2,0) -- (2.2,0); \draw[thick] (0.35,0.1) -- (2.05,0.1);
+      \draw[omProp, densely dashed, thick] (0,1.9) -- (0.2,0.15);
+      \draw[omProp, densely dashed, thick] (2.4,1.9) -- (2.2,0.15);
+      \node[anchor=north] at (1.2,-1.3) {\mode};
+    \end{scope}
+  }
+  % endo: carbonyls tucked under the diene
+  \draw[thick] (0.2,0) -- (0.75,0.95) (2.2,0) -- (1.65,0.95);
+  \node[font=\scriptsize, fill=white, inner sep=1pt] at (0.75,1.1) {C=O};
+  \node[font=\scriptsize, fill=white, inner sep=1pt] at (1.65,1.1) {C=O};
+  \draw[omThm, densely dotted, thick] (0.75,1.25) -- (0.65,2.35);
+  \draw[omThm, densely dotted, thick] (1.65,1.25) -- (1.75,2.35);
+  % exo: carbonyls pointing away
+  \draw[thick] (5.2,0) -- (4.95,-0.85) (7.2,0) -- (7.45,-0.85);
+  \node[font=\scriptsize] at (4.95,-1.0) {C=O};
+  \node[font=\scriptsize] at (7.45,-1.0) {C=O};
+\end{tikzpicture}
+
+{\small Aproximaciones endo y exo del anhídrido maleico al ciclopentadieno, esquema.
+Los enlaces que se forman, en trazo discontinuo. En la aproximación endo los grupos carbonilo quedan bajo el
+\omterm{def:b2:frontier-orbitals:diels-alder}{dieno}, y sus orbitales $\pi$ se solapan con sus carbonos centrales (punteado, solapamiento
+secundario); en la aproximación exo apuntan en sentido opuesto.}
+\end{omfigure}
+
+\begin{method}[Dibujar un producto de Diels--Alder]\label{met:b2:frontier-orbitals:diels-alder}
+\begin{enumerate}
+  \item Póngase el \omterm{def:b2:frontier-orbitals:diels-alder}{dieno} en su conformación s-cis, con el \omterm{def:b2:frontier-orbitals:diels-alder}{dienófilo} frente a sus extremos.
+  \item Dibújense los dos nuevos enlaces $\sigma$ de los extremos del \omterm{def:b2:frontier-orbitals:diels-alder}{dieno} a los carbonos del \omterm{def:b2:frontier-orbitals:diels-alder}{dienófilo},
+        y el nuevo enlace $\pi$ entre C2 y C3 del \omterm{def:b2:frontier-orbitals:diels-alder}{dieno}.
+  \item Manténganse los sustituyentes del \omterm{def:b2:frontier-orbitals:diels-alder}{dienófilo} del mismo lado (lo cis sigue cis).
+  \item Para participantes asimétricos, únanse los coeficientes mayores (productos ``orto'' o ``para''
+        para \omterm{def:b2:frontier-orbitals:diels-alder}{dienos} sustituidos en 1 o en 2).
+  \item Con un \omterm{def:b2:frontier-orbitals:diels-alder}{dieno} cíclico, colóquese el sustituyente insaturado en posición endo.
+\end{enumerate}
+\end{method}
+
+\begin{inthelab}[Craqueo del diciclopentadieno]
+El ciclopentadieno se vende como su dímero y se regenera justo antes de usarlo: el dímero se
+calienta hasta su punto de ebullición (unos \qty{170}{\degreeCelsius}) en un matraz provisto de una
+columna de fraccionamiento, donde se rompe de nuevo en el monómero (una reacción de retro-Diels--Alder),
+que destila a \qty{41}{\degreeCelsius} y se recoge en un colector enfriado
+en hielo. El monómero vuelve a dimerizarse en unas horas a temperatura ambiente y se usa de
+inmediato. Ambos compuestos son inflamables y nocivos; el trabajo se hace en una vitrina de gases.
+\end{inthelab}
+
+\begin{safety}{\ghs[5mm]{GHS02}\,\ghs[5mm]{GHS06}\,\ghs[5mm]{GHS08}}
+El ciclopentadieno y su dímero son muy inflamables y tóxicos por inhalación; el anhídrido
+maleico es corrosivo y sensibilizante respiratorio. Se manipulan en una vitrina de gases,
+con guantes y protección ocular, lejos de llamas.
+% ledger: ghs:cyclopentadiene, ghs:dicyclopentadiene, ghs:maleic-anhydride, bp:cyclopentadiene, bp:dicyclopentadiene
+\end{safety}
+
+\section{Ejercicios}
+
+\begin{exercise}[$\star$]\label{exo:b2:frontier-orbitals:1}
+Dense el \omterm{def:b2:frontier-orbitals:frontier}{HOMO} y el \omterm{def:b2:frontier-orbitals:frontier}{LUMO} (energías en unidades de Hückel) del eteno, del anión alilo
+y del butadieno.
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b2:frontier-orbitals:2}
+Clasifíquense como duros o blandos: \ce{OH-}, \ce{I-}, \ce{H+}, un tiolato \ce{RS-}, el carbono del
+yodometano, \ce{F-}.
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b2:frontier-orbitals:3}
+¿Cuáles de estos \omterm{def:b2:frontier-orbitals:diels-alder}{dienos} pueden participar en una \omterm{def:b2:frontier-orbitals:diels-alder}{reacción de Diels--Alder}: buta-1,3-dieno,
+ciclopentadieno, penta-1,4-dieno, (2\textit{Z},4\textit{Z})-hexa-2,4-dieno en su forma
+s-cis?
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b2:frontier-orbitals:4}
+Dibújese el producto del butadieno con el propenonitrilo \ce{CH2=CH-C#N}.
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b2:frontier-orbitals:5}
+Dos orbitales a $-10$ y \qty{-2}{eV} interaccionan con $\beta = \qty{-1.0}{eV}$ (datos del ejercicio).
+Calcúlese la estabilización perturbativa de dos electrones, y luego la exacta.
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b2:frontier-orbitals:6}
+El ion cianuro reacciona con el yodometano dando etanonitrilo \ce{CH3-C#N}, pero con un
+carbocatión en un disolvente fuertemente ionizante da algo de isonitrilo \ce{R-N#C}. Explíquese.
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b2:frontier-orbitals:7}
+Con los coeficientes del capítulo, prevéase el producto mayoritario del 1-metoxibutadieno
+con el propenal.
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b2:frontier-orbitals:8}
+Dibújese el \omterm{def:b2:frontier-orbitals:endo}{aducto endo} del ciclopentadieno con el propenoato de metilo.
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b2:frontier-orbitals:9}
+¿Por qué el anhídrido maleico reacciona con el ciclopentadieno a temperatura ambiente, mientras que el eteno
+necesita calentamiento a presión?
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b2:frontier-orbitals:10}
+El ciclopentadieno reacciona con el maleato de dimetilo (diéster cis) y con el fumarato de dimetilo
+(diéster trans). Dibújense ambos productos y dígase cuántos estereoisómeros da cada uno.
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b2:frontier-orbitals:11}
+La \omterm{def:b2:frontier-orbitals:diels-alder}{reacción de Diels--Alder} tiene $\Delta_r H^\circ < 0$ y $\Delta_r S^\circ < 0$. Explíquense los signos
+y por qué la reacción inversa se vuelve favorable a alta temperatura.
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b2:frontier-orbitals:12}
+En la hidrazina \ce{H2N-NH2}, cada nitrógeno lleva un par no enlazante. Con la interacción a cuatro
+electrones, explíquese por qué la molécula evita la conformación en la que los dos pares
+no enlazantes son paralelos.
+\end{exercise}
+
+\section{Problema: el craqueo del ciclopentadieno}
+
+\begin{problem}[{Problema de fin de semana --- la dimerización del ciclopentadieno como
+reacción de Diels--Alder, la termodinámica del craqueo, los orbitales frontera del
+ciclopentadieno y del anhídrido maleico, y la estereoquímica de su aducto}]
+\label{pb:b2:frontier-orbitals:1}
+Datos: puntos de ebullición, ciclopentadieno \qty{41}{\degreeCelsius}, diciclopentadieno unos
+\qty{170}{\degreeCelsius}. Energías del modelo de Hückel (un modelo): ciclopentadieno, tratado como
+una unidad de butadieno, \omterm{def:b2:frontier-orbitals:frontier}{HOMO} $\alpha + 0.62\beta$ y \omterm{def:b2:frontier-orbitals:frontier}{LUMO} $\alpha - 0.62\beta$; anhídrido maleico, \omterm{def:b2:frontier-orbitals:frontier}{LUMO}
+hacia $\alpha - 0.35\beta$.
+% ledger: bp:cyclopentadiene, bp:dicyclopentadiene
+
+\medskip
+\noindent\textbf{Parte I --- El dímero.}
+\begin{enumerate}
+  \item Dibújese el ciclopentadieno y demuéstrese que su unidad de \omterm{def:b2:frontier-orbitals:diels-alder}{dieno} está fijada en s-cis.
+  \item En la dimerización, una molécula es el \omterm{def:b2:frontier-orbitals:diels-alder}{dieno}. ¿Qué es la otra?
+  \item Dibújese el dímero y numérense los nuevos enlaces.
+  \item ¿Qué aducto, endo o exo, se forma a temperatura ambiente, y por qué?
+  \item ¿Es estereoespecífica la dimerización? Explíquese con el mecanismo.
+  \item ¿Por qué la dimerización no necesita catalizador?
+\end{enumerate}
+
+\medskip
+\noindent\textbf{Parte II --- Termodinámica del craqueo.}
+\begin{enumerate}[resume]
+  \item Dese el signo de $\Delta_r H^\circ$ de la dimerización, a partir de los enlaces formados y
+        rotos.
+  \item Dese el signo de $\Delta_r S^\circ$.
+  \item Escríbase $\Delta_r G^\circ(T)$ y demuéstrese que cambia de signo a una temperatura $T_i$.
+  \item ¿Por qué el dímero es estable a temperatura ambiente, y el monómero está favorecido en caliente?
+  \item En el montaje de craqueo, ¿por qué destilar el monómero a medida que se forma desplaza la
+        reacción?
+  \item ¿Por qué debe mantenerse frío el monómero y usarse deprisa?
+\end{enumerate}
+
+\medskip
+\noindent\textbf{Parte III --- \omterm{def:b2:frontier-orbitals:frontier}{Orbitales frontera}.}
+\begin{enumerate}[resume]
+  \item Para el ciclopentadieno que reacciona consigo mismo, calcúlese la diferencia HOMO--LUMO en unidades de
+        $|\beta|$.
+  \item Para el ciclopentadieno con el anhídrido maleico, calcúlese la diferencia entre el \omterm{def:b2:frontier-orbitals:frontier}{HOMO} del \omterm{def:b2:frontier-orbitals:diels-alder}{dieno}
+        y el \omterm{def:b2:frontier-orbitals:frontier}{LUMO} del anhídrido.
+  \item ¿Qué pareja reacciona más deprisa? Explíquese.
+  \item ¿Por qué los dos grupos carbonilo del anhídrido maleico rebajan su \omterm{def:b2:frontier-orbitals:frontier}{LUMO}?
+  \item ¿Qué orbital del anhídrido maleico da el solapamiento secundario de la aproximación
+        endo?
+\end{enumerate}
+
+\medskip
+\noindent\textbf{Parte IV --- El aducto con el anhídrido maleico.}
+\begin{enumerate}[resume]
+  \item Dibújese el \omterm{def:b2:frontier-orbitals:endo}{aducto endo}.
+  \item Márquense sus estereocentros.
+  \item ¿Es quiral el aducto? (Búsquese un plano de simetría.)
+  \item ¿Por qué los dos hidrógenos del antiguo \omterm{def:b2:frontier-orbitals:diels-alder}{dienófilo} acaban del mismo lado del
+        anillo?
+  \item ¿Cómo sería el \omterm{def:b2:frontier-orbitals:endo}{aducto exo}?
+  \item ¿Pueden interconvertirse los \omterm{def:b2:frontier-orbitals:endo}{aductos endo} y exo a temperatura ambiente? ¿Por qué?
+  \item ¿Cómo reaccionaría el anhídrido con el agua, y qué producto se formaría?
+  \item Indíquese el número de estereocentros del \omterm{def:b2:frontier-orbitals:endo}{aducto endo} del ciclopentadieno y el
+        anhídrido maleico.
+\end{enumerate}
+\end{problem}

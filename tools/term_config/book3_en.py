@@ -14,7 +14,11 @@ STOP = {
     "fragment", "fragments", "Fragment", "Fragments",
 }
 NO_CAPITAL = set()
-EXTRA = {}
+EXTRA = {
+    # the definition "Enolates" harvests only "enolate ion"; the bare noun, used
+    # ~130 times in ch. 25-28, never linked (Arabic Book 3 agent, 2026-10-06)
+    "enolate": "def:b2:enolates-aldol:enolate",
+}
 DROP = set()
 DERIVED = {}
 PRIMARY_OK = set()

@@ -515,6 +515,12 @@ NOT_GATED = {
     # sets -- belongs in the logic; reported, not made.) Appended by the
     # Indonesian Chemistry Book 2 agent, 2026-10-04 (ch. 5, metallic bond).
     "kation-kation", "karbokation-karbokation",
+    # "glutation" is the Indonesian spelling of the tripeptide glutathione
+    # (Chemistry Book 4, ch. 19 solutions, the cell's sulfur ligands that
+    # deactivate cisplatin); it ends in -tion, so ENGLISH_SUFFIX gated it.
+    # English spells it "glutathione", so no English word is lost. Appended
+    # by the Indonesian Chemistry Book 4 agent, 2026-10-06.
+    "glutation",
 }
 
 # Brand, markup names and unit symbols that legitimately stay Latin.
@@ -689,7 +695,35 @@ ATTRIBUTION = re.compile(
     # fragments "on" and "an", both gated English words, and no rewording can
     # change a name. Only this name is blanked; the surrounding prose stays
     # gated. Appended by the Indonesian Chemistry Book 1 agent, 2026-10-04.
-    r"|(?:L[\u00e9e]on\s+)?P[\u00e9e]an\s+de\s+Saint-Gilles")
+    r"|(?:L[\u00e9e]on\s+)?P[\u00e9e]an\s+de\s+Saint-Gilles"
+    # The PHOTOGRAPHER'S WEBSITE in a photo credit (Chemistry Book 4, ch. 6,
+    # radio antennas: "ESO/B.~Tafreshi (twanight.org)", and the book-4
+    # image-credits page): a domain name, printed as published by every
+    # edition (fr, es, pt, nl keep it verbatim); "twanight" fires on the
+    # English -ght suffix rule. Only this domain is blanked. Appended by the
+    # Indonesian Chemistry Book 4 agent, 2026-10-06.
+    r"|twanight\.org"
+    # A PERSON'S NAME: "William Lawrence Bragg" (Chemistry Book 4, ch. 9,
+    # opening and history box). "Lawrence" follows another capitalised name,
+    # so the eponym exemption cannot apply, and the capitalised English-suffix
+    # rule fires on "-ence"; a name cannot be reworded. Only the full name is
+    # blanked. Appended by the Indonesian Chemistry Book 4 agent, 2026-10-06.
+    r"|William\s+Lawrence\s+Bragg"
+    # An EPONYM AT THE START OF A TITLE: the theorem "[Persamaan Young]"
+    # (Chemistry Book 4, ch. 17, Young's equation of the contact angle). The
+    # eponym exemption needs a LOWERCASE native word before the name, but a
+    # title is sentence-initial, so its head noun is capitalised and "Young"
+    # fires as the English adjective; in running prose ("persamaan Young")
+    # the exemption already works. Only this two-word title phrase is blanked.
+    # Appended by the Indonesian Chemistry Book 4 agent, 2026-10-06.
+    r"|Persamaan\s+Young\b"
+    # A PERSON'S NAME: "Benjamin List" (Chemistry Book 4, ch. 28, history
+    # box on asymmetric organocatalysis, 2021 Nobel Prize). "List" follows
+    # the capitalised first name, so the eponym exemption cannot apply, and it
+    # fires as the English word "list"; a name cannot be reworded. Only the
+    # full name is blanked. Appended by the Indonesian Chemistry Book 4 agent,
+    # 2026-10-06.
+    r"|Benjamin\s+List\b")
 
 # The twenty standard THREE-LETTER AMINO-ACID SYMBOLS. These are international
 # chemical symbols, identical in every language, and a genetic-code table has
@@ -738,7 +772,23 @@ WORK_TITLE = re.compile(r"Anatomy\s+and\s+Physiology"
     # grade 12, synthesis-strategy chapter; every wave-1 edition (fr, es, pt,
     # nl) keeps it verbatim. Appended by the Indonesian Chemistry Book 1
     # agent, 2026-10-04.
-    r"|Green\s+Chemistry:\s+Theory\s+and\s+Practice")
+    r"|Green\s+Chemistry:\s+Theory\s+and\s+Practice"
+    # Gibbs's memoir, cited by its published title in Chemistry Book 3, ch. 2
+    # (history box), inside the canon's own \emph{}; every wave-1 Book 3
+    # edition (fr, es, pt, nl) keeps it verbatim. Appended by the Indonesian
+    # Chemistry Book 3 agent, 2026-10-06.
+    r"|On\s+the\s+Equilibrium\s+of\s+Heterogeneous\s+Substances"
+    # The periodical a portrait comes from, in a photo credit (Chemistry
+    # Book 3, ch. 22, Friedel and Crafts history box), set in \textit{} by the
+    # canon; the fr edition keeps it verbatim. "Science" is a gated word.
+    # Appended by the Indonesian Chemistry Book 3 agent, 2026-10-06.
+    r"|Popular\s+Science\s+Monthly"
+    # Rachel Carson's book, cited by its published title in \textit{} in
+    # Chemistry Book 4, ch. 32 (history box); the nl and pt Book 4 editions
+    # keep it verbatim (fr and es use their own published translated titles).
+    # "Spring" fires as a gated English word.
+    # Appended by the Indonesian Chemistry Book 4 agent, 2026-10-07.
+    r"|Silent\s+Spring")
 
 # A CANONICAL GENE OR PROTEIN SYMBOL whose ALPHABETIC part is an English word.
 # LATIN_WORD drops the digits, so "HER2" (the receptor amplified in breast
@@ -765,7 +815,26 @@ GENE_SYMBOL = re.compile(r"\bHER2\b"
     # commonest English words, so only the symbol in its element-list context
     # -- right after "I, " -- is blanked. Appended by the Indonesian Chemistry
     # Book 2 agent, 2026-10-04.
-    r"|(?<=\bI, )At\b")
+    r"|(?<=\bI, )At\b"
+    # The Ox/Red NOTATION as SUBSCRIPTS inside mathematics (Chemistry Book 3,
+    # ch. 10, wave equation of a fast couple): $D_{\text{Red}}$,
+    # $c^s_{\text{Red}}$, $i = nFAD_{\text{Red}}(c^b_{\text{Red}} - ...)$.
+    # The reduction keeps \text{} contents, so a display reads
+    # "\x00 Red Red Red Ox Ox Ox \x00" -- byte-identical to the English canon,
+    # which this gate would flag too, and frozen by id_apply's math census.
+    # Only a run made solely of Ox/Red tokens between two math markers is
+    # blanked; "Red" in prose is still gated (the DECADE_SUFFIX rule above
+    # already exempts "Oks/Red" and "Red" before a comma or bracket).
+    # Appended by the Indonesian Chemistry Book 3 agent, 2026-10-06.
+    r"|(?<=\x00)(?:\s*(?:Red|Ox)\b)+(?=\s*\x00)"
+    # The chemfig ANCHOR option of \schemestart[][west] (Chemistry Book 3,
+    # ch. 21, hydroboration scheme): visible_text strips the command but keeps
+    # its optional arguments, so the line reduces to "[west]" and fires on the
+    # gated compass word -- in the English canon too. A layout key, never
+    # prose; only a lone bracketed compass anchor is blanked, a free-standing
+    # "west" in a sentence or node is still caught. Appended by the Indonesian
+    # Chemistry Book 3 agent, 2026-10-06.
+    r"|\[(?:north|south|east|west)\]")
 
 # ---------------------------------------------------------------------------
 # 2. Untranslated sentences.

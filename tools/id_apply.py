@@ -280,14 +280,18 @@ def emph_signature(text):
     return sig
 
 
-DRAW_ENVS = ("tikzpicture", "axis", "circuitikz")
+# MOdiagram (modiagram) is drawing code too: its \atom/\molecule bodies are
+# energies and electron keys, never prose (chemistry Books 3-4, 2026-10-06).
+DRAW_ENVS = ("tikzpicture", "axis", "circuitikz", "MOdiagram")
 # `at (...)` may nest one level of parentheses -- `at ($(a)+(0,1)$)`,
 # `at ({2.4*sin(40)},1)` -- and the old `[^)]*` stopped at the first `)`, so
 # such a node's visible label was compared as drawing code and every
 # translation of it cost a whole-file `!draw` (both wave-1 chemistry Book 1
 # agents, 2026-10-04; first reported on Biology Book 5).
 _PAREN1 = r"\((?:[^()]|\([^()]*\))*\)"
-NODE_TEXT = re.compile(r"node\s*(\[[^\]]*\])?\s*(" + _PAREN1 + r")?\s*(at\s*" + _PAREN1 + r")?\s*\{")
+# Options may also FOLLOW the coordinate, `\node at (x,y) [left] {text}` (Dutch
+# chemistry Book 4 agent, 2026-10-06: it forced a !draw on ch. 26).
+NODE_TEXT = re.compile(r"node\s*(\[[^\]]*\])?\s*(" + _PAREN1 + r")?\s*(at\s*" + _PAREN1 + r")?\s*(\[[^\]]*\])?\s*\{")
 # pgfplots' \legend{...} and \addlegendentry{...} MACROS. AXIS_STR below only knows the KEY form,
 # "legend entries=", so a legend used to be compared BYTE-FOR-BYTE as drawing
 # code: translating one -- which you must, it is visible text -- forced
@@ -371,16 +375,36 @@ def _blank_axis_strings(s):
 CHEM_MACRO = re.compile(r"\\(?:ce|chemfig|ghs)\s*(?:\[[^\]]*\])?\s*\{")
 PERIODIC = re.compile(r"\\omperiodictable(?:\[[^\]]*\])?")
 SCHEME = re.compile(r"\\schemestart(.*?)\\schemestop", re.S)
-ARROW_LABEL = re.compile(r"(\\arrow\s*\{[^\[\]{}]*)((?:\[[^\[\]]*\])+)")
+# Term symbols \termsym{3}{P}{2} and Kroger-Vink symbols \kv{V}{O}{..} are
+# \ensuremath notation written in running text, outside every math span
+# (chemistry Book 4, 2026-10-06): frozen like a formula.
+NOTATION3 = re.compile(r"\\(?:termsym|kv)\s*\{[^{}]*\}\s*\{[^{}]*\}\s*\{(?:[^{}]|\{[^{}]*\})*\}")
+# A label may hold a brace group with brackets inside, `[{[3,3]}, then]` (Book 4
+# ch. 29): the old `[^\[\]]*` stopped at the inner `[` and froze the whole
+# scheme, words included (2026-10-06).
+_LABEL = r"\[((?:[^\[\]{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\]"
+ARROW_LABEL = re.compile(r"(\\arrow\s*\{[^\[\]{}]*)((?:" + _LABEL + r")+)")
+
+
+# A MIXED label -- formula plus words, `[then \ce{H2O}]`, `[\ce{H+} or \ce{HO-}]`
+# -- used to be compared byte for byte, so its words were frozen English, while
+# check_orphan_lines.py (gate 10) rightly refuses an untranslated "then": the two
+# gates demanded opposite things and no translation could pass both (Portuguese
+# chemistry Book 3 agent, 2026-10-06). Compare only its \ce{} groups and $...$
+# spans, in order; the words around them are prose.
+LABEL_FROZEN = re.compile(r"\\ce\s*\{(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\}|\$[^$]*\$")
+
+
+def _arrow_label_key(x):
+    if "\\" in x or "$" in x:
+        return "@".join(m.group(0) for m in LABEL_FROZEN.finditer(x)) or x
+    return x if not re.search(r"[A-Za-z]{2,}|[^\x00-\x7f]", x) else "@"
 
 
 def _blank_arrow_labels(s):
     def one(m):
-        labels = re.findall(r"\[([^\[\]]*)\]", m.group(2))
-        return m.group(1) + "".join(
-            "[%s]" % (x if ("\\" in x or "$" in x
-                           or not re.search(r"[A-Za-z]{2,}|[^\x00-\x7f]", x))
-                      else "@") for x in labels)
+        labels = re.findall(_LABEL, m.group(2))
+        return m.group(1) + "".join("[%s]" % _arrow_label_key(x) for x in labels)
     return ARROW_LABEL.sub(one, s)
 
 
@@ -395,6 +419,7 @@ def chem_spans(text):
         body, _ = _group(t, m.end() - 1)
         spans.append(m.group(0) + body)
     spans.extend(PERIODIC.findall(t))
+    spans.extend(NOTATION3.findall(t))
     return spans
 
 

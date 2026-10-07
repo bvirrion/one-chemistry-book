@@ -12,7 +12,12 @@ migration of a group or an atom (not ionic migration in electrode kinetics).
 
 STOP = set()
 NO_CAPITAL = set()
-EXTRA = {}
+EXTRA = {
+    # the definition names "volume of activation", the prose says "activation
+    # volume" (ch. 19 l. 100, 459): English never reached its own definition
+    # (Spanish Book 4 agent, 2026-10-06)
+    "activation volume": "def:b3:complex-mechanisms:activation-volume",
+}
 DROP = set()
 DERIVED = {}
 PRIMARY_OK = set()
@@ -21,6 +26,10 @@ AMBIG_POLICY = "drop"
 # NOTE: multi-word patterns use \s+ between words -- a phrase wrapped across
 # a source line break must still be protected.
 EXTRA_PROTECT = [
+    # "indistinguishable" of a symmetry operation (a configuration
+    # indistinguishable from the original / from itself, ch. 4): everyday sense,
+    # not quantum indistinguishability (coordinator, 2026-10-07, from the hi agent)
+    r"indistinguishable(?=\s+from\s+(?:the\s+original|itself))",
     # people who run an instrument or a plant
     r"the\s+operators?(?=\s+(?:wear|works))",
     r"trained\s+operators",
@@ -38,6 +47,10 @@ EXTRA_PROTECT = [
     # migration of a group or an atom, not ionic migration
     r"the\s+migration(?=\s+of\s+a\s+group)",
     r"one\s+migration",
+    # "indistinguishable" in its everyday sense (an orientation of the
+    # symmetry-number argument; two sums numerically equal), not the
+    # quantum-indistinguishability definition (Portuguese Book 4 agent, 2026-10-06)
+    r"indistinguishable(?=\s+(?:from\s+the\s+(?:sum|starting)|orientation))",
     # chemfig settings and arrow labels
     r"\\setchemfig\{[^{}]*\}",
     r"\\arrow\{(?:[^{}]|\{[^{}]*\})*\}",

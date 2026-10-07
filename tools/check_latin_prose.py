@@ -109,10 +109,10 @@ LEGEND_RE = re.compile(
 # it is the applier doing exactly what it promises.
 DRAW_ENV_OPEN = re.compile(
     r"\\begin\{(?:tikzpicture|axis|semilogxaxis|semilogyaxis|loglogaxis|"
-    r"scope|circuitikz|groupplot|pgfonlayer)\}")
+    r"scope|circuitikz|groupplot|pgfonlayer|MOdiagram)\}")
 DRAW_ENV_CLOSE = re.compile(
     r"\\end\{(?:tikzpicture|axis|semilogxaxis|semilogyaxis|loglogaxis|"
-    r"scope|circuitikz|groupplot|pgfonlayer)\}")
+    r"scope|circuitikz|groupplot|pgfonlayer|MOdiagram)\}")
 # A DISPLAYED-MATH body is copied byte-identically by design too, and the
 # "$" guard below cannot see it: an align* line carries no $ delimiters at all.
 # Translating the \text{} label on one line of an align* therefore made the
@@ -532,7 +532,23 @@ ALLOWED_BY_LANG = {
            # correct Portuguese and was NOT reworded; the two fragments of
            # the locant name are the only "words" the scan sees (the es and
            # fr agents listed the same two for the same node).
-           "butan", "ol"},
+           "butan", "ol",
+           # Appended by the Portuguese Chemistry Book 3 agent, 2026-10-06:
+           # three fragments blocked although none is untranslated prose:
+           #  * 17-frontier-orbitals, the Diels--Alder figure's \foreach
+           #    {0/endo, 5/exo}: the fields are the endo/exo stereodescriptors
+           #    (italic prefixes, identical in Portuguese -- "aduto endo",
+           #    "regra endo" throughout the edition) and serve as keys;
+           #  * 21-alkene-redox, the dihydroxylation node "syn: meso": the
+           #    syn descriptor and the meso prefix are written exactly so in
+           #    Portuguese;
+           #  * 08-solid-liquid-diagrams, the proposition title
+           #    "Schröder--van Laar": a proper name whose particle "van"
+           #    (as in van 't Hoff, van Deemter) is a lowercase word, and
+           #    whose umlaut makes LOWER_WORD (ASCII-only) read "Schröder"
+           #    as "Schr" + "der" -- a tokeniser bug worth fixing for every
+           #    language; "der" is listed here only to get past it.
+           "endo", "exo", "syn", "meso", "van", "der"},
     # Indonesian absorbs Latin anatomical nomenclature verbatim.
     "id": {"muscularis", "mucosae", "propria", "lamina", "serosa", "submucosa",
            # Reported by the Indonesian Book 3 agent, 2026-09-06: three
@@ -777,6 +793,93 @@ def main():
           "(the one-word tier above is advisory -- read it, it is usually cognates)")
     return 0
 
+
+# Appended by the Spanish Chemistry Book 3 agent, 2026-10-06: the Diels--Alder
+# figure of 17-frontier-orbitals carries the \foreach {0/endo, 5/exo}; its
+# fields are the endo/exo stereodescriptors, written identically in Spanish
+# ("aducto endo", "regla endo" throughout the edition) and used as keys. Same
+# two words the Portuguese Book 3 agent listed for the same figure.
+ALLOWED_BY_LANG["es"] |= {"endo", "exo"}
+
+
+# Appended by the French Chemistry Book 3 agent, 2026-10-06: three fragments
+# hit the BLOCKING tier with no untranslated prose in them, none reworded:
+#  * 17-frontier-orbitals, the Diels--Alder figure's \foreach {0/endo, 5/exo}:
+#    the endo/exo stereodescriptors, written exactly so in French ("adduit
+#    endo", "règle endo" throughout the edition) and used as keys (the pt
+#    Book 3 agent listed the same two);
+#  * 30-biomolecules, the legend "cation, zwitterion, anion": "zwitterion" is
+#    the French term itself (the edition's defined term, \index{zwitterion});
+#    cation and anion are already listed;
+#  * 08-solid-liquid-diagrams, the proposition title "Schröder--van Laar": a
+#    proper name; "van" is its lowercase particle and "der" the tokeniser
+#    fragment of "Schröder" the pt agent described.
+ALLOWED_BY_LANG["fr"] |= {"endo", "exo", "zwitterion", "van", "der"}
+
+# Appended by the Dutch Chemistry Book 3 agent, 2026-10-06: five fragments hit
+# the BLOCKING tier with no untranslated prose in them, none reworded:
+#  * 17-frontier-orbitals, the Diels--Alder figure's \foreach {0/endo, 5/exo}:
+#    the endo/exo stereodescriptors, written so in Dutch ("endo-adduct",
+#    "endoregel" throughout the edition) and used as keys (es, fr, pt listed
+#    the same two);
+#  * 08-solid-liquid-diagrams, the title "Schröder--van Laar": a proper name;
+#    "van" its particle, "der" the tokeniser fragment of "Schröder" (as fr);
+#  * 06-ellingham, the axis node "(\unit{kJ} per mol \ce{O2})": "mol" is the
+#    unit name, "per" is already listed;
+#  * 07-liquid-vapour-diagrams, the node "ethanol--water (model)": "ethanol"
+#    and "model" are the Dutch words themselves;
+#  * 21-alkene-redox, the node "syn: meso": the stereodescriptors, written so
+#    in Dutch ("syn-additie", "mesoverbinding").
+ALLOWED_BY_LANG["nl"] |= {"endo", "exo", "van", "der", "mol", "ethanol",
+                          "model", "syn", "meso"}
+
+# Appended by the French Chemistry Book 4 agent, 2026-10-06: six fragments hit
+# the BLOCKING tier with no untranslated prose in them, none reworded:
+#  * solutions 05-group-theory-applied, answers 13 and 14 of the weekend
+#    problem, "cis 2, trans 1, fac 2, mer 3." (the "dup" tier): the cis/trans
+#    and fac/mer isomer descriptors, written exactly so in French, followed by
+#    band counts -- the line is correct French as it stands;
+#  * 06-rovibrational-spectroscopy, the axis node "absorbance (relative)":
+#    "absorbance" and "relative" are the French words themselves;
+#  * 27-radicals-carbenes, the carbene node "triplet\\ sp2 p": "triplet" is
+#    the French term (the edition writes "carbène triplet", "état triplet");
+#  * 30-total-synthesis, the retrosynthesis node "iodolactonisation,
+#    Baeyer--Villiger": the French name of the reaction, plus a proper name;
+#  * 31-green-industrial, the ammonia-loop node "purge (Ar, CH4)": "purge" is
+#    the French word (the edition's "recyclage et purge").
+ALLOWED_BY_LANG["fr"] |= {"cis", "trans", "fac", "mer", "absorbance",
+                          "relative", "triplet", "iodolactonisation", "purge"}
+
+# Appended by the Indonesian Chemistry Book 3 agent, 2026-10-06: two fragments
+# hit the BLOCKING tier with no untranslated prose in them, none reworded:
+#  * 17-frontier-orbitals, the Diels--Alder figure's \foreach {0/endo, 5/exo}:
+#    the endo/exo stereodescriptors, written exactly so in Indonesian ("adduk
+#    endo", "aturan endo" throughout the edition) and used as keys (es, fr,
+#    nl, pt listed the same two);
+#  * 06-ellingham, the axis node "(\unit{kJ} per mol \ce{O2})": "per mol" is
+#    the Indonesian unit phrase itself ("per" is the Indonesian word too, as
+#    in "per detik"; "mol" is the unit name; the nl agent listed "mol" for the
+#    same node).
+# A third, the ch. 23 proposition title "pH optimum", was reworded to "pH
+# optimal" instead of being exempted.
+ALLOWED_BY_LANG["id"] |= {"endo", "exo", "mol", "per"}
+
+# Appended by the Indonesian Chemistry Book 4 agent, 2026-10-07: four fragments
+# hit the BLOCKING tier with no untranslated prose in them, none reworded:
+#  * solutions 05-group-theory-applied, answers 13 and 14 of the weekend
+#    problem, "cis 2, trans 1, fac 2, mer 3." (the "dup" tier): the cis/trans
+#    and fac/mer isomer descriptors, written exactly so in Indonesian (the
+#    edition's "isomer cis", "isomer fac"), followed by band counts -- the
+#    same line the fr Book 4 agent listed;
+#  * 27-radicals-carbenes, the carbene nodes "singlet\\ sp2 p" and
+#    "triplet\\ sp2 p": "singlet" and "triplet" are the Indonesian terms
+#    (the edition writes "karbena singlet", "keadaan triplet" throughout; fr
+#    listed "triplet" for the same node);
+#  * 31-green-industrial, the ammonia-loop node "purge (Ar, CH4)": "purge" is
+#    the Indonesian term of the Book 3 edition's definition ("Konversi sekali
+#    lewat, daur ulang, purge"), kept so here (fr listed the same word).
+ALLOWED_BY_LANG["id"] |= {"cis", "trans", "fac", "mer", "singlet", "triplet",
+                          "purge"}
 
 if __name__ == "__main__":
     sys.exit(main())

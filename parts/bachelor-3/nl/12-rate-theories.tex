@@ -1,0 +1,728 @@
+\chapter{Theorieën van reactiesnelheden}\label{ch:b3:rate-theories}
+
+In 2017 werd een geneesmiddel goedgekeurd dat alleen van een ouder middel
+verschilt doordat de zes waterstofatomen van zijn twee methoxygroepen
+deuteriumatomen zijn. De lever breekt het middel af door precies die
+bindingen C--H te verbreken, en een binding C--D wordt meerdere keren
+trager verbroken: het zware molecuul blijft langer in het bloed, en wordt
+in kleinere, minder frequente doses ingenomen. Niets in de wet van
+Arrhenius verklaart waarom een neutron in een kern een reactie zou
+vertragen. Dit hoofdstuk leidt snelheidsconstanten af uit moleculaire
+eigenschappen: eerst uit botsingen, daarna uit de vorm van het
+\omterm{def:b3:computational-chemistry:pes}{potentiaalenergieoppervlak} en de toestandssommen van de
+\omterm{def:b3:rate-theories:tst}{overgangstoestandstheorie}, die de grootte van zulke isotoopeffecten
+voorspelt; het eindigt met reacties in oplossing, waar het oplosmiddel een
+snelheidslimiet oplegt.
+
+\begin{recall}
+Het deel van jaar~1 definieerde de snelheidsconstante, de wet van
+Arrhenius $k =
+A\eu^{-E_a/RT}$ met haar activeringsenergie en pre-exponentiële factor,
+elementaire stappen, de overgangstoestand, het energieprofiel langs de
+reactiecoördinaat en het postulaat van Hammond. Het deel van jaar~2
+definieerde ionsterkte en activiteitscoëfficiënten, met de limietwet van
+Debye-Hückel $\log\gamma_i = -Az_i^2\sqrt I$ ($A \approx
+0.51$ in water bij \qty{25}{\celsius}), en paste kleinstekwadratenrechten
+aan.
+\Cref{ch:b3:computational-chemistry} voerde potentiaalenergieoppervlakken
+in;
+\cref{ch:b3:partition-functions,ch:b3:statistical-thermo-applied}
+berekenden evenwichtsconstanten uit toestandssommen en nulpuntsenergieën.
+Uit de natuurkunde: de maxwell-boltzmannverdeling van de moleculaire
+snelheden, en de wet van Fick voor diffusie.
+\end{recall}
+
+\begin{omfigure}
+\includegraphics[width=0.6\linewidth]{images/book4/ai/b3-12-pharmacy.jpg}
+
+{\small Geneesmiddelen op een apotheekschap. Waterstof vervangen door
+deuterium op de bindingen die de lever het eerst aanvalt, kan de tijd
+verlengen dat een middel in het lichaam blijft.}
+\end{omfigure}
+
+\section{Botsingstheorie}
+
+Twee moleculen in een gas kunnen alleen reageren als ze elkaar ontmoeten.
+Stel ze voor als harde bollen met diameters $d_{\mathrm A}$ en $d_{\mathrm B}$:
+ze botsen wanneer hun middelpunten elkaar tot op $d =
+\frac12(d_{\mathrm A} + d_{\mathrm B})$ naderen.
+
+\begin{definition}[Botsingsdoorsnede, sterische factor]\label{def:b3:rate-theories:collision}
+De \emph{botsingsdoorsnede}\index{botsingsdoorsnede} van twee moleculen
+is de oppervlakte $\sigma = \pi d^2$ van de schijf, loodrecht op hun
+relatieve snelheid, waarbinnen het middelpunt van het ene moet passeren om
+het andere te raken. De
+\emph{sterische factor}\index{sterische factor} $P$ is de verhouding van de
+gemeten pre-exponentiële factor van een reactie tot de factor die de
+botsingstheorie voorspelt.
+\end{definition}
+
+\begin{omfigure}
+\begin{tikzpicture}[font=\small, >=Stealth]
+  \shade[ball color=omDef!40] (0,0) circle (0.45);
+  \node at (0,0) {A};
+  \draw[black!50, dashed] (-0.0,0.85) -- (5.2,0.85) (-0.0,-0.85) -- (5.2,-0.85);
+  \draw[black!60] (0,0) ellipse (0.25 and 0.85);
+  \draw[<->] (-0.45,0) -- (-0.45,0.85) node[midway, left] {$d$};
+  \shade[ball color=omThm!40] (3.3,0.55) circle (0.4);
+  \node at (3.3,0.55) {B};
+  \shade[ball color=omThm!20] (4.6,1.45) circle (0.4);
+  \node at (4.6,1.45) {B};
+  \draw[->, thick] (0.6,0) -- (2.2,0) node[midway, below] {$v_{\mathrm{rel}}\,\Delta t$};
+  \node[anchor=west, align=left, font=\scriptsize] at (5.3,0) {cilinder met\\ doorsnede\\ $\sigma = \pi d^2$};
+  \node[font=\scriptsize, anchor=south] at (3.3,1.0) {geraakt};
+  \node[font=\scriptsize, anchor=south] at (4.6,1.9) {gemist};
+\end{tikzpicture}
+
+{\small De botsingscilinder. Molecuul A, dat beweegt met de relatieve
+snelheid $v_{\mathrm{rel}}$, doorloopt
+in een tijd $\Delta t$ een cilinder met doorsnede $\sigma = \pi d^2$, met
+$d$ de som van de twee stralen; elk B waarvan het middelpunt erin ligt,
+wordt geraakt.}
+\end{omfigure}
+
+\begin{theorem}[Snelheidsconstante volgens de botsingstheorie]\label{thm:b3:rate-theories:collision}
+Als elke botsing waarvan de kinetische energie langs de verbindingslijn
+van de middelpunten een drempel $E_0$ (per mol) overschrijdt, tot reactie
+leidt, is de snelheidsconstante van $\mathrm{A + B} \to$
+producten
+\[
+  k = \sigma\bar v_{\mathrm{rel}}N_A\,\eu^{-E_0/RT}, \qquad \bar v_{\mathrm{rel}} = \sqrt{\frac{8kT}{\pi\mu}},\
+  \mu = \frac{m_{\mathrm A}m_{\mathrm B}}{m_{\mathrm A} + m_{\mathrm B}} .
+\]
+\end{theorem}
+
+\begin{proof}[Gedeeltelijk bewijs]
+In een tijd $\Delta t$ doorloopt een molecuul A een volume $\sigma v_{\mathrm{rel}}\Delta t$ en raakt het de
+$n_{\mathrm B}\sigma v_{\mathrm{rel}}\Delta t$ moleculen B die erin zitten: de
+botsingsfrequentie per volume-eenheid
+is $\sigma\bar v_{\mathrm{rel}}n_{\mathrm A}n_{\mathrm B}$, met $\bar v_{\mathrm{rel}}$
+de gemiddelde relatieve snelheid die de
+maxwell-boltzmannverdeling geeft (uit de natuurkunde overgenomen, met de
+\omterm{def:b3:quantum-model-systems:oscillator}{gereduceerde massa}). Elke botsing wegen met haar snelheid en alleen die
+behouden waarvan de energie langs de verbindingslijn van de middelpunten
+de drempel overschrijdt, laat de fractie
+$\eu^{-E_0/RT}$ van de botsingsfrequentie over (de integratie over de
+botsingsparameter wordt aangenomen). Het omzetten van aantaldichtheden in
+molaire concentraties vermenigvuldigt met
+$N_A$.
+\end{proof}
+
+Omdat $\bar v_{\mathrm{rel}} \propto \sqrt T$, is de activeringsenergie $E_a = RT^2\,\dd\ln k/\dd T$ gelijk aan $E_0 + \frac12RT$,
+dicht bij de drempel. De pre-exponentiële factor is van de orde van
+$10^{11}$~\unit{L.mol^{-1}.s^{-1}} voor kleine moleculen. Gemeten factoren
+zijn vaak veel kleiner: $P \ll 1$ voor moleculen die elkaar in een
+bepaalde oriëntatie moeten ontmoeten, en de doorsnede heeft geen
+eenduidige waarde voor echte moleculen, die geen harde bollen zijn. De
+botsingstheorie geeft de grootteorde en de temperatuurafhankelijkheid;
+ze kan $E_0$ niet geven, want daarvoor is het \omterm{def:b3:computational-chemistry:pes}{potentiaalenergieoppervlak}
+nodig.
+
+\section{Potentiaalenergieoppervlakken}
+
+De reactie $\mathrm{H_A + H_BH_C \to H_AH_B + H_C}$ is de eenvoudigste die
+er bestaat. Bij een collineaire nadering hangt de energie af van twee
+afstanden, $r_{\mathrm{AB}}$ en $r_{\mathrm{BC}}$, en kan ze als een kaart
+getekend worden.
+
+\begin{definition}[Zadelpunt, pad van minimale energie]\label{def:b3:rate-theories:saddle}
+Een \emph{zadelpunt}\index{zadelpunt} van een \omterm{def:b3:computational-chemistry:pes}{potentiaalenergieoppervlak} is
+een punt waar de gradiënt nul is, en de energie maximaal is in één
+richting en minimaal in alle andere. Het
+\emph{pad van minimale energie}\index{pad van minimale energie}
+is het pad van steilste daling vanaf het zadelpunt naar het dal van de
+beginstoffen en dat van de producten; de lengte gemeten langs dat pad is
+de reactiecoördinaat, en het zadelpunt is de overgangstoestand.
+\end{definition}
+
+\begin{omfigure}
+\begin{tikzpicture}
+\begin{axis}[ompes, width=0.62\linewidth, xmin=0.4, xmax=3.0, ymin=0.4, ymax=3.0,
+  xlabel={$r_{\mathrm{AB}}$ / \AA}, ylabel={$r_{\mathrm{BC}}$ / \AA},
+  colorbar, colorbar style={ylabel={$E$ / eV}, ylabel style={font=\small},
+  yticklabel style={font=\small}}, point meta min=-4.7, point meta max=-0.8]
+\addplot3[contour prepared={labels=false}, thick] table {figdata/out/bachelor-3-pes-collinear-contours.dat};
+\addplot3[ompath] table[x=x, y=y, z expr=0] {figdata/out/bachelor-3-pes-collinear-mep.dat};
+\node[omsaddle] at (axis cs:0.918,0.918,0) {};
+\node[font=\small, anchor=south west] at (axis cs:0.95,0.95,0) {zadelpunt};
+\node[font=\small, anchor=west, fill=white, fill opacity=0.85, text opacity=1, inner sep=1.5pt] at (axis cs:2.05,1.0,0) {$\mathrm{H_A + H_BH_C}$};
+\node[font=\small, anchor=west, fill=white, fill opacity=0.85, text opacity=1, inner sep=1.5pt] at (axis cs:0.95,2.55,0) {$\mathrm{H_AH_B + H_C}$};
+\node[font=\small, anchor=north east] at (axis cs:2.95,2.95,0) {$\ce{H + H + H}$};
+\end{axis}
+\end{tikzpicture}
+
+{\small Een modelpotentiaalenergieoppervlak voor collineair $\ce{H + H2}$
+(LEPS-vorm opgebouwd uit de morsekromme van \ce{H2}, met een
+Sato-parameter van 0.17, gekozen als modelconstante). Hoogtelijnen van
+\qty{-4.65}{eV} tot \qty{-0.8}{eV}, met als nulpunt van de energie drie
+gescheiden atomen; de dalen liggen bij \qty{-4.75}{eV}, de diepte van de
+put van \ce{H2}. Gestreept: het \omterm{def:b3:rate-theories:saddle}{pad van minimale energie}, dat het
+symmetrische \omterm{def:b3:rate-theories:saddle}{zadelpunt} kruist bij $r_{\mathrm{AB}} = r_{\mathrm{BC}} = \qty{0.92}{\angstrom}$,
+in dit model \qty{0.27}{eV} boven de dalen.}
+\end{omfigure}
+
+Het pad klimt uit het dal van de beginstoffen, waar $r_{\mathrm{BC}}$ dicht
+bij de bindingslengte van \ce{H2} blijft terwijl A nadert, kruist het
+\omterm{def:b3:rate-theories:saddle}{zadelpunt}, en daalt af in het dal van de producten. Bij het \omterm{def:b3:rate-theories:saddle}{zadelpunt} zijn
+beide bindingen uitgerekt tot \qty{0.92}{\angstrom}: de oude binding is
+half verbroken en de nieuwe half gevormd, en de energiekost van dit
+compromis is de barrière. Voor de symmetrische reactie ligt het \omterm{def:b3:rate-theories:saddle}{zadelpunt}
+op de diagonaal; voor een exotherme reactie schuift het naar het dal van
+de beginstoffen (een vroege barrière, een overgangstoestand die op de
+beginstoffen lijkt, zoals het postulaat van Hammond zegt), voor een
+endotherme naar het dal van de producten (een late barrière).
+De positie bepaalt welke energie helpt: translatie-energie, gericht langs
+het ingangsdal, brengt de moleculen over een vroege barrière; een late
+barrière, om een hoek heen, wordt gemakkelijker genomen met vibratie-energie
+in de binding die verbroken wordt. Dit zijn de regels van Polanyi,
+bevestigd door experimenten met moleculaire bundels.
+
+\section{Overgangstoestandstheorie}
+
+\begin{definition}[Geactiveerd complex]\label{def:b3:rate-theories:activated-complex}
+Het \emph{geactiveerd complex}\index{geactiveerd complex} van een
+elementaire stap is de verzameling configuraties van het reagerende
+systeem in een dunne laag rond het \omterm{def:b3:rate-theories:saddle}{zadelpunt}, loodrecht op het \omterm{def:b3:rate-theories:saddle}{pad van
+minimale energie}; het wordt behandeld als een deeltje $\ce{AB^{\ddagger}}$,
+met een eigen toestandssom.
+\end{definition}
+
+\begin{definition}[Overgangstoestandstheorie, transmissiecoëfficiënt]\label{def:b3:rate-theories:tst}
+De \emph{overgangstoestandstheorie}\index{overgangstoestandstheorie} neemt
+aan dat de \omterm{def:b3:rate-theories:activated-complex}{geactiveerde complexen} in evenwicht zijn met de beginstoffen,
+dat elk complex dat het gebied van het \omterm{def:b3:rate-theories:saddle}{zadelpunt} in de richting van de
+producten doorkruist, die ook vormt, en dat de beweging langs de
+reactiecoördinaat een vrije translatie is. De
+\emph{transmissiecoëfficiënt}\index{transmissiecoefficient@transmissiecoëfficiënt} $\kappa \le 1$ corrigeert voor
+de complexen die terugkeren naar de beginstoffen.
+\end{definition}
+
+\begin{theorem}[Vergelijking van Eyring]\label{thm:b3:rate-theories:eyring}
+Voor een elementaire stap $\mathrm{A + B} \to \mathrm{AB}^{\ddagger} \to$ producten is
+\[
+  k = \kappa\frac{k_BT}{h}\overline{K}{}^{\ddagger}, \qquad
+  \overline{K}{}^{\ddagger} = \frac{\bar q^{\ddagger}/N_A}{(q_{\mathrm A}/N_A)(q_{\mathrm B}/N_A)}\,\eu^{-\Delta E_0^{\ddagger}/RT},
+\]
+waarin $\bar q^{\ddagger}$ de toestandssom is van het \omterm{def:b3:rate-theories:activated-complex}{geactiveerde complex}
+zonder de beweging langs de reactiecoördinaat, $q$ de molaire
+toestandssommen per volume-eenheid zijn, en $\Delta E_0^{\ddagger}$ de
+hoogte is van het nulpuntsniveau van het complex boven dat van de
+beginstoffen. In thermodynamische vorm, met $c^\circ = \qty{1}{mol/L}$ en
+de moleculariteit $m$,
+\[
+  k = \kappa\frac{k_BT}{h}(c^\circ)^{1-m}\,\eu^{\Delta^{\ddagger}S^\circ/R}\,\eu^{-\Delta^{\ddagger}H^\circ/RT}.
+\]
+Deze uitspraak is de \emph{vergelijking van Eyring}\index{vergelijking van Eyring}; $k_B$ is de
+boltzmannconstante, zo geschreven om verwarring met $k$ te vermijden.
+\end{theorem}
+
+\begin{proof}
+Quasi-evenwicht: $[\ce{AB^{\ddagger}}] = K^{\ddagger}[\mathrm A][\mathrm B]$, met $K^{\ddagger}$ uit de toestandssommen
+(\cref{thm:b3:statistical-thermo-applied:k-from-q}, geschreven met
+concentraties). Van de vibraties van het complex is er één de beweging
+langs de reactiecoördinaat: een zeer slappe vibratie met frequentie $\nu \ll k_BT/h$, waarvan de
+toestandssom $k_BT/h\nu$ is (de hogetemperatuurlimiet van
+\cref{prop:b3:partition-functions:q-vib}); dus $q^{\ddagger} = \bar q^{\ddagger}k_BT/h\nu$. De
+complexen steken naar de producten over met de frequentie $\nu$ van deze
+beweging, zodat de
+snelheid $\nu[\ce{AB^{\ddagger}}] = \nu\frac{k_BT}{h\nu}\overline{K}{}^{\ddagger}[\mathrm A][\mathrm B]$ is: de onbekende $\nu$ valt weg. Schrijven van
+$\overline{K}{}^{\ddagger} = (c^\circ)^{1-m}\eu^{-\Delta^{\ddagger}G^\circ/RT}$ en $\Delta^{\ddagger}G^\circ = \Delta^{\ddagger}H^\circ - T\Delta^{\ddagger}S^\circ$ geeft de
+tweede vorm, met $\kappa$ ingevoegd voor het terugkeren.
+\end{proof}
+
+De factor $k_BT/h$ is \qty{6.2e12}{s^{-1}} bij \qty{298}{K}: de snelheid van
+een monomoleculaire stap zonder barrière en zonder entropieverlies. Alles
+wat specifiek is voor de reactie, zit in de activeringsgrootheden.
+
+\begin{definition}[Gibbsenergie, enthalpie en entropie van activering]\label{def:b3:rate-theories:activation}
+De \emph{gibbsenergie van activering}\index{gibbsenergie van activering}
+$\Delta^{\ddagger}G^\circ$, \emph{activeringsenthalpie}\index{activeringsenthalpie} $\Delta^{\ddagger}H^\circ$ en
+\emph{activeringsentropie}\index{activeringsentropie} $\Delta^{\ddagger}S^\circ$
+van een elementaire stap zijn de standaardgibbsenergie, -enthalpie en
+-entropie van de vorming van het \omterm{def:b3:rate-theories:activated-complex}{geactiveerde complex} (zonder zijn
+beweging langs de reactiecoördinaat) uit de beginstoffen, gedefinieerd
+door de \omterm{thm:b3:rate-theories:eyring}{vergelijking van Eyring}.
+\end{definition}
+
+\begin{proposition}[Activeringsenergie en activeringsenthalpie]\label{prop:b3:rate-theories:ea-dh}
+Voor een reactie in oplossing is $E_a = \Delta^{\ddagger}H^\circ + RT$; voor
+een bimoleculaire gasreactie
+$E_a = \Delta^{\ddagger}H^\circ + 2RT$.
+\end{proposition}
+
+\begin{proof}
+$E_a = RT^2\,\dd\ln k/\dd T$, en $\ln k = \ln T + \Delta^{\ddagger}S^\circ/R - \Delta^{\ddagger}H^\circ/RT + $ const: $E_a =
+RT + \Delta^{\ddagger}H^\circ$ wanneer de activeringsparameters niet met $T$
+variëren. In oplossing is dat het resultaat. In de gasfase bevat de
+betrekking van Van 't Hoff voor $K^{\ddagger}$, geschreven in concentraties,
+de inwendige energie, $\Delta^{\ddagger}U^\circ = \Delta^{\ddagger}H^\circ - \Delta n^{\ddagger}RT$
+met $\Delta n^{\ddagger} = 1 - m$: voor $m = 2$ is $E_a = \Delta^{\ddagger}H^\circ + 2RT$.
+\end{proof}
+
+De \omterm{def:b3:rate-theories:activation}{activeringsentropie} leest de structuur van de overgangstoestand. Twee
+moleculen die tot één complex samengaan, verliezen translatie- en
+rotatievrijheid: $\Delta^{\ddagger}S^\circ$ is sterk negatief, $-50$ tot
+$-150$ \unit{J.K^{-1}.mol^{-1}}, voor associatieve stappen en cyclische
+overgangstoestanden. Een molecuul dat op weg naar dissociatie een binding
+losser maakt, wint vrijheid: $\Delta^{\ddagger}S^\circ > 0$.
+
+\begin{proposition}[Standaardfouten van een aangepaste rechte]\label{prop:b3:rate-theories:slope-uncertainty}
+Voor een kleinstekwadratenrechte $y = a + bx$ door $n$ punten waarvan de
+$y$ onafhankelijke fouten met dezelfde variantie dragen, geschat door $s^2 = \sum_i(y_i - a - bx_i)^2/(n - 2)$,
+hebben helling en afsnijding de standaardfouten
+\[
+  s_b = \frac{s}{\sqrt{\sum_i(x_i - \bar x)^2}}, \qquad
+  s_a = s\sqrt{\frac1n + \frac{\bar x^2}{\sum_i(x_i - \bar x)^2}} .
+\]
+\end{proposition}
+
+\begin{proof}
+$b = \sum_i(x_i - \bar x)y_i/S_{xx}$, met $S_{xx} = \sum_i(x_i - \bar x)^2$,
+is een lineaire combinatie van onafhankelijke $y_i$ met variantie $\sigma^2$: haar variantie is $\sigma^2\sum_i(x_i - \bar x)^2/S_{xx}^2 = \sigma^2/S_{xx}$.
+Evenzo is $a = \bar y - b\bar x$, en $\bar y$ en $b$ zijn ongecorreleerd
+(hun covariantie is
+$\sigma^2\sum_i(x_i - \bar x)/(nS_{xx}) = 0$), zodat $\operatorname{var}a = \sigma^2/n + \bar x^2\sigma^2/S_{xx}$. Het vervangen van $\sigma^2$
+door zijn schatting $s^2$ (de deler $n - 2$ houdt rekening met de twee
+aangepaste parameters, hier aangenomen) geeft het resultaat.
+\end{proof}
+
+\begin{method}[Een eyringgrafiek met onzekerheden]\label{met:b3:rate-theories:eyring-plot}
+\begin{enumerate}
+  \item Meet $k$ bij vijf of meer temperaturen, gespreid over 30 tot \qty{40}{K}.
+  \item Zet $y = \ln(k/T)$ uit tegen $x = 1/T$ en pas de kleinstekwadratenrechte $y = a + bx$ aan.
+  \item $\Delta^{\ddagger}H^\circ = -Rb$ en $\Delta^{\ddagger}S^\circ = R[a - \ln(k_B/h)]$ ($\ln(k_B/h) = 23.760$ met $k$ in
+        \unit{s^{-1}}).
+  \item Hun standaardfouten zijn $Rs_b$ en $Rs_a$; een
+        betrouwbaarheidsinterval van 95\,\% vermenigvuldigt ze met de $t$
+        van Student voor $n - 2$ vrijheidsgraden (3.18 voor vijf punten).
+  \item De afsnijding ligt ver buiten het gemeten bereik, bij $1/T = 0$: $\Delta^{\ddagger}S^\circ$
+        is altijd veel minder nauwkeurig dan $\Delta^{\ddagger}H^\circ$, en de
+        twee fouten zijn gecorreleerd.
+\end{enumerate}
+\end{method}
+
+\begin{omfigure}
+\begin{tikzpicture}
+\begin{axis}[width=0.74\linewidth, height=6.2cm, xmin=3.12, xmax=3.62, ymin=-12.8, ymax=-6.4,
+  axis lines=left, xlabel={$1000\,\mathrm K/T$}, ylabel={$\ln\bigl(k/(\mathrm s^{-1}\,\mathrm K^{-1})\bigr)$},
+  tick label style={font=\small}, label style={font=\small},
+  legend style={font=\scriptsize, draw=none, fill=white, fill opacity=0.85, text opacity=1,
+  at={(0.98,0.98)}, anchor=north east}, legend cell align=left]
+\addplot[omDef, thick] table[x=invT, y=fit] {figdata/out/bachelor-3-eyring-band-H.dat};
+\addplot[omThm, thick] table[x=invT, y=fit] {figdata/out/bachelor-3-eyring-band-D.dat};
+\addplot[omDef, thin, dashed, forget plot] table[x=invT, y=lo] {figdata/out/bachelor-3-eyring-band-H.dat};
+\addplot[omDef, thin, dashed, forget plot] table[x=invT, y=hi] {figdata/out/bachelor-3-eyring-band-H.dat};
+\addplot[omThm, thin, dashed, forget plot] table[x=invT, y=lo] {figdata/out/bachelor-3-eyring-band-D.dat};
+\addplot[omThm, thin, dashed, forget plot] table[x=invT, y=hi] {figdata/out/bachelor-3-eyring-band-D.dat};
+\addplot[only marks, mark=*, mark size=1.8pt, omDef, forget plot] table[x=invT, y=lnkT_H] {figdata/out/bachelor-3-eyring-points.dat};
+\addplot[only marks, mark=square*, mark size=1.7pt, omThm, forget plot] table[x=invT, y=lnkT_D] {figdata/out/bachelor-3-eyring-points.dat};
+\legend{middel met \ce{OCH3}, middel met \ce{OCD3}}
+\end{axis}
+\end{tikzpicture}
+
+{\small Eyringgrafieken van de snelheidsconstanten van het weekendprobleem
+(gegevens van het probleem) voor het geneesmiddel en zijn gedeutereerde
+analoog, met de kleinstekwadratenrechten en hun
+betrouwbaarheidsbanden van 95\,\% (gestreept, nauwelijks breder dan de
+rechten: de punten spreiden ongeveer 1\,\%). De rechten zijn evenwijdig
+binnen hun onzekerheid: dezelfde \omterm{def:b3:rate-theories:activation}{activeringsentropie}, activeringsenthalpieën
+die ongeveer \qty{5}{kJ/mol} verschillen.}
+\end{omfigure}
+
+\section{Kinetische isotoopeffecten}
+
+\begin{definition}[Kinetische isotoopeffecten]\label{def:b3:rate-theories:kie}
+Het \emph{kinetisch isotoopeffect}\index{kinetisch isotoopeffect} van een
+stap is de verhouding $k_{\mathrm{licht}}/k_{\mathrm{zwaar}}$ van zijn
+snelheidsconstanten voor twee \omterm{def:b3:rovibrational-spectroscopy:rotational-constant}{isotopologen}, meestal
+$k_{\mathrm H}/k_{\mathrm D}$. Het is een \emph{primair kinetisch
+isotoopeffect}\index{primair kinetisch isotoopeffect}
+wanneer de binding met het gesubstitueerde atoom in de stap gevormd of
+verbroken wordt, een \emph{secundair kinetisch
+isotoopeffect}\index{secundair kinetisch isotoopeffect}
+wanneer dat niet zo is.
+\end{definition}
+
+\begin{proposition}[Maximaal primair kinetisch isotoopeffect]\label{prop:b3:rate-theories:primary-kie}
+Als de strekvibratie van een binding X--H de reactiecoördinaat wordt,
+zodat haar \omterm{def:b3:quantum-model-systems:oscillator}{nulpuntsenergie} in de overgangstoestand verloren gaat terwijl
+alle andere bijdragen voor H en D dezelfde zijn, is
+\[
+  \frac{k_{\mathrm H}}{k_{\mathrm D}} = \exp\Bigl[\frac{hc(\tilde\nu_{\mathrm{XH}} - \tilde\nu_{\mathrm{XD}})}{2k_BT}\Bigr],
+  \qquad \frac{\tilde\nu_{\mathrm{XH}}}{\tilde\nu_{\mathrm{XD}}} = \sqrt{\frac{\mu_{\mathrm{XD}}}{\mu_{\mathrm{XH}}}} .
+\]
+\end{proposition}
+
+\begin{proof}
+Het \omterm{def:b3:computational-chemistry:pes}{potentiaalenergieoppervlak} is voor beide \omterm{def:b3:rovibrational-spectroscopy:rotational-constant}{isotopologen} hetzelfde (de
+elektronen zien het neutron niet). In de beginstof bevat de strekvibratie
+X--H
+$\frac12hc\tilde\nu_{\mathrm{XH}}$ aan \omterm{def:b3:quantum-model-systems:oscillator}{nulpuntsenergie}; in de
+overgangstoestand is deze trilling de reactiecoördinaat geworden en bevat
+ze niets. De barrière, gemeten tussen nulpuntsniveaus, is daardoor voor
+H lager met $\frac12hc\tilde\nu_{\mathrm{XH}}$ en voor D met $\frac12hc\tilde\nu_{\mathrm{XD}}$: $\Delta E_0^{\ddagger}(\mathrm D) -
+\Delta E_0^{\ddagger}(\mathrm H) = \frac12hc(\tilde\nu_{\mathrm{XH}} - \tilde\nu_{\mathrm{XD}})$, en de \omterm{thm:b3:rate-theories:eyring}{vergelijking van Eyring} geeft de
+verhouding wanneer de andere factoren wegvallen. Het golfgetal van een
+strekvibratie is evenredig met
+$1/\sqrt\mu$ (\cref{ch:b3:rovibrational-spectroscopy}).
+\end{proof}
+
+\begin{omfigure}
+\begin{tikzpicture}[font=\small, >=Stealth, x=1cm, y=1cm]
+  \draw[->] (-1.4,0) -- (-1.4,4.7) node[anchor=south] {$E$};
+  \draw[->] (-1.4,0) -- (10.6,0) node[anchor=north east] {reactiecoördinaat};
+  \draw[very thick, black!70] plot[smooth, tension=0.6] coordinates {(1.6,3.4) (2.1,1.6) (2.7,0.8)
+    (3.3,0.6) (3.9,0.8) (4.7,2.0) (5.5,3.6) (6.2,4.0) (6.9,3.6) (7.7,2.2) (8.5,1.2) (9.2,1.0)
+    (9.9,1.2) (10.4,1.7)};
+  \draw[black!50, dashed] (2.8,0.6) -- (3.8,0.6);
+  \draw[omDef, thick] (2.42,1.35) -- (4.2,1.35);
+  \draw[omThm, thick] (2.5,1.05) -- (4.05,1.05);
+  \node[omDef, font=\scriptsize, anchor=south] at (3.3,1.37) {C--H};
+  \node[omThm, font=\scriptsize, anchor=north] at (3.3,1.03) {C--D};
+  \draw[black, thick] (5.7,4.0) -- (6.7,4.0);
+  \draw[black!40, densely dotted] (0.0,4.0) -- (5.7,4.0);
+  \draw[black!40, densely dotted] (0.7,1.35) -- (2.42,1.35) (0.0,1.05) -- (2.5,1.05);
+  \draw[<->, omThm] (0.0,1.05) -- (0.0,4.0) node[pos=0.5, left, font=\scriptsize] {$E_0(\mathrm D)$};
+  \draw[<->, omDef] (0.7,1.35) -- (0.7,4.0) node[pos=0.5, right, font=\scriptsize] {$E_0(\mathrm H)$};
+  \node[anchor=south, align=center, font=\scriptsize] at (6.2,4.05) {overgangstoestand: de strekvibratie is\\ de reactiecoördinaat geworden};
+\end{tikzpicture}
+
+{\small Oorsprong van het primaire kinetische isotoopeffect. In de
+beginstof bevat de strekvibratie C--H meer \omterm{def:b3:quantum-model-systems:oscillator}{nulpuntsenergie} dan de
+strekvibratie C--D (niveaus boven de bodem van de put, gestreept); in de
+overgangstoestand is deze vibratie de reactiecoördinaat geworden, en
+bereiken beide \omterm{def:b3:rovibrational-spectroscopy:rotational-constant}{isotopologen} dezelfde top. De barrière is voor D groter, met
+het verschil van de nulpuntsenergieën.}
+\end{omfigure}
+
+\begin{omfigure}
+\begin{tikzpicture}
+\begin{axis}[width=0.7\linewidth, height=5.6cm, xmin=200, xmax=800, ymin=1, ymax=50,
+  ymode=log, axis lines=left, xlabel={$T$ / K}, ylabel={$k_{\mathrm H}/k_{\mathrm D}$ (maximum)},
+  tick label style={font=\small}, label style={font=\small}, log ticks with fixed point,
+  ytick={1,2,5,10,20,50}, legend style={font=\scriptsize, draw=none, at={(0.98,0.98)},
+  anchor=north east}, legend cell align=left]
+\addplot[omThm, thick] table[x=T, y=OH] {figdata/out/bachelor-3-kie.dat};
+\addplot[black!60, thick] table[x=T, y=NH] {figdata/out/bachelor-3-kie.dat};
+\addplot[omDef, thick] table[x=T, y=CH] {figdata/out/bachelor-3-kie.dat};
+\legend{O--H (\qty{3657}{cm^{-1}}), N--H (\qty{3337}{cm^{-1}}), C--H (\qty{2917}{cm^{-1}})}
+\end{axis}
+\end{tikzpicture}
+
+{\small Maximaal \omterm{def:b3:rate-theories:kie}{primair kinetisch isotoopeffect} als functie van de
+temperatuur voor het verlies van een strekvibratie C--H, N--H of O--H
+(\omterm{def:b3:rovibrational-spectroscopy:anharmonic}{fundamentele overgangen} van \ce{CH4}, \ce{NH3} en \ce{H2O}; de
+golfgetallen voor deuterium uit de \omterm{def:b3:quantum-model-systems:oscillator}{gereduceerde massa}'s). Bij
+\qty{298}{K} is het 6.5 voor C--H; het daalt naar 1 naarmate de
+temperatuur stijgt.}
+\end{omfigure}
+
+De maximale waarde voor C--H bij kamertemperatuur, ongeveer 7, is een
+ijkpunt. Waargenomen effecten van 2 tot 7 wijzen erop dat de binding C--H
+in de snelheidsbepalende stap verbroken wordt; kleinere waarden erop dat
+de overgangstoestand een deel van de strekvibratie behoudt
+(asymmetrische, vroege of late waterstofoverdrachten), of dat de stap niet
+de traagste is. Waarden die bij kamertemperatuur veel groter zijn dan 7,
+kunnen niet van nulpuntsenergieën komen: ze verraden \omterm{def:b3:quantum-model-systems:tunnelling}{tunneling}
+(\cref{ch:b3:quantum-model-systems}), die een deeltje met de dubbele massa
+veel minder vertoont. Secundaire effecten, afkomstig van veranderingen van
+de buigvibraties van bindingen C--H naast het reactiecentrum, zijn klein,
+meestal 0.8 tot 1.2 per deuteriumatoom; ze onderscheiden bijvoorbeeld een
+koolstofatoom dat trigonaal wordt (sp$^3$ naar sp$^2$, $k_{\mathrm H}/k_{\mathrm D} > 1$) van een dat
+tetraëdrisch wordt ($< 1$).
+
+\begin{method}[Een kinetisch isotoopeffect meten door competitie]\label{met:b3:rate-theories:kie}
+\begin{enumerate}
+  \item Voer de reactie uit op een mengsel van de twee \omterm{def:b3:rovibrational-spectroscopy:rotational-constant}{isotopologen}, of op
+        een molecuul met H op één plaats en D op een equivalente plaats.
+  \item Stop bij een lage omzetting en meet de verhouding van de producten
+        met H en met D door massaspectrometrie of NMR.
+  \item De productverhouding, gecorrigeerd voor de beginverhouding, is
+        $k_{\mathrm H}/k_{\mathrm D}$; beide \omterm{def:b3:rovibrational-spectroscopy:rotational-constant}{isotopologen} ondergaan precies
+        dezelfde omstandigheden, wat de methode nauwkeuriger maakt dan twee
+        afzonderlijke snelheidsmetingen.
+\end{enumerate}
+\end{method}
+
+\section{Reacties in oplossing}
+
+In een vloeistof vliegt een molecuul tussen twee botsingen niet vrij rond:
+het rammelt in een kooi van buren, waartegen het vele keren botst voordat
+het wegdiffundeert. Twee beginstoffen die elkaar ontmoeten, blijven
+gedurende vele botsingen samen: een ontmoeting.
+
+\begin{definition}[Diffusie- en activeringscontrole, kooieffect]\label{def:b3:rate-theories:diffusion}
+Een reactie in oplossing is
+\emph{diffusiegecontroleerd}\index{diffusiegecontroleerde reactie}
+wanneer de reactie bij elke ontmoeting snel is, zodat haar snelheid de
+snelheid is waarmee de beginstoffen naar elkaar toe diffunderen; ze is
+\emph{activeringsgecontroleerd}\index{activeringsgecontroleerde reactie}
+wanneer slechts een kleine fractie van de ontmoetingen tot reactie leidt.
+Het \emph{kooieffect}\index{kooieffect}
+is de opsluiting van een paar moleculen door het omringende oplosmiddel,
+waardoor ze tijdens één ontmoeting herhaaldelijk botsen.
+\end{definition}
+
+\begin{proposition}[Limiet van Smoluchowski]\label{prop:b3:rate-theories:smoluchowski}
+De snelheidsconstante van een \omterm{def:b3:rate-theories:diffusion}{diffusiegecontroleerde reactie} tussen bollen
+die reageren op de afstand $R^*$ is $k_d = 4\pi N_A(D_{\mathrm A} + D_{\mathrm B})R^*$. Met de betrekking van
+Stokes-Einstein
+$D = k_BT/6\pi\eta a$ voor bollen met straal $a$ in een oplosmiddel met
+viscositeit $\eta$, en $R^* = a_{\mathrm A} + a_{\mathrm B}$ met $a_{\mathrm A} = a_{\mathrm B}$, is
+\[
+  k_d = \frac{8RT}{3\eta} .
+\]
+\end{proposition}
+
+\begin{proof}[Gedeeltelijk bewijs]
+Leg A vast in de oorsprong; B diffundeert met de relatieve
+diffusiecoëfficiënt $D =
+D_{\mathrm A} + D_{\mathrm B}$ en wordt vernietigd bij $r = R^*$. In de
+stationaire toestand is de radiale flux door elke bol dezelfde, $J = 4\pi r^2D\,\dd c/\dd r$ (wet van
+Fick, uit de natuurkunde); integreren van $R^*$, waar $c = 0$, tot
+oneindig, waar $c = c_{\mathrm B}$, geeft
+$J = 4\pi DR^*c_{\mathrm B}$, de snelheid per molecuul A. Met
+Stokes-Einstein (aangenomen) is
+$(D_{\mathrm A} + D_{\mathrm B})R^* = \frac{k_BT}{6\pi\eta}(\frac{1}{a} + \frac1a)(2a) = \frac{2k_BT}{3\pi\eta}$, en $k_d = 4\pi N_A \times
+\frac{2k_BT}{3\pi\eta} = 8RT/3\eta$.
+\end{proof}
+
+\begin{example}[Snelheidslimieten in water en in hexaan]\label{ex:b3:rate-theories:speed-limit}
+% ledger: visc:H2O.25C, visc:hexane.25C
+Bij \qty{298.15}{K} geeft water ($\eta = \qty{0.890}{mPa.s}$) $k_d = 8 \times 8.314 \times
+298.15/(3 \times \num{0.890e-3}) = \qty{7.4e6}{m^3.mol^{-1}.s^{-1}} = \qty{7.4e9}{L.mol^{-1}.s^{-1}}$; hexaan
+($\eta = \qty{0.298}{mPa.s}$) \qty{2.2e10}{L.mol^{-1}.s^{-1}}. Geen enkele
+bimoleculaire reactie tussen neutrale moleculen van gewone grootte is
+sneller; gemeten constanten in de buurt van deze waarden (het uitdoven
+van aangeslagen toestanden, de recombinatie van radicalen) zijn
+\omterm{def:b3:rate-theories:diffusion}{diffusiegecontroleerd}. Ionen met tegengestelde lading trekken elkaar aan
+en kunnen sneller gaan.
+\end{example}
+
+Ionen in oplossing voegen een elektrostatische bijdrage toe aan de
+activering: de overgangstoestand van twee ionen heeft lading $z_{\mathrm A} + z_{\mathrm B}$, en zijn
+activiteitscoëfficiënt verschilt van het product van de hunne.
+
+\begin{definition}[Kinetisch zouteffect]\label{def:b3:rate-theories:salt}
+Het \emph{kinetisch zouteffect}\index{kinetisch zouteffect} is de
+verandering van de snelheidsconstante van een reactie tussen ionen met de
+ionsterkte van de oplossing.
+\end{definition}
+
+\begin{proposition}[Vergelijking van Brønsted-Bjerrum]\label{prop:b3:rate-theories:bronsted-bjerrum}
+Voor een stap tussen ionen met ladingen $z_{\mathrm A}$ en $z_{\mathrm B}$ in
+verdunde waterige oplossing is
+\[
+  \log k = \log k_0 + 2Az_{\mathrm A}z_{\mathrm B}\sqrt I,
+\]
+waarin $k_0$ de snelheidsconstante bij ionsterkte nul is.
+\end{proposition}
+
+\begin{proof}
+In de theorie van de overgangstoestand wordt het evenwicht met het \omterm{def:b3:rate-theories:activated-complex}{geactiveerde
+complex} geschreven met activiteiten: $[\ce{AB^{\ddagger}}] = K^{\ddagger}[\mathrm A][\mathrm B]\gamma_{\mathrm A}\gamma_{\mathrm B}/\gamma^{\ddagger}$, dus $k = k_0\gamma_{\mathrm A}\gamma_{\mathrm B}/\gamma^{\ddagger}$.
+Met de limietwet: $\log(\gamma_{\mathrm A}\gamma_{\mathrm B}/\gamma^{\ddagger}) = -A\sqrt I[z_{\mathrm A}^2 + z_{\mathrm B}^2 - (z_{\mathrm A} + z_{\mathrm B})^2] =
+2Az_{\mathrm A}z_{\mathrm B}\sqrt I$.
+\end{proof}
+
+Ionen met hetzelfde teken reageren sneller wanneer er zout toegevoegd
+wordt (de ionenatmosfeer schermt hun afstoting af), ionen met
+tegengestelde tekens trager, en een neutrale beginstof vertoont geen
+primair zouteffect: een grafiek van $\log k$ tegen $\sqrt I$ bij lage
+ionsterkte meet het product van de ladingen van de reagerende deeltjes.
+
+\begin{method}[Wat activeringsparameters over een mechanisme zeggen]\label{met:b3:rate-theories:mechanism-evidence}
+\begin{enumerate}
+  \item $\Delta^{\ddagger}S^\circ$ sterk negatief: een associatieve stap,
+        een geordende of cyclische overgangstoestand, of een die het
+        oplosmiddel ordent (ontstaan van lading); positief: een
+        dissociatieve stap.
+  \item Een primaire $k_{\mathrm H}/k_{\mathrm D}$ van 2 tot 7: de binding
+        met H wordt in de snelheidsbepalende stap verbroken; boven ongeveer
+        10 bij kamertemperatuur: \omterm{def:b3:quantum-model-systems:tunnelling}{tunneling}.
+  \item De helling van $\log k$ tegen $\sqrt I$: het product $z_{\mathrm A}z_{\mathrm B}$ van de
+        ladingen die elkaar in de snelheidsbepalende stap ontmoeten.
+  \item Een snelheidsconstante rond $10^{10}$~\unit{L.mol^{-1}.s^{-1}} die varieert als $T/\eta$:
+        diffusiecontrole.
+\end{enumerate}
+\end{method}
+
+\begin{inthelab}[Een dubbelwandige cel voor een eyringstudie]
+De reactie wordt gevolgd via haar absorbantie in een cel van een
+spectrofotometer waarvan de mantel gevoed wordt door een thermostaatbad;
+een thermokoppel in een referentiecel controleert de temperatuur tot op
+\qty{0.1}{K}. Vijf tot zeven temperaturen, elk in drievoud gemeten, geven
+een eyringgrafiek; de oplossingen worden vóór het mengen in de houder op
+temperatuur gebracht, want een reactie die bij de verkeerde temperatuur
+start, vertekent de eerste punten.
+\end{inthelab}
+
+\begin{history}[Eyring, Evans en Polanyi, 1935]
+In 1935 publiceerden Henry Eyring, in Princeton, en Meredith Gwynne Evans
+en Michael Polanyi, in Manchester, onafhankelijk van elkaar de theorie van
+het \omterm{def:b3:rate-theories:activated-complex}{geactiveerde complex}. Eyring had in 1931 met Polanyi in Berlijn het
+eerste \omterm{def:b3:computational-chemistry:pes}{potentiaalenergieoppervlak} voor $\ce{H + H2}$ berekend, met een
+semi-empirische methode van het soort dat voor de figuur van dit hoofdstuk
+gebruikt werd. De theorie werd met argwaan ontvangen: een tijdschrift
+wees het artikel van Eyring eerst af als ondeugdelijk, en het werd pas
+gepubliceerd nadat andere natuurkundigen ervoor ingestaan hadden.
+\end{history}
+
+\section{Oefeningen}
+
+\begin{exercise}[$\star$]\label{exo:b3:rate-theories:1}
+% ledger: kin:NO+O3.A
+Neem voor $\ce{NO + O3 -> NO2 + O2}$ $\sigma = \qty{0.43}{nm^2}$ (gegevens van de oefening). Bereken $\bar v_{\mathrm{rel}}$
+bij \qty{298}{K} ($\mu = \qty{18.46}{u}$), de pre-exponentiële factor
+volgens de botsingstheorie, en de \omterm{def:b3:rate-theories:collision}{sterische factor}, gegeven de gemeten $A = \qty{2.07e-12}{cm^3.s^{-1}}$ per molecuul.
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:rate-theories:2}
+Een reactie in oplossing heeft $E_a = \qty{75.0}{kJ/mol}$ rond \qty{298}{K}.
+Hoe groot is $\Delta^{\ddagger}H^\circ$? En voor een bimoleculaire
+gasreactie met dezelfde $E_a$?
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:rate-theories:3}
+Voorspel het teken van $\Delta^{\ddagger}S^\circ$ voor: een
+diels-aldercycloadditie; het monomoleculaire verlies van \ce{N2} uit een
+azoverbinding; een $\mathrm{S_N2}$-reactie tussen twee neutrale moleculen
+die twee ionen vormt in een polair oplosmiddel.
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:rate-theories:4}
+% ledger: visc:H2O.25C, visc:hexane.25C
+Bereken de diffusiegecontroleerde snelheidsconstante in water en in hexaan
+bij \qty{298.15}{K}. Welk oplosmiddel laat snellere ontmoetingen toe, en
+waarom?
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:rate-theories:5}
+Een eersteordereactie heeft $k = \qty{1.00e-3}{s^{-1}}$ bij \qty{298.15}{K} en \qty{1.00e-2}{s^{-1}} bij
+\qty{318.15}{K}. Bereken $\Delta^{\ddagger}H^\circ$ en $\Delta^{\ddagger}S^\circ$, en ter vergelijking $E_a$.
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:rate-theories:6}
+% ledger: vib:H2O.sym
+Bereken het maximale primaire isotoopeffect voor de overdracht van een
+proton O--H bij
+\qty{298}{K} ($\tilde\nu_{\mathrm{OH}} = \qty{3657}{cm^{-1}}$, \omterm{def:b3:quantum-model-systems:oscillator}{gereduceerde massa}'s met O = 16, H = 1, D = 2).
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:rate-theories:7}
+% ledger: vib:CH4.nu1, vib:CD4.nu1
+Een enzymatische waterstofoverdracht vanaf koolstof vertoont $k_{\mathrm H}/k_{\mathrm D} = 40$ bij \qty{298}{K}. Vergelijk
+met het maximum uit nulpuntsenergieën ($\tilde\nu = 2917$ en \qty{2109}{cm^{-1}}) en trek een besluit.
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:rate-theories:8}
+Voorspel het effect van een verhoging van de ionsterkte van 0 naar 0.010
+op de snelheid van: de oxidatie van \ce{I-} door \ce{S2O8^{2-}}
+(snelheidsbepalende stap tussen deze twee ionen); de reactie van
+\ce{CH3COOC2H5} met \ce{OH-}; de reactie van $\ce{[Co(NH3)5Br]^{2+}}$ met \ce{OH-}.
+Geef de factor waar er een is ($A = 0.51$).
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:rate-theories:9}
+De reactie $\ce{F + H2 -> HF + H}$ is sterk exotherm. Waar ligt haar
+barrière op het \omterm{def:b3:computational-chemistry:pes}{potentiaalenergieoppervlak}? Welke vorm van energie,
+toegevoerd aan de beginstoffen, bevordert de omgekeerde reactie het best?
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:rate-theories:10}
+Een kleinstekwadratenaanpassing van $\ln(k/T)$ tegen $1/T$ over vijf punten geeft $b = -7446$ K
+met $s_b = \qty{31}{K}$ en $a = 16.528$ met $s_a = 0.103$. Geef $\Delta^{\ddagger}H^\circ$ en $\Delta^{\ddagger}S^\circ$ met
+hun standaardfouten en betrouwbaarheidsintervallen van 95\,\% ($t = 3.18$).
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:rate-theories:11}
+Toon aan, vertrekkend van de \omterm{thm:b3:rate-theories:eyring}{vergelijking van Eyring}, dat $E_a = \Delta^{\ddagger}H^\circ + RT$ voor een
+monomoleculaire stap en dat $A = \eu\,(k_BT/h)\eu^{\Delta^{\ddagger}S^\circ/R}$. Leid $A$ af voor $\Delta^{\ddagger}S^\circ = 0$ bij
+\qty{298}{K}, en vergelijk met de $10^{13}$ tot $10^{14}$~\unit{s^{-1}} van
+eenvoudige bindingsbreuken.
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:rate-theories:12}
+Pas de \omterm{def:b3:rate-theories:tst}{overgangstoestandstheorie} toe op twee structuurloze atomen A en B
+waarvan het \omterm{def:b3:rate-theories:activated-complex}{geactiveerde complex} een diatomisch molecuul is met
+bindingslengte $d$ (geen vibratie meer over na het wegnemen van de
+reactiecoördinaat, rotatie met $I = \mu d^2$). Toon aan dat ze de
+snelheidsconstante van de botsingstheorie geeft met $\sigma = \pi d^2$.
+\end{exercise}
+
+\section{Probleem: een zwaarder geneesmiddel}
+
+\begin{problem}[{Weekendprobleem --- een zwaarder geneesmiddel:
+nulpuntsenergieën van de strekvibraties C--H en C--D, het maximale
+isotoopeffect bij lichaamstemperatuur, de halveringstijd van een
+gedeutereerd geneesmiddel, en een eyringanalyse van beide verbindingen}]
+\label{pb:b3:rate-theories:1}
+% ledger: vib:CH4.nu1, vib:CD4.nu1, imass:H1, imass:H2, hist4:deut.2017
+Een geneesmiddel wordt langs twee wegen uit het lichaam verwijderd: 75\,\%
+van zijn klaring door de O-demethylering van zijn twee \ce{OCH3}-groepen,
+waarin de verbreking van een binding C--H snelheidsbepalend is, en 25\,\%
+langs wegen die deze bindingen niet raken; zijn halveringstijd is
+\qty{5.0}{h} (gegevens van het probleem). Zijn analoog draagt twee
+\ce{OCD3}-groepen. Modellen voor de strekvibraties C--H en C--D: de
+symmetrische strekvibraties van \ce{CH4}
+(\qty{2917}{cm^{-1}}) en \ce{CD4} (\qty{2109}{cm^{-1}}). Snelheidsconstanten
+van de eerste orde van de demethyleringsstap, gemeten met een preparaat
+van leverenzymen (gegevens van het probleem):
+\begin{center}\small
+\begin{tabular}{lccccc}
+\hline
+$T$ / K & 278.15 & 288.15 & 298.15 & 308.15 & 318.15 \\
+$k_{\mathrm H}$ / \unit{s^{-1}} & 0.00989 & 0.0263 & 0.0632 & 0.150 & 0.328 \\
+$k_{\mathrm D}$ / \unit{s^{-1}} & 0.00117 & 0.00333 & 0.00874 & 0.0219 & 0.0503 \\ \hline
+\end{tabular}
+\end{center}
+
+\medskip\noindent\textbf{Deel I --- Nulpuntsenergieën.}
+\begin{enumerate}
+  \item Bereken de \omterm{def:b3:quantum-model-systems:oscillator}{gereduceerde massa}'s van C--H en C--D (C = 12, H = 1.00783,
+        D = 2.01410).
+  \item Voorspel het golfgetal van C--D uit dat van C--H en vergelijk met de
+        gemeten \qty{2109}{cm^{-1}}.
+  \item Bereken de nulpuntsenergieën van de twee strekvibraties en hun
+        verschil, in \unit{cm^{-1}} en \unit{kJ/mol} (gemeten golfgetallen).
+  \item Wat gebeurt er in de overgangstoestand met de strekvibratie van de
+        binding die verbroken wordt?
+  \item Leid het verschil tussen de barrières voor H en D af.
+\end{enumerate}
+
+\medskip\noindent\textbf{Deel II --- Het isotoopeffect.}
+\begin{enumerate}[resume]
+  \item Bereken de maximale $k_{\mathrm H}/k_{\mathrm D}$ bij \qty{37}{\celsius}.
+  \item Bereken ze bij \qty{25}{\celsius}.
+  \item Waarom heet dit een maximum?
+  \item Dragen de twee andere deuteriumatomen van elke \ce{CD3}-groep veel bij?
+  \item Wat zegt een gemeten waarde rond 7 bij \qty{25}{\celsius} over het
+        mechanisme?
+\end{enumerate}
+
+\medskip\noindent\textbf{Deel III --- Halveringstijden.}
+\begin{enumerate}[resume]
+  \item Hoe hangt de halveringstijd af van de totale klaringsconstante?
+  \item Schrijf de totale snelheidsconstante van het H-middel als de som
+        van zijn twee wegen, in fracties.
+  \item Met hoeveel wordt de demethyleringsweg vertraagd in het D-middel?
+  \item Bereken $k_{\mathrm{totaal}}(\mathrm D)/k_{\mathrm{totaal}}(\mathrm H)$.
+  \item Bereken de halveringstijd van het D-middel.
+  \item Bereken de verhouding van de halveringstijden.
+  \item Hoe groot zou ze zijn als de hele klaring via demethylering verliep?
+  \item Wat verandert een langere halveringstijd voor de patiënt?
+\end{enumerate}
+
+\medskip\noindent\textbf{Deel IV --- Een eyringanalyse.}
+\begin{enumerate}[resume]
+  \item Welke grafiek van de gegevens is volgens de \omterm{thm:b3:rate-theories:eyring}{vergelijking van Eyring}
+        lineair?
+  \item Pas ze aan voor het H-middel: $\Delta^{\ddagger}H^\circ$ en $\Delta^{\ddagger}S^\circ$ met hun standaardfouten.
+  \item Doe hetzelfde voor het D-middel.
+  \item Bereken $\Delta\Delta^{\ddagger}H^\circ = \Delta^{\ddagger}H^\circ(\mathrm D) - \Delta^{\ddagger}H^\circ(\mathrm H)$ en de standaardfout ervan.
+  \item Is het gelijk aan het verschil in \omterm{def:b3:quantum-model-systems:oscillator}{nulpuntsenergie} van vraag 3?
+  \item Wat zeggen de twee activeringsentropieën?
+  \item Formuleer het resultaat: de voorspelde verhouding van de
+        halveringstijden van de twee geneesmiddelen bij \qty{37}{\celsius}.
+\end{enumerate}
+\end{problem}

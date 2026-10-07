@@ -1,0 +1,684 @@
+\chapter{Química computacional: Hartree--Fock e DFT}\label{ch:b3:computational-chemistry}
+
+Acredita-se que o íon hidreto de hélio, \ce{HeH+}, tenha sido a primeira
+molécula formada quando o Universo jovem esfriou: um átomo de hélio
+segurando um próton. Ele foi produzido em um tubo de descarga de laboratório
+em 1925, mas procurado no espaço sem sucesso durante décadas, até que sua
+raia rotacional foi detectada em uma nebulosa planetária em 2019. Àquela
+altura, seu comprimento de ligação, suas frequências vibracionais e os
+comprimentos de onda de suas raias eram conhecidos havia muito tempo ---
+por cálculo. Um programa de computador que resolve, de modo aproximado, a
+\omterm{thm:b3:quantum-model-systems:schrodinger}{equação de Schrödinger} dos elétrons pode prever a forma, a energia e o
+espectro de uma molécula que ninguém pôs em um frasco. Este capítulo explica
+como funcionam esses programas, da separação entre núcleos e elétrons à
+teoria de Hartree--Fock e à \omterm{def:b3:computational-chemistry:dft}{teoria do funcional da densidade}, e para que
+seus números merecem ou não confiança.
+
+\begin{recall}
+O \cref{ch:b3:quantum-model-systems} deu o hamiltoniano, a \omterm{thm:b3:quantum-model-systems:schrodinger}{equação de
+Schrödinger} e o átomo de hidrogênio; o \cref{ch:b3:many-electron-atoms}, o
+\omterm{def:b3:many-electron-atoms:slater}{determinante de Slater} e a \omterm{def:b3:many-electron-atoms:exchange}{integral de troca}. O volume do 2.º ano construiu
+orbitais moleculares como combinações lineares de orbitais atômicos (CLOA),
+com integrais de sobreposição, de Coulomb e de ressonância e um determinante
+secular, e resolveu o método de Hückel; usou também espectros de fotoelétrons
+para ver as energias orbitais.
+\end{recall}
+
+\begin{omfigure}
+\includegraphics[width=0.6\linewidth]{images/book4/ai/b3-03-cluster.jpg}
+
+{\small Um cluster de computação: fileiras de servidores nos quais roda hoje
+a maioria dos cálculos de química quântica, muitas vezes por horas ou dias por molécula.}
+\end{omfigure}
+
+\section{Born--Oppenheimer e a superfície de energia potencial}
+
+O hamiltoniano de uma molécula contém as energias cinéticas de seus núcleos
+e elétrons e todas as suas interações coulombianas. Os núcleos são pelo
+menos 1836 vezes mais pesados que os elétrons: para as mesmas forças, eles
+se movem muito mais devagar, e os elétrons se ajustam quase instantaneamente
+a cada posição dos núcleos.
+
+\begin{definition}[Aproximação de Born--Oppenheimer]\label{def:b3:computational-chemistry:born-oppenheimer}
+Na \emph{aproximação de Born--Oppenheimer}\index{aproximacao de Born--Oppenheimer@aproximação de Born--Oppenheimer},
+a \omterm{thm:b3:quantum-model-systems:schrodinger}{equação de Schrödinger} eletrônica é resolvida para núcleos
+mantidos fixos nas posições $\mathbf R$,
+\[
+\hat H_{\mathrm{el}}\,\psi_{\mathrm{el}}(\mathbf r;\mathbf R) =
+E_{\mathrm{el}}(\mathbf R)\,\psi_{\mathrm{el}}(\mathbf r;\mathbf R),
+\]
+e os núcleos se movem então no potencial $E_{\mathrm{el}}(\mathbf R) +
+V_{\mathrm{nn}}(\mathbf R)$, a energia eletrônica mais a repulsão entre os
+núcleos.
+\end{definition}
+
+\begin{definition}[Superfície de energia potencial, ponto estacionário, otimização de geometria]\label{def:b3:computational-chemistry:pes}
+A \emph{superfície de energia potencial}\index{superficie de energia potencial@superfície de energia potencial} (SEP) de
+uma molécula é a função $U(\mathbf R) = E_{\mathrm{el}}(\mathbf R) +
+V_{\mathrm{nn}}(\mathbf R)$ de suas coordenadas nucleares. Um \emph{ponto
+estacionário}\index{ponto estacionario@ponto estacionário} é um ponto em que todas as derivadas primeiras de $U$
+se anulam; um mínimo é uma \emph{geometria de equilíbrio}\index{geometria de equilibrio@geometria de equilíbrio}.
+Procurar um mínimo a partir de uma estrutura inicial, seguindo as
+forças $-\nabla U$, é uma \emph{otimização de geometria}\index{otimizacao de geometria@otimização de geometria}.
+\end{definition}
+
+Para uma molécula diatômica, a SEP é uma curva $U(R)$; para uma triatômica,
+uma função de três coordenadas; para $N$ átomos, de $3N - 6$. A massa dos
+núcleos não entra em $\hat H_{\mathrm{el}}$: \ce{H2}, \ce{HD} e \ce{D2} compartilham
+a mesma SEP, o mesmo comprimento de ligação e a mesma \omterm{def:b3:quantum-model-systems:oscillator}{constante de força}, e
+diferem apenas no modo como os núcleos se movem sobre ela (\omterm{def:b3:quantum-model-systems:oscillator}{energia do ponto
+zero}, \cref{ch:b3:quantum-model-systems}).
+
+\begin{proposition}[Frequências a partir da hessiana]\label{prop:b3:computational-chemistry:hessian}
+Perto de um mínimo, $U \approx U_0 + \frac12\sum_{ij}H_{ij}\,\delta q_i\,\delta q_j$, com
+a hessiana $H_{ij} = \partial^2U/\partial q_i\partial q_j$. Em coordenadas
+ponderadas pelas massas, $\delta q_i\sqrt{m_i}$, os \omterm{def:b3:quantum-model-systems:operator}{autovalores} $\lambda_k$ da
+hessiana ponderada pelas massas dão as frequências angulares harmônicas $\omega_k =
+\sqrt{\lambda_k}$ dos modos normais. Em um mínimo, todos os $\lambda_k$ são
+positivos (seis, ou cinco para uma molécula linear, são nulos: translações e
+rotações); em um ponto de sela de primeira ordem, exatamente um é negativo.
+\end{proposition}
+
+\begin{proof}[Demonstração parcial]
+Para uma diatômica, $U \approx U_0 + \frac12k(R - R_e)^2$ com $k = U''(R_e)$, e
+o oscilador do \cref{ch:b3:quantum-model-systems} dá $\omega =
+\sqrt{k/\mu}$. Em geral, as equações clássicas $m_i\ddot q_i =
+-\sum_jH_{ij}q_j$ tornam-se, nas coordenadas ponderadas pelas massas $x_i = \sqrt{m_i}q_i$,
+$\ddot{\mathbf x} = -\tilde H\mathbf x$ com a matriz simétrica $\tilde H_{ij} =
+H_{ij}/\sqrt{m_im_j}$; seus autovetores oscilam independentemente a
+$\sqrt{\lambda_k}$. Um $\lambda_k$ negativo dá uma frequência imaginária: nessa
+direção a energia diminui, é um máximo. Os modos normais do
+\cref{ch:b3:group-theory-applied} são esses autovetores.
+\end{proof}
+
+\begin{omfigure}
+\begin{tikzpicture}[font=\small, scale=0.95]
+  \fill[omDef!8] (0,0) ellipse (1.9 and 1.15);
+  \foreach \s in {1.0,0.75,0.5,0.25}{\draw[omDef!70] (0,0) ellipse ({1.9*\s} and {1.15*\s});}
+  \fill[omThm!8] (6,0.4) ellipse (1.6 and 1.0);
+  \foreach \s in {1.0,0.75,0.5,0.25}{\draw[omThm!70] (6,0.4) ellipse ({1.6*\s} and {1.0*\s});}
+  \draw[gray] (2.1,-0.15) .. controls (2.9,0.55) and (3.4,0.55) .. (4.3,0.35);
+  \draw[gray] (2.2,0.9) .. controls (3.0,0.35) and (3.5,0.35) .. (4.1,1.2);
+  \node[omsaddle] at (3.15,0.42) {};
+  \draw[ompath] (0,0) .. controls (1.8,0.6) and (2.4,0.5) .. (3.15,0.42) .. controls (4.0,0.35) and (4.8,0.4) .. (6,0.4);
+  \node[anchor=north] at (0,-1.25) {mínimo A (reagentes)};
+  \node[anchor=north] at (6,-0.7) {mínimo B (produtos)};
+  \node[anchor=south] at (3.15,1.25) {ponto de sela};
+  \draw[->, gray] (3.15,1.25) -- (3.15,0.6);
+  \fill (0,0) circle (1.2pt) (6,0.4) circle (1.2pt);
+  \draw[->] (-2.3,-2.2) -- (8.2,-2.2) node[right] {$q_1$};
+  \draw[->] (-2.3,-2.2) -- (-2.3,1.8) node[above] {$q_2$};
+\end{tikzpicture}
+
+{\small Uma \omterm{def:b3:computational-chemistry:pes}{superfície de energia potencial} vista de cima, como um mapa de
+curvas de nível sobre duas coordenadas nucleares (esquema). Dois mínimos são
+ligados, através de um ponto de sela (cruz), pelo caminho de menor energia
+(tracejado): o caminho de energia mínima estudado no \cref{ch:b3:rate-theories}.}
+\end{omfigure}
+
+\section{O princípio variacional}
+
+A \omterm{thm:b3:quantum-model-systems:schrodinger}{equação de Schrödinger} eletrônica não pode ser resolvida exatamente para
+nenhuma molécula com mais de um elétron. As aproximações são julgadas por um
+único teorema.
+
+\begin{theorem}[O princípio variacional]\label{thm:b3:computational-chemistry:variational}
+Para toda função tentativa normalizável $\phi$ que satisfaz as condições de
+contorno do problema,
+\[
+E[\phi] = \frac{\langle\phi|\hat H|\phi\rangle}{\langle\phi|\phi\rangle} \ge E_0,
+\]
+onde $E_0$ é o menor \omterm{def:b3:quantum-model-systems:operator}{autovalor} de $\hat H$; a igualdade só vale se $\phi$
+for uma \omterm{def:b3:quantum-model-systems:operator}{autofunção} do estado fundamental. É o \emph{princípio
+variacional}\index{principio variacional@princípio variacional}.
+\end{theorem}
+
+\begin{proof}
+Expanda $\phi = \sum_nc_n\psi_n$ nas \omterm{def:b3:quantum-model-systems:operator}{autofunções} ortonormais de $\hat H$
+(\cref{thm:b3:quantum-model-systems:hermitian-real}). Então $\langle\phi|\hat
+H|\phi\rangle = \sum_n|c_n|^2E_n \ge E_0\sum_n|c_n|^2 = E_0\langle\phi|\phi\rangle$,
+pois todo $E_n \ge E_0$; a igualdade exige $c_n = 0$ sempre que $E_n > E_0$.
+\end{proof}
+
+Quanto mais baixa a energia de uma função tentativa, melhor ela é; todo
+parâmetro ajustável é fixado minimizando $E$.
+
+\begin{proposition}[O hélio com uma carga blindada]\label{prop:b3:computational-chemistry:helium-zeta}
+Para o hélio, a função tentativa $\phi = \eu^{-\zeta(r_1 + r_2)}$ (em unidades atômicas:
+comprimentos em $a_0$, energias em $E_h$) dá $E(\zeta) = \zeta^2 - \frac{27}{8}\zeta$,
+mínima para $\zeta = \frac{27}{16}$, com $E = -(\frac{27}{16})^2 E_h =
+\qty{-2.8477}{\hartree}$.
+\end{proposition}
+
+\begin{proof}
+Para um elétron em $\eu^{-\zeta r}$, $\langle T\rangle = \zeta^2/2$ e
+$\langle 1/r\rangle = \zeta$; a repulsão de dois elétrons na mesma função $1s$
+vale $\frac58\zeta$ (uma integral clássica, admitida). Logo $E = 2\cdot\frac12
+\zeta^2 - 2\cdot2\zeta + \frac58\zeta = \zeta^2 - \frac{27}{8}\zeta$, e $\dd E/\dd
+\zeta = 0$ dá $\zeta = 27/16 = 1.6875$.
+\end{proof}
+
+\begin{example}[Quão boa ela é?]\label{ex:b3:computational-chemistry:helium}
+% ledger: ie:He, ie4:He2, const:Eh, const:eV
+A energia total do hélio é o oposto da soma de suas duas energias de ionização,
+$-(24.5874 + 54.4178)\,\unit{eV} = \qty{-2.9034}{\hartree}$. A função de
+um parâmetro fica \qty{0.056}{\hartree} (\qty{1.5}{eV}) alta demais: cada
+elétron vê um núcleo blindado pelo outro até $Z_{\mathrm{eff}} = 1.69$, como
+sugerem as regras de Slater, mas os elétrons também se esquivam um do outro
+de um modo que nenhum produto de duas funções consegue descrever.
+\end{example}
+
+\begin{proposition}[Variação linear]\label{prop:b3:computational-chemistry:linear-variation}
+Para uma função tentativa $\phi = \sum_{i=1}^n c_i\chi_i$ construída sobre $n$ funções fixas,
+com $H_{ij} = \langle\chi_i|\hat H|\chi_j\rangle$ e $S_{ij} = \langle\chi_i|\chi_j
+\rangle$, os valores estacionários de $E$ são as raízes de $\det(H - ES) = 0$, e
+a menor raiz é um limite superior para $E_0$.
+\end{proposition}
+
+\begin{proof}
+$E\sum_{ij}c_ic_jS_{ij} = \sum_{ij}c_ic_jH_{ij}$ (coeficientes reais). Derive
+em relação a $c_k$ e imponha $\partial E/\partial c_k = 0$: $\sum_j(H_{kj} -
+ES_{kj})c_j = 0$ para todo $k$. Uma solução não nula exige um determinante
+nulo. A menor raiz é $E[\phi]$ para seu autovetor, logo $\ge E_0$.
+\end{proof}
+
+O método de Hückel do volume do 2.º ano é esta proposição com orbitais $p$
+e $H_{ij}$ empíricos. Todos os métodos a seguir são a mesma ideia com
+funções melhores e elementos de matriz melhores.
+
+\section{Conjuntos de base}
+
+\begin{definition}[Conjunto de base, base mínima, orbitais do tipo Slater e do tipo gaussiano]\label{def:b3:computational-chemistry:basis}
+Um \emph{conjunto de base}\index{conjunto de base} é o conjunto das funções fixas $\chi_i$,
+centradas nos átomos, a partir das quais se constroem os orbitais
+moleculares. Uma \emph{base mínima}\index{base minima@base mínima} tem uma função por
+orbital atômico ocupado (um $1s$ para H, cinco para C). Um \emph{orbital do tipo
+Slater}\index{orbital do tipo Slater} (STO) tem a forma radial
+$r^{n-1}\eu^{-\zeta r}$; um \emph{orbital do tipo gaussiano}\index{orbital do tipo gaussiano}
+(GTO) tem a forma $\eu^{-\alpha r^2}$ multiplicada por um polinômio em $x$, $y$,
+$z$. Uma \emph{função gaussiana contraída}\index{funcao gaussiana contraida@função gaussiana contraída}
+é uma combinação fixa $\sum_kd_k\,\eu^{-\alpha_kr^2}$ de gaussianas primitivas.
+\end{definition}
+
+As funções de Slater têm a forma correta (um bico no núcleo, uma cauda
+exponencial), mas suas integrais de dois elétrons sobre vários centros são
+muito custosas; as funções gaussianas têm a forma errada, mas o produto de
+duas gaussianas em centros diferentes é uma gaussiana centrada em um ponto
+entre eles, de modo que toda integral se reduz a uma fórmula fechada. As
+contrações tiram o melhor dos dois mundos: na base STO-3G, cada função de
+Slater é substituída por uma soma fixa de três gaussianas ajustadas a ela.
+
+\begin{example}[A função STO-3G do hidrogênio]\label{ex:b3:computational-chemistry:sto3g}
+% ledger: bse:H.sto3g.a1, bse:H.sto3g.a2, bse:H.sto3g.a3, bse:sto3g.c1, bse:sto3g.c2, bse:sto3g.c3
+A função $1s$ do hidrogênio em STO-3G é $0.15433\,g(3.42525) + 0.53533\,
+g(0.62391) + 0.44463\,g(0.16886)$, onde $g(\alpha)$ é a gaussiana normalizada
+$(2\alpha/\pi)^{3/4}\eu^{-\alpha r^2}$ (expoentes em $a_0^{-2}$). Ela imita uma
+função de Slater de expoente $\zeta = 1.24$ --- um átomo de hidrogênio
+ligeiramente comprimido, como ele está nas moléculas. Sua sobreposição com a
+função $1s$ exata de mesmo expoente é $0.9998$; só o bico no núcleo e a cauda
+distante ficam de fora (figura abaixo).
+\end{example}
+
+\begin{definition}[Valência dividida, funções de polarização e funções difusas]\label{def:b3:computational-chemistry:split-valence}
+Uma \emph{base de valência dividida}\index{base de valencia dividida@base de valência dividida} descreve cada
+orbital de valência por duas (ou mais) funções de tamanhos diferentes, de
+modo que o orbital possa crescer ou encolher em uma molécula. Uma \emph{função de
+polarização}\index{funcao de polarizacao@função de polarização} tem um $l$ maior que o dos orbitais
+ocupados ($p$ em H, $d$ em C) e permite que a densidade se desloque para fora do átomo; uma
+\emph{função difusa}\index{funcao difusa@função difusa} tem um expoente pequeno e
+descreve ânions e interações fracas longe dos núcleos.
+\end{definition}
+
+Um nome como 6-31G(d) diz: seis primitivas para cada função de caroço, a
+valência dividida em uma contração de três e uma única primitiva, e \omterm{def:b3:computational-chemistry:split-valence}{funções
+de polarização} $d$ nos átomos pesados. Os resultados convergem para o
+\emph{limite de base completa} à medida que a base cresce; um cálculo só é
+tão bom quanto sua base.
+
+\begin{omfigure}
+\begin{tikzpicture}
+\begin{axis}[width=0.46\linewidth, height=5.4cm, xmin=0, xmax=5, ymin=0,
+  ymax=0.6, axis lines=left, xlabel={$r$ / $a_0$}, ylabel={$\phi(r)$},
+  legend cell align=left, legend style={font=\small, draw=none},
+  tick label style={font=\small}, label style={font=\small},
+  title={\small STO-3G comparada com $\eu^{-r}$ ($\zeta = 1$)}]
+\addplot[black, thick] table[x=r, y=slater] {figdata/out/bachelor-3-minimal-basis-hf-sto.dat};
+\addlegendentry{Slater}
+\addplot[omDef, thick, dashed] table[x=r, y=g3] {figdata/out/bachelor-3-minimal-basis-hf-sto.dat};
+\addlegendentry{STO-3G}
+\addplot[omThm, thick, dotted] table[x=r, y=g1] {figdata/out/bachelor-3-minimal-basis-hf-sto.dat};
+\addlegendentry{uma gaussiana}
+\end{axis}
+\end{tikzpicture}\hfill
+\begin{tikzpicture}
+\begin{axis}[width=0.46\linewidth, height=5.4cm, xmin=0.5, xmax=8.5,
+  ymin=-2.86, ymax=-2.78, axis lines=left, xlabel={ciclo SCF},
+  ylabel={$E$ / $E_h$}, ytick={-2.85,-2.83,-2.81,-2.79},
+  yticklabel style={/pgf/number format/fixed, /pgf/number format/precision=2},
+  tick label style={font=\small}, label style={font=\small},
+  title={\small SCF do \ce{HeH+}}]
+\addplot[omDef, thick, mark=*] table[x=it, y=E] {figdata/out/bachelor-3-minimal-basis-hf-heh-scf.dat};
+\addplot[gray, dashed, domain=0.5:8.5] {-2.84184};
+\end{axis}
+\end{tikzpicture}
+
+{\small À esquerda: a contração STO-3G (tracejada) reproduz de perto a função
+de Slater $1s$, exceto no núcleo; uma única gaussiana (pontilhada) não.
+À direita: a energia de \ce{HeH+} a \qty{1.4632}{\bohr} durante as iterações
+do \omterm{def:b3:computational-chemistry:hartree-fock}{campo autoconsistente} (STO-3G); ela converge por cima para
+\qty{-2.8418}{\hartree} em poucos ciclos, cada iterado obedecendo ao \omterm{thm:b3:computational-chemistry:variational}{princípio
+variacional}.}
+\end{omfigure}
+
+\section{A teoria de Hartree--Fock}
+
+A \omterm{def:b3:many-electron-atoms:indistinguishable}{função de onda antissimétrica} mais simples de $N$ elétrons é um único
+\omterm{def:b3:many-electron-atoms:slater}{determinante de Slater}. A teoria de Hartree--Fock encontra o melhor deles.
+
+\begin{definition}[Método de Hartree--Fock, operador de Fock, campo autoconsistente]\label{def:b3:computational-chemistry:hartree-fock}
+O \emph{método de Hartree--Fock}\index{metodo de Hartree--Fock@método de Hartree--Fock} aproxima o
+estado fundamental pelo \omterm{def:b3:many-electron-atoms:slater}{determinante de Slater} único de menor energia. Seus
+orbitais são \omterm{def:b3:quantum-model-systems:operator}{autofunções} do \emph{operador de Fock}\index{operador de Fock}
+\[
+\hat f(1) = \hat h(1) + \sum_b\big[2\hat J_b(1) - \hat K_b(1)\big],
+\]
+no caso de camadas fechadas: $\hat h$ é a energia cinética e a atração pelos
+núcleos de um elétron, $\hat J_b$ a repulsão pela nuvem de carga do
+orbital $b$, e $\hat K_b$ o \omterm{def:b3:quantum-model-systems:operator}{operador} de troca, cujos \omterm{def:b3:quantum-model-systems:hermitian}{valores esperados} são
+as \omterm{def:b3:many-electron-atoms:exchange}{integrais de troca} do \cref{ch:b3:many-electron-atoms}. Como $\hat f$
+depende dos orbitais que ele determina, as equações são resolvidas por
+iteração até que os orbitais não mudem mais: um \emph{campo
+autoconsistente}\index{campo autoconsistente} (SCF).
+\end{definition}
+
+\begin{theorem}[Equações de Roothaan--Hall]\label{thm:b3:computational-chemistry:roothaan}
+Escrevendo cada orbital em uma base, $\phi_a = \sum_\mu C_{\mu a}\chi_\mu$, as
+equações de Hartree--Fock de camadas fechadas tornam-se o problema matricial de \omterm{def:b3:quantum-model-systems:operator}{autovalores}
+\[
+\mathbf F\mathbf C = \mathbf S\mathbf C\boldsymbol\varepsilon, \qquad F_{\mu\nu} =
+h_{\mu\nu} + \sum_{\lambda\sigma}P_{\lambda\sigma}\big[(\mu\nu|\sigma\lambda) -
+\tfrac12(\mu\lambda|\sigma\nu)\big],
+\]
+com a matriz densidade $P_{\lambda\sigma} = 2\sum_a^{\mathrm{occ}}C_{\lambda a}C_{\sigma
+a}$ e as integrais de dois elétrons $(\mu\nu|\lambda\sigma) = \iint\chi_\mu(1)\chi_\nu(1)
+r_{12}^{-1}\chi_\lambda(2)\chi_\sigma(2)$ (unidades atômicas).
+\end{theorem}
+
+\begin{proof}[Demonstração parcial]
+A energia do determinante é $E = \sum_{\mu\nu}P_{\mu\nu}h_{\mu\nu} + \frac12
+\sum P_{\mu\nu}P_{\lambda\sigma}[(\mu\nu|\sigma\lambda) - \frac12(\mu\lambda|\sigma\nu)]$, uma
+função quadrática dos coeficientes. Minimize-a sob as restrições de que os
+orbitais permaneçam ortonormais, $\mathbf C^{\mathsf T}\mathbf S\mathbf C = \mathbf 1$,
+com um multiplicador de Lagrange para cada restrição: as condições de
+estacionariedade são $\mathbf F\mathbf C = \mathbf S\mathbf C\boldsymbol\varepsilon$, e
+os multiplicadores formam uma matriz que pode ser diagonalizada por uma rotação
+dos orbitais ocupados entre si. A álgebra é admitida.
+\end{proof}
+
+\begin{method}[O procedimento SCF]\label{met:b3:computational-chemistry:scf}
+\begin{enumerate}
+  \item Calcule uma única vez as integrais $S_{\mu\nu}$, $h_{\mu\nu}$ e $(\mu\nu|\lambda\sigma)$.
+  \item Faça uma estimativa inicial da matriz densidade (por exemplo, a partir dos
+        autovetores de $\mathbf h$ sozinha, a estimativa ``de caroço'').
+  \item Construa $\mathbf F$ a partir de $\mathbf P$; resolva $\mathbf F\mathbf C = \mathbf S\mathbf C
+        \boldsymbol\varepsilon$ (ortogonalize com $\mathbf S^{-1/2}$, depois diagonalize).
+  \item Preencha os orbitais mais baixos, com dois elétrons cada; forme a nova $\mathbf P$
+        e a energia.
+  \item Repita a partir da etapa 3 até que a energia e $\mathbf P$ variem menos
+        que um limiar.
+\end{enumerate}
+\end{method}
+
+\begin{omfigure}
+\begin{tikzpicture}[font=\small, node distance=4mm,
+  box/.style={draw=black!60, rounded corners=2pt, fill=omDef!6, align=center,
+  text width=4.4cm, inner sep=4pt}]
+  \node[box] (a) {integrais $S$, $h$, $(\mu\nu|\lambda\sigma)$};
+  \node[box, below=of a] (b) {estimativa de $\mathbf P$};
+  \node[box, below=of b] (c) {construir $\mathbf F(\mathbf P)$};
+  \node[box, below=of c] (d) {resolver $\mathbf F\mathbf C = \mathbf S\mathbf C\boldsymbol\varepsilon$};
+  \node[box, below=of d] (e) {nova $\mathbf P$, energia $E$};
+  \node[diamond, aspect=2.4, draw=black!60, fill=omThm!6, below=of e, inner sep=1pt] (f) {convergiu?};
+  \node[box, below=of f, fill=omProp!8] (g) {orbitais, $\varepsilon$, $E$};
+  \draw[->] (a) -- (b); \draw[->] (b) -- (c); \draw[->] (c) -- (d);
+  \draw[->] (d) -- (e); \draw[->] (e) -- (f);
+  \draw[->] (f) -- node[left] {sim} (g);
+  \draw[->] (f.east) -- ++(1.6,0) |- node[pos=0.25, right] {não} (c.east);
+\end{tikzpicture}
+
+{\small O ciclo do \omterm{def:b3:computational-chemistry:hartree-fock}{campo autoconsistente} de um cálculo Hartree--Fock.}
+\end{omfigure}
+
+\begin{example}[\ce{H2} na base mínima]\label{ex:b3:computational-chemistry:h2}
+% ledger: re:H2, janaf:H.dfH0, diat:H2.we, diat:H2.wexe
+Com uma função STO-3G por átomo, o orbital ligante é fixado pela simetria,
+$\sigma_g \propto \chi_A + \chi_B$, e o SCF precisa de uma única etapa. Em $R =
+\qty{1.4}{\bohr}$, a sobreposição é $S_{AB} = 0.6593$ e a energia,
+\qty{-1.1167}{\hartree}; o mínimo fica em \qty{1.346}{\bohr} (\qty{71.2}{pm},
+contra os \qty{74.1}{pm} medidos) e \qty{-1.1175}{\hartree}. A figura abaixo
+compara a curva com a verdadeira, construída a partir de dados espectroscópicos
+medidos e da energia de dissociação (uma curva de Morse, \cref{ch:b3:rovibrational-spectroscopy}).
+\end{example}
+
+\begin{omfigure}
+\begin{tikzpicture}
+\begin{axis}[width=0.7\linewidth, height=6cm, xmin=0.8, xmax=10, ymin=-1.2,
+  ymax=-0.45, axis lines=left, xlabel={$R$ / $a_0$}, ylabel={$E$ / $E_h$},
+  legend cell align=left, legend style={font=\small, at={(0.04,0.98)}, anchor=north west, draw=none},
+  tick label style={font=\small}, label style={font=\small}]
+\addplot[omDef, thick] table[x=R, y=rhf] {figdata/out/bachelor-3-minimal-basis-hf-h2.dat};
+\addlegendentry{RHF/STO-3G}
+\addplot[black, thick, dashed] table[x=R, y=morse] {figdata/out/bachelor-3-minimal-basis-hf-h2.dat};
+\addlegendentry{medida (forma de Morse)}
+\addplot[gray, dotted, domain=0.8:10] {-1.0};
+\addplot[omThm, dotted, domain=0.8:10] {-0.93316};
+\node[font=\scriptsize, anchor=north] at (axis cs:8,-1.005) {dois átomos de H exatos};
+\node[font=\scriptsize, anchor=south, omThm] at (axis cs:8,-0.930) {dois átomos de H STO-3G};
+\end{axis}
+\end{tikzpicture}
+
+{\small A energia de \ce{H2} em função da distância internuclear: Hartree--Fock
+restrito na base STO-3G (traço contínuo) e a curva verdadeira (tracejada,
+forma de Morse construída a partir de $D_0$, $\omega_e$, $\omega_ex_e$, $r_e$
+medidos). Perto do mínimo o RHF é bom; para $R$ grande, ele sobe muito acima
+de dois átomos de hidrogênio.}
+\end{omfigure}
+
+\begin{proposition}[Por que o Hartree--Fock restrito falha na dissociação]\label{prop:b3:computational-chemistry:rhf-dissociation}
+Na \omterm{def:b3:computational-chemistry:basis}{base mínima}, a função de onda RHF de \ce{H2} é, a menos da
+normalização, $\sigma_g(1)\sigma_g(2) \propto \chi_A(1)\chi_B(2) + \chi_B(1)\chi_A(2)
++ \chi_A(1)\chi_A(2) + \chi_B(1)\chi_B(2)$: a qualquer distância, metade covalente e
+metade iônica (\ce{H+ H-}). Para $R$ grande, sua energia tende à média da de dois
+átomos neutros e da de um par de íons, e não à de dois átomos.
+\end{proposition}
+
+\begin{proof}
+Desenvolva $(\chi_A + \chi_B)(1)(\chi_A + \chi_B)(2)$: os dois termos cruzados põem
+um elétron em cada átomo, os dois termos quadrados põem ambos no mesmo átomo,
+com pesos iguais qualquer que seja $R$. O determinante não pode mudar esses pesos.
+\end{proof}
+
+\begin{definition}[Correlação eletrônica, energia de correlação]\label{def:b3:computational-chemistry:correlation}
+A \emph{correlação eletrônica}\index{correlacao eletronica@correlação eletrônica} é a parte do
+afastamento mútuo dos elétrons que um único determinante não descreve (nele,
+os elétrons de spins opostos se movem independentemente, cada um no campo
+médio do outro). A \emph{energia de correlação}\index{energia de correlacao@energia de correlação} é a energia
+exata menos a energia de Hartree--Fock em uma base completa; ela é sempre
+negativa.
+\end{definition}
+
+A \omterm{def:b3:computational-chemistry:correlation}{energia de correlação} é de cerca de \qty{-0.04}{\hartree} por par de
+elétrons, um por cento de uma energia total, mas comparável à energia de uma
+reação: os métodos que a incluem (interação de configurações, teoria de
+perturbação, \textit{coupled cluster}) custam muito mais que o Hartree--Fock, cujo
+custo já cresce aproximadamente com a quarta potência do número de funções de base.
+
+\begin{theorem}[Teorema de Koopmans]\label{thm:b3:computational-chemistry:koopmans}
+Na teoria de Hartree--Fock, a energia necessária para retirar um elétron do
+orbital ocupado $a$, mantendo todos os outros orbitais congelados, é $-\varepsilon_a$. As
+energias de ionização medidas são, portanto, aproximadamente os opostos das
+energias orbitais: é o \emph{teorema de Koopmans}\index{teorema de Koopmans}.
+\end{theorem}
+
+\begin{proof}
+A energia de um determinante de camadas fechadas é $\sum_a2h_{aa} + \sum_{ab}(2J_{ab} -
+K_{ab})$, e $\varepsilon_a = h_{aa} + \sum_b(2J_{ab} - K_{ab})$. Retire um elétron
+de $a$ sem mudar os orbitais: os termos perdidos são $h_{aa}$, as
+interações desse elétron com todos os outros, $\sum_b(2J_{ab} - K_{ab}) -
+J_{aa}$, mais $J_{aa}$ com seu antigo parceiro --- no total, exatamente
+$\varepsilon_a$. Logo $E^+ - E = -\varepsilon_a$.
+\end{proof}
+
+\begin{example}[Ionizando \ce{H2}]\label{ex:b3:computational-chemistry:koopmans}
+% ledger: ie4:H2
+A \qty{1.4}{\bohr}, a energia orbital STO-3G de $\sigma_g$ é
+\qty{-0.5782}{\hartree}: Koopmans prevê \qty{15.73}{eV}, contra os
+\qty{15.43}{eV} medidos. Os orbitais congelados superestimam a energia do íon
+(ele relaxaria), e a correlação ausente age no sentido oposto; para as
+ionizações de valência os dois erros se compensam em grande parte, e é por
+isso que os espectros de fotoelétrons do volume do 2.º ano podem ser lidos com
+diagramas de orbitais.
+\end{example}
+
+\section{A teoria do funcional da densidade, e o que um cálculo pode dizer}
+
+A função de onda de $N$ elétrons depende de $3N$ coordenadas; a \omterm{def:b3:computational-chemistry:dft}{densidade
+eletrônica} depende de três.
+
+\begin{definition}[Densidade eletrônica, teoria do funcional da densidade]\label{def:b3:computational-chemistry:dft}
+A \emph{densidade eletrônica}\index{densidade eletronica@densidade eletrônica} $\rho(\mathbf r)$ é o
+número de elétrons por unidade de volume em $\mathbf r$, somado sobre todos os elétrons:
+$\int\rho\,\dd\tau = N$. A \emph{teoria do funcional da densidade}\index{teoria do funcional da densidade}
+(DFT) calcula a energia do estado fundamental como um funcional de $\rho$. Na
+prática, $\rho = \sum_a|\phi_a|^2$ é construída a partir dos \emph{orbitais de
+Kohn--Sham}\index{orbitais de Kohn--Sham}, os orbitais de elétrons independentes
+fictícios que têm a mesma densidade que os reais, e todos os efeitos de troca
+e de correlação são reunidos em um \emph{funcional de
+troca--correlação}\index{funcional de troca--correlacao@funcional de troca--correlação} $E_{\mathrm{xc}}[\rho]$.
+\end{definition}
+
+\begin{theorem}[Hohenberg--Kohn]\label{thm:b3:computational-chemistry:hohenberg-kohn}
+A densidade do estado fundamental de um sistema de elétrons determina o
+potencial externo (os núcleos) a menos de uma constante, logo o hamiltoniano e
+todas as propriedades do estado fundamental; e o funcional de energia da
+densidade é mínimo na densidade verdadeira.
+\end{theorem}
+\admitted
+
+A demonstração é tratada em cursos mais avançados. Ela garante que existe um
+funcional exato, mas não diz qual é: todo funcional prático é uma
+aproximação, escolhida em uma hierarquia --- densidade local, correções de
+gradiente, híbridos que incorporam uma parte de troca Hartree--Fock --- e
+calibrada sobre dados de referência. As equações de Kohn--Sham são resolvidas
+pelo mesmo ciclo SCF que o Hartree--Fock, a um custo semelhante, mas incluem a
+correlação; é por isso que a DFT se tornou o cavalo de batalha da química.
+
+\begin{method}[Ler um cálculo]\label{met:b3:computational-chemistry:read-calculation}
+\begin{enumerate}
+  \item Verifique que o SCF convergiu e que a \omterm{def:b3:computational-chemistry:pes}{otimização de geometria} terminou
+        com forças abaixo do limiar.
+  \item Faça um cálculo de frequências no mesmo nível: todas as frequências
+        reais indicam um mínimo; uma frequência imaginária, uma estrutura de
+        transição, cujo modo normal é o movimento que atravessa a barreira.
+  \item Compare o que é comparável: diferenças de energia entre estruturas
+        calculadas em um mesmo nível, nunca energias absolutas de níveis diferentes.
+  \item Compare com o experimento conhecendo os erros típicos do nível:
+        as frequências harmônicas costumam ser multiplicadas por um fator de 0.9 a 0.97;
+        os comprimentos de ligação são bons a cerca de 1 pm com um funcional híbrido e
+        uma base polarizada; as energias de reação, a alguns \unit{kJ/mol}, no melhor caso.
+\end{enumerate}
+\end{method}
+
+\begin{method}[Escolher um nível de teoria]\label{met:b3:computational-chemistry:choose-level}
+Geometrias e frequências de moléculas orgânicas: um funcional híbrido com uma
+\omterm{def:b3:computational-chemistry:split-valence}{base de valência dividida} polarizada. Interações fracas: acrescente uma
+correção de dispersão e \omterm{def:b3:computational-chemistry:split-valence}{funções difusas}. Barreiras de reação e energias
+precisas: métodos correlacionados de função de onda sobre geometrias DFT,
+até onde o orçamento permitir. Sistemas grandes (proteínas, superfícies): uma
+pequena região tratada pela mecânica quântica dentro de um campo de forças
+clássico. Teste sempre o nível escolhido em uma molécula aparentada cuja
+resposta é conhecida.
+\end{method}
+
+\begin{inthelab}[Um experimento computacional]
+Um cálculo é conduzido como um experimento e registrado no caderno: o
+programa e sua versão, o método, a base, os limiares de convergência, a
+estrutura inicial, e os arquivos de saída guardados como dados brutos. Uma
+sequência típica é: construir a molécula, otimizar sua geometria em um nível
+modesto, calcular as frequências para confirmar um mínimo e, por fim,
+calcular a energia em um nível mais alto sobre essa geometria.
+\end{inthelab}
+
+\begin{history}[Uma molécula conhecida primeiro pelo cálculo]
+% ledger: hist4:HeHp.2019
+\ce{HeH+} foi produzido em laboratório em 1925. Suas propriedades foram
+calculadas em detalhe a partir da década de 1930, e previu-se que seria
+abundante em certos gases astrofísicos; mas sua primeira raia rotacional fica
+no infravermelho distante, absorvida pela atmosfera. Em 2019, um
+observatório aerotransportado o detectou na nebulosa planetária NGC 7027, na
+frequência que os cálculos e os espectros de laboratório haviam previsto.
+\end{history}
+
+\section{Exercícios}
+
+\begin{exercise}[$\star$]\label{exo:b3:computational-chemistry:1}
+Para o átomo de hidrogênio, tome a função tentativa $\eu^{-\alpha r^2}$. Em
+unidades atômicas, $E(\alpha) = \frac32\alpha - 2\sqrt{2\alpha/\pi}$. Encontre o melhor
+$\alpha$ e a energia correspondente; compare com $-\frac12E_h$.
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:computational-chemistry:2}
+Quantas funções de base usa um cálculo sobre o benzeno na base STO-3G?
+E em 6-31G(d), com seis funções $d$ cartesianas por carbono e duas funções $s$
+por hidrogênio?
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:computational-chemistry:3}
+Explique por que \ce{H2} e \ce{D2} têm o mesmo comprimento de ligação e a
+mesma \omterm{def:b3:quantum-model-systems:oscillator}{constante de força}, mas números de onda vibracionais diferentes. Que
+razão você espera?
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:computational-chemistry:4}
+Um cálculo de frequências sobre uma estrutura de fórmula \ce{C2H5F} dá 17
+frequências reais e uma frequência imaginária, $487\iu$~\unit{cm^{-1}}. Que tipo
+de \omterm{def:b3:computational-chemistry:pes}{ponto estacionário} é esse? Quantas frequências você esperava no total?
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:computational-chemistry:5}
+% ledger: ie:He, ie4:He2
+Usando $E(\zeta) = \zeta^2 - \frac{27}{8}\zeta$, calcule a melhor energia
+variacional do hélio em \unit{\hartree} e em eV, e seu erro em relação ao valor exato
+$\qty{-2.9034}{\hartree}$. Que fração da energia total representa o erro?
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:computational-chemistry:6}
+Duas funções de base dão $H_{11} = \qty{-1.0}{\hartree}$, $H_{22} =
+\qty{-0.5}{\hartree}$, $H_{12} = \qty{-0.2}{\hartree}$, $S_{12} = 0.3$. Resolva a
+equação secular. A menor raiz fica abaixo de $H_{11}$?
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:computational-chemistry:7}
+Um cálculo Hartree--Fock leva 10 minutos para o benzeno em STO-3G. Supondo
+um custo proporcional à quarta potência do número de funções de base,
+estime o tempo em 6-31G(d).
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:computational-chemistry:8}
+% ledger: ie4:H2
+A energia orbital STO-3G de \ce{H2} a \qty{1.4}{\bohr} é
+\qty{-0.5782}{\hartree}. Dê a estimativa de Koopmans da energia de ionização em eV
+e compare com \qty{15.43}{eV}. Cite duas razões para a diferença e o sentido
+de cada uma.
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:computational-chemistry:9}
+Em STO-3G, a energia de um átomo de hidrogênio é \qty{-0.4666}{\hartree} e a energia
+RHF de \ce{H2} a \qty{10}{\bohr} é \qty{-0.5960}{\hartree}. Quão acima de dois
+átomos fica a energia RHF a essa distância, em eV? Explique com os termos
+iônicos.
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:computational-chemistry:10}
+Para $\phi = c_1\chi_1 + c_2\chi_2$ com funções reais, escreva $E(c_1,c_2)$ e
+deduza as duas equações seculares impondo $\partial E/\partial c_1 =
+\partial E/\partial c_2 = 0$.
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:computational-chemistry:11}
+% ledger: aw:H, diat:H2.we
+A energia RHF/STO-3G de \ce{H2} é $-1.116871$, $-1.117501$ e
+$\qty{-1.116714}{\hartree}$ em $R = 1.30$, 1.35 e \qty{1.40}{\bohr}. Estime
+a \omterm{def:b3:quantum-model-systems:oscillator}{constante de força} por uma diferença finita, converta-a em \unit{N/m}
+($\qty{1}{\hartree\per\bohr\squared} = \qty{1556.9}{N/m}$) e calcule o
+número de onda harmônico. Compare com $\tilde\omega_e = \qty{4401}{cm^{-1}}$.
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:computational-chemistry:12}
+Você precisa calcular a diferença de energia entre dois confôrmeros de um
+açúcar, que se sabe diferirem de alguns \unit{kJ/mol}, com uma ligação de
+hidrogênio intramolecular em um deles. Escolha e justifique um método, um
+\omterm{def:b3:computational-chemistry:basis}{conjunto de base} e as verificações que você faria.
+\end{exercise}
+
+\section{Problema: HeH\texorpdfstring{$^+$}{+}, a primeira molécula}
+
+\begin{problem}[{Problema de fim de semana --- um cálculo Hartree--Fock em base
+mínima do íon hidreto de hélio: a base, a estimativa de caroço, o orbital
+convergido e a ligação de um próton ao hélio}]
+\label{pb:b3:computational-chemistry:1}
+% ledger: bse:He.sto3g.a1, bse:He.sto3g.a2, bse:He.sto3g.a3, bse:H.sto3g.a1, pa:He, ie:He, ie4:He2
+\ce{HeH+} é calculado em $R = \qty{1.4632}{\bohr}$ na base STO-3G (expoentes
+do He 6.3624, 1.1589, 0.31365; expoentes do H 3.4253, 0.62391, 0.16886; os
+mesmos três coeficientes). A função 1 está no He, a função 2 no H. O programa
+fornece (unidades atômicas)
+\[
+\mathbf S = \begin{pmatrix}1 & 0.5368\\ 0.5368 & 1\end{pmatrix},\quad
+\mathbf h = \begin{pmatrix}-2.5983 & -1.4318\\ -1.4318 & -1.7318\end{pmatrix},\quad
+\mathbf F_{\mathrm{final}} = \begin{pmatrix}-1.5902 & -1.0610\\ -1.0610 & -0.8340
+\end{pmatrix},
+\]
+o orbital ocupado $\phi = 0.8766\chi_1 + 0.2025\chi_2$, as energias orbitais
+$-1.6328$ e \qty{-0.1725}{\hartree}, e as energias SCF $-2.7978$, $-2.8404$,
+$-2.8418$, $-2.8418$. Um átomo de hélio na mesma base tem
+\qty{-2.8078}{\hartree}. $\qty{1}{\hartree} = \qty{27.211}{eV} =
+\qty{2625.5}{kJ/mol}$.
+
+\medskip\noindent\textbf{Parte I --- A base.}
+\begin{enumerate}
+  \item O que significa ``STO-3G''?
+  \item Por que os expoentes do hélio são maiores que os do hidrogênio? Verifique
+        que sua razão é $(1.69/1.24)^2$.
+  \item Quantas funções de base, elétrons e orbitais ocupados há?
+  \item Calcule a energia de repulsão nuclear.
+  \item Interprete $S_{12} = 0.5368$.
+  \item Por que $h_{11}$ é mais baixo que $h_{22}$?
+\end{enumerate}
+
+\medskip\noindent\textbf{Parte II --- A estimativa de caroço.}
+\begin{enumerate}[resume]
+  \item Escreva a equação secular $\det(\mathbf h - \varepsilon\mathbf S) = 0$ como
+        uma equação do segundo grau em $\varepsilon$.
+  \item Resolva-a.
+  \item Por que isso é apenas um ponto de partida?
+  \item Dê a fórmula da matriz de Fock em função de $\mathbf h$, da
+        matriz densidade e das integrais de dois elétrons.
+  \item Que interações entre elétrons $\mathbf F$ contém e que faltam em $\mathbf h$?
+  \item Explique por que o procedimento precisa ser iterado.
+\end{enumerate}
+
+\medskip\noindent\textbf{Parte III --- O orbital convergido.}
+\begin{enumerate}[resume]
+  \item Verifique que $\phi$ está normalizado.
+  \item As populações são os elementos diagonais de $P\mathbf S$, $2c_1^2 + 2c_1c_2S$
+        no He e $2c_2^2 + 2c_1c_2S$ no H. Calcule-as.
+  \item Onde fica a carga positiva? A molécula é mais bem descrita
+        como \ce{He + H+} ou como \ce{He+ + H}?
+  \item Use o \omterm{thm:b3:computational-chemistry:koopmans}{teorema de Koopmans} para estimar a energia necessária para retirar
+        um elétron de \ce{HeH+}.
+  \item Calcule a energia eletrônica $E_{\mathrm{el}} = E - V_{\mathrm{nn}}$.
+  \item Quantos ciclos foram necessários para convergir a \qty{e-4}{\hartree}? Por que
+        a energia diminuiu a cada ciclo?
+  \item Com os expoentes do hélio reescalados para $\zeta = 2.0925$ em vez de 1.69, o
+        mesmo programa dá \qty{-2.8607}{\hartree}. Qual base é melhor, e
+        por que se pode afirmá-lo?
+  \item O que representa a energia do orbital virtual, \qty{-0.1725}{\hartree}?
+\end{enumerate}
+
+\medskip\noindent\textbf{Parte IV --- A ligação de um próton.}
+\begin{enumerate}[resume]
+  \item Qual é a energia de um próton isolado? E a de \ce{He + H+} muito
+        afastados, nesta base?
+  \item Calcule a energia liberada por \ce{He + H+ -> HeH+} nesse nível, em
+        \unit{kJ/mol}.
+  \item A afinidade protônica medida do hélio é \qty{177.8}{kJ/mol}.
+        Comente.
+  \item A energia exata do hélio é o oposto da soma de suas energias de
+        ionização, 24.5874 e \qty{54.4178}{eV}. Calcule-a em \unit{\hartree} e
+        o erro do átomo de hélio STO-3G.
+  \item Por que um erro desse tamanho ainda pode dar geometrias moleculares
+        úteis?
+  \item Enuncie o resultado: a energia total RHF/STO-3G de \ce{HeH+} a
+        \qty{1.4632}{\bohr}.
+\end{enumerate}
+\end{problem}

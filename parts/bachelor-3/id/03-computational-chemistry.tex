@@ -1,0 +1,719 @@
+\chapter{Kimia Komputasi: Hartree--Fock dan DFT}\label{ch:b3:computational-chemistry}
+
+Ion helium hidrida, \ce{HeH+}, diduga merupakan molekul pertama yang
+terbentuk ketika alam semesta yang masih muda mendingin: sebuah atom helium
+yang mengikat sebuah proton. Ion itu dibuat dalam tabung lucutan di
+laboratorium pada tahun 1925, tetapi dicari di antariksa selama puluhan
+tahun tanpa hasil, sampai garis rotasinya terdeteksi dalam sebuah nebula
+planeter pada tahun 2019. Saat itu panjang ikatannya, frekuensi vibrasinya,
+dan panjang gelombang garis-garisnya sudah lama diketahui --- dari
+perhitungan. Sebuah program komputer yang menyelesaikan, secara pendekatan,
+\omterm{thm:b3:quantum-model-systems:schrodinger}{persamaan Schrödinger} elektron-elektronnya dapat meramalkan bentuk, energi,
+dan spektrum molekul yang belum pernah dimasukkan siapa pun ke dalam botol.
+Bab ini menjelaskan cara kerja program semacam itu, mulai dari pemisahan inti
+dan elektron sampai teori Hartree--Fock dan \omterm{def:b3:computational-chemistry:dft}{teori fungsional kerapatan}, serta
+untuk apa angka-angkanya dapat dan tidak dapat dipercaya.
+
+\begin{recall}
+\Cref{ch:b3:quantum-model-systems} memberikan Hamiltonian, \omterm{thm:b3:quantum-model-systems:schrodinger}{persamaan
+Schrödinger}, dan atom hidrogen; \cref{ch:b3:many-electron-atoms} memberikan
+\omterm{def:b3:many-electron-atoms:slater}{determinan Slater} dan \omterm{def:b3:many-electron-atoms:exchange}{integral pertukaran}. Jilid Tahun 2 menyusun orbital
+molekul sebagai kombinasi linear orbital atom (LCAO), dengan integral
+tumpang-tindih, integral Coulomb, dan integral resonansi serta determinan
+sekular, dan menyelesaikan metode Hückel; jilid itu juga memakai spektrum
+fotoelektron untuk melihat energi orbital.
+\end{recall}
+
+\begin{omfigure}
+\includegraphics[width=0.6\linewidth]{images/book4/ai/b3-03-cluster.jpg}
+
+{\small Sebuah klaster komputasi: deretan server tempat sebagian besar
+perhitungan kimia kuantum kini dijalankan, sering kali berjam-jam atau
+berhari-hari untuk satu molekul.}
+\end{omfigure}
+
+\section{Born--Oppenheimer dan permukaan energi potensial}
+
+Hamiltonian sebuah molekul memuat energi kinetik inti-inti dan
+elektron-elektronnya serta semua interaksi Coulomb di antara mereka. Inti
+sedikitnya 1836 kali lebih berat daripada elektron: di bawah gaya yang sama,
+inti bergerak jauh lebih lambat, dan elektron-elektron menyesuaikan diri
+hampir seketika terhadap setiap posisi inti.
+
+\begin{definition}[Pendekatan Born--Oppenheimer]\label{def:b3:computational-chemistry:born-oppenheimer}
+Dalam \emph{pendekatan Born--Oppenheimer}\index{pendekatan Born--Oppenheimer},
+\omterm{thm:b3:quantum-model-systems:schrodinger}{persamaan Schrödinger} elektronik diselesaikan untuk inti-inti yang ditahan
+tetap pada posisi $\mathbf R$,
+\[
+\hat H_{\mathrm{el}}\,\psi_{\mathrm{el}}(\mathbf r;\mathbf R) =
+E_{\mathrm{el}}(\mathbf R)\,\psi_{\mathrm{el}}(\mathbf r;\mathbf R),
+\]
+lalu inti-inti itu bergerak dalam potensial $E_{\mathrm{el}}(\mathbf R) +
+V_{\mathrm{nn}}(\mathbf R)$, yaitu energi elektronik ditambah tolakan
+antarinti.
+\end{definition}
+
+\begin{definition}[Permukaan energi potensial, titik stasioner, optimasi geometri]\label{def:b3:computational-chemistry:pes}
+Yang disebut \emph{permukaan energi potensial}\index{permukaan energi potensial}
+(PES) sebuah molekul adalah fungsi $U(\mathbf R) = E_{\mathrm{el}}(\mathbf R) +
+V_{\mathrm{nn}}(\mathbf R)$ dari koordinat-koordinat intinya. Yang disebut
+\emph{titik stasioner}\index{titik stasioner} adalah titik tempat semua
+turunan pertama $U$ lenyap; sebuah minimum adalah \emph{geometri
+kesetimbangan}\index{geometri kesetimbangan}. Pencarian minimum itu dari
+sebuah struktur awal, dengan mengikuti gaya-gaya $-\nabla U$, disebut
+\emph{optimasi geometri}\index{optimasi geometri}.
+\end{definition}
+
+Untuk molekul diatomik, PES berupa kurva $U(R)$; untuk molekul triatomik,
+fungsi tiga koordinat; untuk $N$ atom, fungsi $3N - 6$ koordinat. Massa inti
+tidak muncul dalam $\hat H_{\mathrm{el}}$: \ce{H2}, \ce{HD} dan \ce{D2}
+mempunyai PES yang sama, panjang ikatan dan \omterm{def:b3:quantum-model-systems:oscillator}{tetapan gaya} yang sama, dan
+hanya berbeda dalam cara inti-intinya bergerak di atasnya (\omterm{def:b3:quantum-model-systems:oscillator}{energi titik nol},
+\cref{ch:b3:quantum-model-systems}).
+
+\begin{proposition}[Frekuensi dari Hessian]\label{prop:b3:computational-chemistry:hessian}
+Di dekat sebuah minimum, $U \approx U_0 + \frac12\sum_{ij}H_{ij}\,\delta q_i\,\delta q_j$,
+dengan Hessian $H_{ij} = \partial^2U/\partial q_i\partial q_j$. Dalam koordinat
+berbobot massa $\delta q_i\sqrt{m_i}$, \omterm{def:b3:quantum-model-systems:operator}{nilai-nilai eigen} $\lambda_k$ dari
+Hessian berbobot massa memberikan frekuensi sudut harmonik $\omega_k =
+\sqrt{\lambda_k}$ dari modus-modus normal. Di sebuah minimum semua
+$\lambda_k$ positif (enam di antaranya, atau lima untuk molekul linear,
+bernilai nol: translasi dan rotasi); di titik pelana orde pertama tepat satu
+yang negatif.
+\end{proposition}
+
+\begin{proof}[Bukti parsial]
+Untuk molekul diatomik, $U \approx U_0 + \frac12k(R - R_e)^2$ dengan $k = U''(R_e)$,
+dan osilator \cref{ch:b3:quantum-model-systems} memberikan $\omega =
+\sqrt{k/\mu}$. Secara umum, persamaan klasik $m_i\ddot q_i =
+-\sum_jH_{ij}q_j$ menjadi, dalam koordinat berbobot massa $x_i = \sqrt{m_i}q_i$,
+$\ddot{\mathbf x} = -\tilde H\mathbf x$ dengan matriks simetris $\tilde H_{ij} =
+H_{ij}/\sqrt{m_im_j}$; vektor-vektor eigennya berosilasi secara bebas pada
+$\sqrt{\lambda_k}$. Nilai $\lambda_k$ yang negatif memberikan frekuensi
+imajiner: sepanjang arah itu energinya turun, sebuah maksimum. Modus-modus
+normal \cref{ch:b3:group-theory-applied} adalah vektor-vektor eigen ini.
+\end{proof}
+
+\begin{omfigure}
+\begin{tikzpicture}[font=\small, scale=0.95]
+  \fill[omDef!8] (0,0) ellipse (1.9 and 1.15);
+  \foreach \s in {1.0,0.75,0.5,0.25}{\draw[omDef!70] (0,0) ellipse ({1.9*\s} and {1.15*\s});}
+  \fill[omThm!8] (6,0.4) ellipse (1.6 and 1.0);
+  \foreach \s in {1.0,0.75,0.5,0.25}{\draw[omThm!70] (6,0.4) ellipse ({1.6*\s} and {1.0*\s});}
+  \draw[gray] (2.1,-0.15) .. controls (2.9,0.55) and (3.4,0.55) .. (4.3,0.35);
+  \draw[gray] (2.2,0.9) .. controls (3.0,0.35) and (3.5,0.35) .. (4.1,1.2);
+  \node[omsaddle] at (3.15,0.42) {};
+  \draw[ompath] (0,0) .. controls (1.8,0.6) and (2.4,0.5) .. (3.15,0.42) .. controls (4.0,0.35) and (4.8,0.4) .. (6,0.4);
+  \node[anchor=north] at (0,-1.25) {minimum A (reaktan)};
+  \node[anchor=north] at (6,-0.7) {minimum B (produk)};
+  \node[anchor=south] at (3.15,1.25) {titik pelana};
+  \draw[->, gray] (3.15,1.25) -- (3.15,0.6);
+  \fill (0,0) circle (1.2pt) (6,0.4) circle (1.2pt);
+  \draw[->] (-2.3,-2.2) -- (8.2,-2.2) node[right] {$q_1$};
+  \draw[->] (-2.3,-2.2) -- (-2.3,1.8) node[above] {$q_2$};
+\end{tikzpicture}
+
+{\small \omterm{def:b3:computational-chemistry:pes}{Permukaan energi potensial} dilihat dari atas, sebagai peta kontur
+atas dua koordinat inti (skematis). Dua minimum dihubungkan, melalui sebuah
+titik pelana (silang), oleh lintasan berenergi terendah (garis putus-putus):
+lintasan energi minimum yang dipelajari dalam \cref{ch:b3:rate-theories}.}
+\end{omfigure}
+
+\section{Prinsip variasi}
+
+\omterm{thm:b3:quantum-model-systems:schrodinger}{Persamaan Schrödinger} elektronik tidak dapat diselesaikan secara eksak untuk
+molekul mana pun yang mempunyai lebih dari satu elektron. Pendekatan-pendekatan
+dinilai dengan satu teorema.
+
+\begin{theorem}[Prinsip variasi]\label{thm:b3:computational-chemistry:variational}
+Untuk setiap fungsi coba $\phi$ yang dapat dinormalisasi dan memenuhi syarat
+batas soalnya,
+\[
+E[\phi] = \frac{\langle\phi|\hat H|\phi\rangle}{\langle\phi|\phi\rangle} \ge E_0,
+\]
+dengan $E_0$ \omterm{def:b3:quantum-model-systems:operator}{nilai eigen} terendah $\hat H$; kesamaan hanya berlaku jika
+$\phi$ adalah \omterm{def:b3:quantum-model-systems:operator}{fungsi eigen} keadaan dasar. Inilah \emph{prinsip
+variasi}\index{prinsip variasi}.
+\end{theorem}
+
+\begin{proof}
+Uraikan $\phi = \sum_nc_n\psi_n$ atas \omterm{def:b3:quantum-model-systems:operator}{fungsi-fungsi eigen} ortonormal $\hat H$
+(\cref{thm:b3:quantum-model-systems:hermitian-real}). Maka $\langle\phi|\hat
+H|\phi\rangle = \sum_n|c_n|^2E_n \ge E_0\sum_n|c_n|^2 = E_0\langle\phi|\phi\rangle$,
+karena setiap $E_n \ge E_0$; kesamaan mensyaratkan $c_n = 0$ setiap kali
+$E_n > E_0$.
+\end{proof}
+
+Makin rendah energi sebuah fungsi coba, makin baik fungsi itu; setiap
+parameter yang dapat disesuaikan ditetapkan dengan meminimumkan $E$.
+
+\begin{proposition}[Helium dengan muatan tertapis]\label{prop:b3:computational-chemistry:helium-zeta}
+Untuk helium, fungsi coba $\phi = \eu^{-\zeta(r_1 + r_2)}$ (dalam satuan atom:
+panjang dalam $a_0$, energi dalam $E_h$) memberikan
+$E(\zeta) = \zeta^2 - \frac{27}{8}\zeta$, yang minimum untuk
+$\zeta = \frac{27}{16}$, dengan $E = -(\frac{27}{16})^2 E_h =
+\qty{-2.8477}{\hartree}$.
+\end{proposition}
+
+\begin{proof}
+Untuk satu elektron dalam $\eu^{-\zeta r}$, $\langle T\rangle = \zeta^2/2$ dan
+$\langle 1/r\rangle = \zeta$; tolakan dua elektron dalam fungsi $1s$ yang
+sama adalah $\frac58\zeta$ (sebuah integral baku, diterima tanpa bukti). Jadi
+$E = 2\cdot\frac12
+\zeta^2 - 2\cdot2\zeta + \frac58\zeta = \zeta^2 - \frac{27}{8}\zeta$, dan $\dd E/\dd
+\zeta = 0$ memberikan $\zeta = 27/16 = 1.6875$.
+\end{proof}
+
+\begin{example}[Seberapa baik hasilnya?]\label{ex:b3:computational-chemistry:helium}
+% ledger: ie:He, ie4:He2, const:Eh, const:eV
+Energi total helium adalah minus jumlah kedua energi ionisasinya,
+$-(24.5874 + 54.4178)\,\unit{eV} = \qty{-2.9034}{\hartree}$. Fungsi
+berparameter tunggal itu \qty{0.056}{\hartree} (\qty{1.5}{eV}) terlalu
+tinggi: setiap elektron melihat inti yang tertapis oleh elektron lainnya
+menjadi $Z_{\mathrm{eff}} = 1.69$, seperti yang disarankan aturan Slater,
+tetapi elektron-elektron itu juga saling mengelak dengan cara yang tidak
+dapat digambarkan oleh hasil kali dua fungsi mana pun.
+\end{example}
+
+\begin{proposition}[Variasi linear]\label{prop:b3:computational-chemistry:linear-variation}
+Untuk fungsi coba $\phi = \sum_{i=1}^n c_i\chi_i$ yang disusun dari $n$ fungsi
+tetap, dengan $H_{ij} = \langle\chi_i|\hat H|\chi_j\rangle$ dan $S_{ij} = \langle\chi_i|\chi_j
+\rangle$, nilai-nilai stasioner $E$ adalah akar-akar $\det(H - ES) = 0$, dan
+akar terendahnya merupakan batas atas bagi $E_0$.
+\end{proposition}
+
+\begin{proof}
+$E\sum_{ij}c_ic_jS_{ij} = \sum_{ij}c_ic_jH_{ij}$ (koefisien real). Turunkan
+terhadap $c_k$ dan tetapkan $\partial E/\partial c_k = 0$: $\sum_j(H_{kj} -
+ES_{kj})c_j = 0$ untuk setiap $k$. Solusi tak nol memerlukan determinan yang
+lenyap. Akar terendah adalah $E[\phi]$ untuk vektor eigennya, sehingga
+$\ge E_0$.
+\end{proof}
+
+Metode Hückel jilid Tahun 2 adalah proposisi ini dengan orbital $p$ dan $H_{ij}$
+empiris. Setiap metode di bawah ini adalah gagasan yang sama dengan fungsi
+yang lebih baik dan unsur matriks yang lebih baik.
+
+\section{Himpunan basis}
+
+\begin{definition}[Himpunan basis, basis minimal, orbital tipe Slater dan tipe Gauss]\label{def:b3:computational-chemistry:basis}
+Yang disebut \emph{himpunan basis}\index{himpunan basis} adalah himpunan
+fungsi tetap $\chi_i$, yang berpusat pada atom-atom, yang menjadi bahan
+penyusun orbital molekul. Yang disebut \emph{himpunan basis
+minimal}\index{himpunan basis minimal} adalah himpunan basis yang mempunyai
+satu fungsi untuk setiap orbital atom yang terisi (satu $1s$ untuk H, lima
+untuk C). Sebuah \emph{orbital tipe Slater}\index{orbital tipe Slater} (STO) mempunyai bentuk radial $r^{n-1}\eu^{-\zeta r}$; sebuah
+\emph{orbital tipe Gauss}\index{orbital tipe Gauss} (GTO) adalah orbital yang berbentuk
+$\eu^{-\alpha r^2}$ dikalikan polinomial dalam $x$, $y$, $z$. Yang disebut
+\emph{fungsi Gauss terkontraksi}\index{fungsi Gauss terkontraksi} adalah
+kombinasi tetap $\sum_kd_k\,\eu^{-\alpha_kr^2}$ dari fungsi-fungsi Gauss
+primitif.
+\end{definition}
+
+Fungsi Slater mempunyai bentuk yang tepat (titik runcing di inti, ekor
+eksponensial), tetapi integral dua elektronnya atas beberapa pusat sangat
+mahal; fungsi Gauss mempunyai bentuk yang salah, tetapi hasil kali dua fungsi
+Gauss pada pusat yang berbeda adalah fungsi Gauss pada sebuah titik di antara
+keduanya, sehingga setiap integral tereduksi menjadi rumus tertutup.
+Kontraksi mengambil keunggulan keduanya: dalam basis STO-3G, setiap fungsi
+Slater diganti dengan jumlah tetap tiga fungsi Gauss yang dicocokkan
+dengannya.
+
+\begin{example}[Fungsi STO-3G hidrogen]\label{ex:b3:computational-chemistry:sto3g}
+% ledger: bse:H.sto3g.a1, bse:H.sto3g.a2, bse:H.sto3g.a3, bse:sto3g.c1, bse:sto3g.c2, bse:sto3g.c3
+Dalam STO-3G, fungsi $1s$ atom hidrogen dinyatakan sebagai $0.15433\,g(3.42525) + 0.53533\,
+g(0.62391) + 0.44463\,g(0.16886)$, dengan $g(\alpha)$ fungsi Gauss ternormalisasi
+$(2\alpha/\pi)^{3/4}\eu^{-\alpha r^2}$ (eksponen dalam $a_0^{-2}$). Fungsi itu
+meniru fungsi Slater dengan eksponen $\zeta = 1.24$ --- atom hidrogen yang
+sedikit termampatkan, seperti keadaannya dalam molekul. Tumpang-tindihnya
+dengan fungsi $1s$ eksak bereksponen sama adalah $0.9998$; hanya titik runcing
+di inti dan ekor yang jauh yang terlewat (gambar di bawah).
+\end{example}
+
+\begin{definition}[Fungsi valensi terpisah, fungsi polarisasi, dan fungsi difus]\label{def:b3:computational-chemistry:split-valence}
+Sebuah \emph{himpunan basis valensi
+terpisah}\index{himpunan basis valensi terpisah} menggambarkan setiap orbital valensi dengan dua (atau lebih) fungsi
+yang ukurannya berbeda, sehingga orbital itu dapat membesar atau mengecil
+dalam molekul. Sebuah \emph{fungsi polarisasi}\index{fungsi polarisasi}
+mempunyai $l$ yang lebih tinggi daripada orbital-orbital yang terisi ($p$ pada
+H, $d$ pada C) dan memungkinkan kerapatan bergeser menjauhi atom; sebuah
+\emph{fungsi difus}\index{fungsi difus} mempunyai eksponen kecil dan
+menggambarkan anion serta interaksi lemah yang jauh dari inti.
+\end{definition}
+
+Nama seperti 6-31G(d) berarti: enam primitif untuk setiap fungsi inti
+dalam, valensi dipecah menjadi satu kontraksi tiga primitif dan satu primitif
+tunggal, dan \omterm{def:b3:computational-chemistry:split-valence}{fungsi polarisasi} $d$ pada atom-atom berat. Hasil-hasilnya
+konvergen menuju \emph{limit \omterm{def:b3:computational-chemistry:basis}{himpunan basis}} ketika basisnya membesar;
+sebuah perhitungan hanya sebaik basisnya.
+
+\begin{omfigure}
+\begin{tikzpicture}
+\begin{axis}[width=0.46\linewidth, height=5.4cm, xmin=0, xmax=5, ymin=0,
+  ymax=0.6, axis lines=left, xlabel={$r$ / $a_0$}, ylabel={$\phi(r)$},
+  legend cell align=left, legend style={font=\small, draw=none},
+  tick label style={font=\small}, label style={font=\small},
+  title={\small STO-3G dibandingkan dengan $\eu^{-r}$ ($\zeta = 1$)}]
+\addplot[black, thick] table[x=r, y=slater] {figdata/out/bachelor-3-minimal-basis-hf-sto.dat};
+\addlegendentry{Slater}
+\addplot[omDef, thick, dashed] table[x=r, y=g3] {figdata/out/bachelor-3-minimal-basis-hf-sto.dat};
+\addlegendentry{STO-3G}
+\addplot[omThm, thick, dotted] table[x=r, y=g1] {figdata/out/bachelor-3-minimal-basis-hf-sto.dat};
+\addlegendentry{satu fungsi Gauss}
+\end{axis}
+\end{tikzpicture}\hfill
+\begin{tikzpicture}
+\begin{axis}[width=0.46\linewidth, height=5.4cm, xmin=0.5, xmax=8.5,
+  ymin=-2.86, ymax=-2.78, axis lines=left, xlabel={siklus SCF},
+  ylabel={$E$ / $E_h$}, ytick={-2.85,-2.83,-2.81,-2.79},
+  yticklabel style={/pgf/number format/fixed, /pgf/number format/precision=2},
+  tick label style={font=\small}, label style={font=\small},
+  title={\small SCF \ce{HeH+}}]
+\addplot[omDef, thick, mark=*] table[x=it, y=E] {figdata/out/bachelor-3-minimal-basis-hf-heh-scf.dat};
+\addplot[gray, dashed, domain=0.5:8.5] {-2.84184};
+\end{axis}
+\end{tikzpicture}
+
+{\small Kiri: kontraksi STO-3G (garis putus-putus) meniru fungsi Slater $1s$
+dengan dekat kecuali di inti; satu fungsi Gauss saja (garis titik-titik)
+tidak. Kanan: energi \ce{HeH+} pada \qty{1.4632}{\bohr} selama iterasi \omterm{def:b3:computational-chemistry:hartree-fock}{medan
+swakonsisten} (STO-3G); energi itu konvergen dari atas ke
+\qty{-2.8418}{\hartree} dalam beberapa siklus, dengan setiap iterasi mematuhi
+\omterm{thm:b3:computational-chemistry:variational}{prinsip variasi}.}
+\end{omfigure}
+
+\section{Teori Hartree--Fock}
+
+\omterm{def:b3:many-electron-atoms:indistinguishable}{Fungsi gelombang antisimetris} yang paling sederhana untuk $N$ elektron adalah
+satu \omterm{def:b3:many-electron-atoms:slater}{determinan Slater}. Teori Hartree--Fock mencari determinan yang terbaik.
+
+\begin{definition}[Metode Hartree--Fock, operator Fock, medan swakonsisten]\label{def:b3:computational-chemistry:hartree-fock}
+Yang disebut \emph{metode Hartree--Fock}\index{metode Hartree--Fock} adalah
+metode yang mendekati keadaan dasar dengan satu \omterm{def:b3:many-electron-atoms:slater}{determinan Slater} yang
+berenergi terendah.
+Orbital-orbitalnya adalah \omterm{def:b3:quantum-model-systems:operator}{fungsi-fungsi eigen} dari \emph{operator
+Fock}\index{operator Fock}
+\[
+\hat f(1) = \hat h(1) + \sum_b\big[2\hat J_b(1) - \hat K_b(1)\big],
+\]
+dalam kasus kulit tertutup: $\hat h$ adalah energi kinetik dan tarikan inti
+pada satu elektron, $\hat J_b$ tolakan oleh awan muatan orbital $b$, dan
+$\hat K_b$ \omterm{def:b3:quantum-model-systems:operator}{operator} pertukaran, yang \omterm{def:b3:quantum-model-systems:hermitian}{nilai harapannya} adalah \omterm{def:b3:many-electron-atoms:exchange}{integral
+pertukaran} \cref{ch:b3:many-electron-atoms}. Karena $\hat f$ bergantung pada
+orbital-orbital yang ditentukannya sendiri, persamaannya diselesaikan secara
+iteratif sampai orbital-orbital itu tidak berubah lagi: sebuah \emph{medan
+swakonsisten}\index{medan swakonsisten} (SCF).
+\end{definition}
+
+\begin{theorem}[Persamaan Roothaan--Hall]\label{thm:b3:computational-chemistry:roothaan}
+Dengan menuliskan setiap orbital dalam sebuah basis, $\phi_a = \sum_\mu C_{\mu a}\chi_\mu$,
+persamaan Hartree--Fock kulit tertutup menjadi soal \omterm{def:b3:quantum-model-systems:operator}{nilai eigen} matriks
+\[
+\mathbf F\mathbf C = \mathbf S\mathbf C\boldsymbol\varepsilon, \qquad F_{\mu\nu} =
+h_{\mu\nu} + \sum_{\lambda\sigma}P_{\lambda\sigma}\big[(\mu\nu|\sigma\lambda) -
+\tfrac12(\mu\lambda|\sigma\nu)\big],
+\]
+dengan matriks kerapatan $P_{\lambda\sigma} = 2\sum_a^{\mathrm{occ}}C_{\lambda a}C_{\sigma
+a}$ dan integral dua elektron $(\mu\nu|\lambda\sigma) = \iint\chi_\mu(1)\chi_\nu(1)
+r_{12}^{-1}\chi_\lambda(2)\chi_\sigma(2)$ (satuan atom).
+\end{theorem}
+
+\begin{proof}[Bukti parsial]
+Energi determinan itu adalah $E = \sum_{\mu\nu}P_{\mu\nu}h_{\mu\nu} + \frac12
+\sum P_{\mu\nu}P_{\lambda\sigma}[(\mu\nu|\sigma\lambda) - \frac12(\mu\lambda|\sigma\nu)]$,
+sebuah fungsi kuadratik koefisien-koefisiennya. Minimumkan energi itu dengan
+kendala bahwa orbital-orbitalnya tetap ortonormal,
+$\mathbf C^{\mathsf T}\mathbf S\mathbf C = \mathbf 1$, dengan satu pengali
+Lagrange untuk setiap kendala: syarat kestasionerannya adalah
+$\mathbf F\mathbf C = \mathbf S\mathbf C\boldsymbol\varepsilon$, dengan
+pengali-pengali itu membentuk matriks yang dapat dibuat diagonal oleh rotasi
+orbital-orbital terisi di antara mereka sendiri. Aljabarnya diterima tanpa
+bukti.
+\end{proof}
+
+\begin{method}[Prosedur SCF]\label{met:b3:computational-chemistry:scf}
+\begin{enumerate}
+  \item Hitunglah integral $S_{\mu\nu}$, $h_{\mu\nu}$ dan $(\mu\nu|\lambda\sigma)$ sekali saja.
+  \item Tebaklah matriks kerapatannya (misalnya dari vektor-vektor eigen
+        $\mathbf h$ saja, tebakan ``inti'').
+  \item Bangunlah $\mathbf F$ dari $\mathbf P$; selesaikan $\mathbf F\mathbf C = \mathbf S\mathbf C
+        \boldsymbol\varepsilon$ (ortogonalkan dengan $\mathbf S^{-1/2}$, lalu diagonalkan).
+  \item Isilah orbital-orbital terendah, masing-masing dua elektron; bentuklah
+        $\mathbf P$ yang baru dan energinya.
+  \item Ulangi dari langkah 3 sampai energi dan $\mathbf P$ berubah kurang
+        dari suatu ambang.
+\end{enumerate}
+\end{method}
+
+\begin{omfigure}
+\begin{tikzpicture}[font=\small, node distance=4mm,
+  box/.style={draw=black!60, rounded corners=2pt, fill=omDef!6, align=center,
+  text width=4.4cm, inner sep=4pt}]
+  \node[box] (a) {integral $S$, $h$, $(\mu\nu|\lambda\sigma)$};
+  \node[box, below=of a] (b) {tebak $\mathbf P$};
+  \node[box, below=of b] (c) {bangun $\mathbf F(\mathbf P)$};
+  \node[box, below=of c] (d) {selesaikan $\mathbf F\mathbf C = \mathbf S\mathbf C\boldsymbol\varepsilon$};
+  \node[box, below=of d] (e) {$\mathbf P$ baru, energi $E$};
+  \node[diamond, aspect=2.4, draw=black!60, fill=omThm!6, below=of e, inner sep=1pt] (f) {konvergen?};
+  \node[box, below=of f, fill=omProp!8] (g) {orbital, $\varepsilon$, $E$};
+  \draw[->] (a) -- (b); \draw[->] (b) -- (c); \draw[->] (c) -- (d);
+  \draw[->] (d) -- (e); \draw[->] (e) -- (f);
+  \draw[->] (f) -- node[left] {ya} (g);
+  \draw[->] (f.east) -- ++(1.6,0) |- node[pos=0.25, right] {tidak} (c.east);
+\end{tikzpicture}
+
+{\small Siklus iterasi \omterm{def:b3:computational-chemistry:hartree-fock}{medan swakonsisten} dalam perhitungan Hartree--Fock.}
+\end{omfigure}
+
+\begin{example}[\ce{H2} dalam basis minimal]\label{ex:b3:computational-chemistry:h2}
+% ledger: re:H2, janaf:H.dfH0, diat:H2.we, diat:H2.wexe
+Dengan satu fungsi STO-3G per atom, orbital ikatan ditentukan oleh simetri,
+$\sigma_g \propto \chi_A + \chi_B$, dan SCF hanya memerlukan satu langkah. Pada
+$R =
+\qty{1.4}{\bohr}$ tumpang-tindihnya $S_{AB} = 0.6593$ dan energinya
+\qty{-1.1167}{\hartree}; minimumnya terletak pada \qty{1.346}{\bohr}
+(\qty{71.2}{pm}, dibandingkan dengan \qty{74.1}{pm} yang terukur) dan
+\qty{-1.1175}{\hartree}. Gambar di bawah membandingkan kurva itu dengan kurva
+sebenarnya, yang dibangun dari data spektroskopi terukur dan energi disosiasi
+(kurva Morse, \cref{ch:b3:rovibrational-spectroscopy}).
+\end{example}
+
+\begin{omfigure}
+\begin{tikzpicture}
+\begin{axis}[width=0.7\linewidth, height=6cm, xmin=0.8, xmax=10, ymin=-1.2,
+  ymax=-0.45, axis lines=left, xlabel={$R$ / $a_0$}, ylabel={$E$ / $E_h$},
+  legend cell align=left, legend style={font=\small, at={(0.04,0.98)}, anchor=north west, draw=none},
+  tick label style={font=\small}, label style={font=\small}]
+\addplot[omDef, thick] table[x=R, y=rhf] {figdata/out/bachelor-3-minimal-basis-hf-h2.dat};
+\addlegendentry{RHF/STO-3G}
+\addplot[black, thick, dashed] table[x=R, y=morse] {figdata/out/bachelor-3-minimal-basis-hf-h2.dat};
+\addlegendentry{terukur (bentuk Morse)}
+\addplot[gray, dotted, domain=0.8:10] {-1.0};
+\addplot[omThm, dotted, domain=0.8:10] {-0.93316};
+\node[font=\scriptsize, anchor=north] at (axis cs:8,-1.005) {dua atom H eksak};
+\node[font=\scriptsize, anchor=south, omThm] at (axis cs:8,-0.930) {dua atom H STO-3G};
+\end{axis}
+\end{tikzpicture}
+
+{\small Energi \ce{H2} terhadap jarak antarinti: Hartree--Fock terbatas dalam
+basis STO-3G (garis penuh) dan kurva sebenarnya (garis putus-putus, bentuk
+Morse yang dibangun dari $D_0$, $\omega_e$, $\omega_ex_e$, $r_e$ terukur). Di
+dekat minimum RHF cukup baik; pada $R$ yang besar energinya naik jauh di atas
+energi dua atom hidrogen.}
+\end{omfigure}
+
+\begin{proposition}[Mengapa Hartree--Fock terbatas gagal pada disosiasi]\label{prop:b3:computational-chemistry:rhf-dissociation}
+Dalam basis minimal, fungsi gelombang RHF \ce{H2}, terlepas dari normalisasi,
+adalah $\sigma_g(1)\sigma_g(2) \propto \chi_A(1)\chi_B(2) + \chi_B(1)\chi_A(2)
++ \chi_A(1)\chi_A(2) + \chi_B(1)\chi_B(2)$: pada jarak berapa pun, setengah
+kovalen dan setengah ionik (\ce{H+ H-}). Pada $R$ yang besar, energinya
+menuju rata-rata dua atom netral dan sepasang ion, bukan energi dua atom.
+\end{proposition}
+
+\begin{proof}
+Jabarkan $(\chi_A + \chi_B)(1)(\chi_A + \chi_B)(2)$: kedua suku silang
+menempatkan satu elektron pada setiap atom, kedua suku kuadrat menempatkan
+keduanya pada atom yang sama, dengan bobot yang sama berapa pun $R$.
+Determinan itu tidak dapat mengubah bobot-bobot ini.
+\end{proof}
+
+\begin{definition}[Korelasi elektron, energi korelasi]\label{def:b3:computational-chemistry:correlation}
+Yang disebut \emph{korelasi elektron}\index{korelasi elektron} adalah bagian
+dari sikap saling menghindar elektron-elektron yang tidak digambarkan oleh
+satu determinan (yang elektron-elektronnya dengan spin berlawanan bergerak
+bebas dalam medan rata-rata satu sama lain). Yang disebut \emph{energi
+korelasi}\index{energi korelasi} adalah energi eksak dikurangi energi
+Hartree--Fock dalam basis lengkap; nilainya selalu negatif.
+\end{definition}
+
+\omterm{def:b3:computational-chemistry:correlation}{Energi korelasi} besarnya sekitar \qty{-0.04}{\hartree} per pasangan
+elektron, satu persen dari energi total tetapi setara dengan energi sebuah
+reaksi: metode-metode yang menambahkannya (interaksi konfigurasi, teori
+gangguan, kluster tergandeng) jauh lebih mahal daripada Hartree--Fock, yang
+biayanya sendiri sudah tumbuh kira-kira sebanding dengan pangkat empat
+banyaknya fungsi basis.
+
+\begin{theorem}[Teorema Koopmans]\label{thm:b3:computational-chemistry:koopmans}
+Dalam teori Hartree--Fock, energi yang diperlukan untuk mengeluarkan sebuah
+elektron dari orbital terisi $a$, dengan semua orbital lain dibekukan, adalah
+$-\varepsilon_a$. Oleh karena itu, energi ionisasi terukur kira-kira sama
+dengan negatif energi-energi orbital: inilah \emph{teorema
+Koopmans}\index{teorema Koopmans}.
+\end{theorem}
+
+\begin{proof}
+Energi determinan kulit tertutup adalah $\sum_a2h_{aa} + \sum_{ab}(2J_{ab} -
+K_{ab})$, dan $\varepsilon_a = h_{aa} + \sum_b(2J_{ab} - K_{ab})$. Keluarkan satu
+elektron dari $a$ tanpa mengubah orbital-orbitalnya: suku-suku yang hilang
+adalah $h_{aa}$, interaksi elektron itu dengan semua elektron lain,
+$\sum_b(2J_{ab} - K_{ab}) -
+J_{aa}$, ditambah $J_{aa}$ dengan bekas
+pasangannya --- seluruhnya tepat $\varepsilon_a$. Jadi
+$E^+ - E = -\varepsilon_a$.
+\end{proof}
+
+\begin{example}[Mengionkan \ce{H2}]\label{ex:b3:computational-chemistry:koopmans}
+% ledger: ie4:H2
+Pada \qty{1.4}{\bohr}, energi orbital STO-3G dari $\sigma_g$ adalah
+\qty{-0.5782}{\hartree}: Koopmans meramalkan \qty{15.73}{eV}, dibandingkan
+dengan \qty{15.43}{eV} yang terukur. Orbital yang dibekukan menaksir energi
+ion terlalu tinggi (ion itu akan berelaksasi), korelasi yang hilang bekerja ke
+arah sebaliknya; untuk ionisasi valensi kedua galat itu sebagian besar saling
+meniadakan, itulah sebabnya spektrum fotoelektron dalam jilid Tahun 2 dapat
+dibaca dengan diagram orbital.
+\end{example}
+
+\section{Teori fungsional kerapatan, dan apa yang dapat dikatakan sebuah perhitungan}
+
+Fungsi gelombang $N$ elektron bergantung pada $3N$ koordinat; \omterm{def:b3:computational-chemistry:dft}{kerapatan
+elektron} bergantung pada tiga.
+
+\begin{definition}[Kerapatan elektron, teori fungsional kerapatan]\label{def:b3:computational-chemistry:dft}
+Yang disebut \emph{kerapatan elektron}\index{kerapatan elektron}
+$\rho(\mathbf r)$ adalah banyaknya elektron per satuan volume di $\mathbf r$,
+dijumlahkan atas semua elektron: $\int\rho\,\dd\tau = N$. Yang disebut
+\emph{teori fungsional kerapatan}\index{teori fungsional kerapatan} (DFT)
+adalah teori yang menghitung energi keadaan dasar sebagai fungsional dari $\rho$. Dalam praktik,
+$\rho = \sum_a|\phi_a|^2$ disusun dari \emph{orbital
+Kohn--Sham}\index{orbital Kohn--Sham}, yaitu orbital elektron-elektron fiktif yang saling bebas dengan
+kerapatan yang sama dengan elektron sebenarnya, dan semua efek pertukaran dan
+korelasi dihimpun dalam sebuah \emph{fungsional
+pertukaran--korelasi}\index{fungsional pertukaran--korelasi} $E_{\mathrm{xc}}[\rho]$.
+\end{definition}
+
+\begin{theorem}[Hohenberg--Kohn]\label{thm:b3:computational-chemistry:hohenberg-kohn}
+Kerapatan keadaan dasar suatu sistem elektron menentukan potensial luar
+(inti-inti) sampai sebuah tetapan, sehingga juga Hamiltonian dan setiap sifat
+keadaan dasar; dan fungsional energi terhadap kerapatan bernilai minimum pada
+kerapatan yang sebenarnya.
+\end{theorem}
+\admitted
+
+Buktinya dibahas dalam kuliah yang lebih lanjut. Teorema itu menjamin bahwa
+fungsional eksak ada, tetapi tidak mengatakan apa wujudnya: setiap fungsional
+praktis adalah sebuah pendekatan, yang dipilih dari suatu hierarki ---
+kerapatan lokal, koreksi gradien, hibrida yang mencampurkan sebagian
+pertukaran Hartree--Fock --- dan dikalibrasi terhadap data acuan.
+Persamaan Kohn--Sham diselesaikan dengan siklus SCF yang sama dengan
+Hartree--Fock, dengan biaya yang serupa, tetapi sudah memuat korelasi;
+itulah sebabnya DFT menjadi andalan kimia.
+
+\begin{method}[Membaca sebuah perhitungan]\label{met:b3:computational-chemistry:read-calculation}
+\begin{enumerate}
+  \item Periksalah bahwa SCF telah konvergen dan bahwa \omterm{def:b3:computational-chemistry:pes}{optimasi geometri}
+        berakhir dengan gaya-gaya di bawah ambang.
+  \item Jalankan perhitungan frekuensi pada tingkat yang sama: semua
+        frekuensi real berarti sebuah minimum; satu frekuensi imajiner berarti
+        struktur transisi, yang modus normalnya adalah gerak melintasi
+        penghalang.
+  \item Bandingkan hal yang sebanding: selisih energi antara
+        struktur-struktur yang dihitung pada satu tingkat, jangan pernah
+        energi absolut dari tingkat yang berbeda.
+  \item Bandingkan dengan eksperimen dengan mengetahui galat khas tingkat
+        itu: frekuensi harmonik biasanya diskalakan turun dengan faktor 0.9
+        sampai 0.97; panjang ikatan akurat sampai sekitar 1 pm dengan
+        fungsional hibrida dan basis terpolarisasi; energi reaksi paling baik
+        sampai beberapa \unit{kJ/mol}.
+\end{enumerate}
+\end{method}
+
+\begin{method}[Memilih tingkat teori]\label{met:b3:computational-chemistry:choose-level}
+Geometri dan frekuensi molekul organik: fungsional hibrida dengan basis
+valensi terpisah yang terpolarisasi. Interaksi lemah: tambahkan koreksi
+dispersi dan \omterm{def:b3:computational-chemistry:split-valence}{fungsi difus}. Penghalang reaksi dan energetika yang akurat:
+metode fungsi gelombang berkorelasi pada geometri DFT, sejauh anggaran
+memungkinkan. Sistem besar (protein, permukaan): sebuah daerah kecil yang
+diperlakukan secara mekanika kuantum di dalam medan gaya klasik. Selalu
+ujilah tingkat yang dipilih pada molekul sejenis yang jawabannya sudah
+diketahui.
+\end{method}
+
+\begin{inthelab}[Sebuah eksperimen komputasi]
+Perhitungan dijalankan seperti eksperimen dan dicatat dalam buku catatan
+laboratorium: program dan versinya, metode, basis, ambang kekonvergenan,
+struktur awal, dan berkas-berkas keluaran yang disimpan sebagai data mentah.
+Urutan yang khas adalah: susun molekulnya, optimasikan geometrinya pada
+tingkat yang sederhana, hitung frekuensinya untuk memastikan sebuah minimum,
+lalu hitung energinya pada tingkat yang lebih tinggi pada geometri itu.
+\end{inthelab}
+
+\begin{history}[Molekul yang lebih dulu dikenal melalui perhitungan]
+% ledger: hist4:HeHp.2019
+\ce{HeH+} dibuat di laboratorium pada tahun 1925. Sifat-sifatnya dihitung
+secara rinci sejak tahun 1930-an, dan ion itu diramalkan melimpah dalam
+beberapa gas astrofisika; tetapi garis rotasi pertamanya terletak di
+inframerah jauh, yang diserap oleh atmosfer. Pada tahun 2019 sebuah
+observatorium di pesawat terbang mendeteksinya dalam nebula planeter
+NGC 7027, pada frekuensi yang telah diramalkan oleh perhitungan dan spektrum
+laboratorium.
+\end{history}
+
+\section{Latihan}
+
+\begin{exercise}[$\star$]\label{exo:b3:computational-chemistry:1}
+Untuk atom hidrogen, ambillah fungsi coba $\eu^{-\alpha r^2}$. Dalam satuan atom
+$E(\alpha) = \frac32\alpha - 2\sqrt{2\alpha/\pi}$. Carilah $\alpha$ terbaik dan
+energi yang bersesuaian; bandingkan dengan $-\frac12E_h$.
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:computational-chemistry:2}
+Berapa banyak fungsi basis yang dipakai perhitungan benzena dalam basis
+STO-3G? Dalam 6-31G(d), dengan enam fungsi $d$ Kartesius per karbon dan dua
+fungsi $s$ per hidrogen?
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:computational-chemistry:3}
+Jelaskan mengapa \ce{H2} dan \ce{D2} mempunyai panjang ikatan dan \omterm{def:b3:quantum-model-systems:oscillator}{tetapan gaya}
+yang sama tetapi bilangan gelombang vibrasi yang berbeda. Rasio berapakah
+yang diharapkan?
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:computational-chemistry:4}
+Perhitungan frekuensi pada sebuah struktur berrumus \ce{C2H5F} memberikan 17
+frekuensi real dan satu frekuensi imajiner, $487\iu$~\unit{cm^{-1}}. \omterm{def:b3:computational-chemistry:pes}{Titik
+stasioner} jenis apakah itu? Berapa banyak frekuensi yang seharusnya ada
+seluruhnya?
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:computational-chemistry:5}
+% ledger: ie:He, ie4:He2
+Dengan memakai $E(\zeta) = \zeta^2 - \frac{27}{8}\zeta$, hitunglah energi
+variasi terbaik helium dalam \unit{\hartree} dan eV, serta galatnya terhadap
+nilai eksak $\qty{-2.9034}{\hartree}$. Berapa fraksi energi total galat itu?
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:computational-chemistry:6}
+Dua fungsi basis memberikan $H_{11} = \qty{-1.0}{\hartree}$, $H_{22} =
+\qty{-0.5}{\hartree}$, $H_{12} = \qty{-0.2}{\hartree}$, $S_{12} = 0.3$.
+Selesaikan persamaan sekularnya. Apakah akar yang lebih rendah berada di
+bawah $H_{11}$?
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:computational-chemistry:7}
+Sebuah perhitungan Hartree--Fock memerlukan 10 menit untuk benzena dalam
+STO-3G. Dengan menganggap biayanya sebanding dengan pangkat empat banyaknya
+fungsi basis, perkirakan waktunya dalam 6-31G(d).
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:computational-chemistry:8}
+% ledger: ie4:H2
+Energi orbital STO-3G \ce{H2} pada \qty{1.4}{\bohr} adalah
+\qty{-0.5782}{\hartree}. Berikan perkiraan Koopmans untuk energi ionisasinya
+dalam eV dan bandingkan dengan \qty{15.43}{eV}. Sebutkan dua alasan mengapa
+keduanya berbeda beserta arah pengaruhnya.
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:computational-chemistry:9}
+Dalam STO-3G, energi satu atom hidrogen adalah \qty{-0.4666}{\hartree} dan
+energi RHF \ce{H2} pada \qty{10}{\bohr} adalah \qty{-0.5960}{\hartree}.
+Seberapa jauh di atas energi dua atom energi RHF pada jarak itu, dalam eV?
+Jelaskan dengan suku-suku ionik.
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:computational-chemistry:10}
+Untuk $\phi = c_1\chi_1 + c_2\chi_2$ dengan fungsi-fungsi real, tuliskan
+$E(c_1,c_2)$ dan turunkan kedua persamaan sekular dengan menetapkan
+$\partial E/\partial c_1 =
+\partial E/\partial c_2 = 0$.
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:computational-chemistry:11}
+% ledger: aw:H, diat:H2.we
+Energi RHF/STO-3G \ce{H2} adalah $-1.116871$, $-1.117501$ dan
+$\qty{-1.116714}{\hartree}$ pada $R = 1.30$, 1.35 dan \qty{1.40}{\bohr}.
+Perkirakan \omterm{def:b3:quantum-model-systems:oscillator}{tetapan gayanya} dengan beda hingga, ubahlah menjadi \unit{N/m}
+($\qty{1}{\hartree\per\bohr\squared} = \qty{1556.9}{N/m}$), dan hitunglah
+bilangan gelombang harmoniknya. Bandingkan dengan
+$\tilde\omega_e = \qty{4401}{cm^{-1}}$.
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:computational-chemistry:12}
+Selisih energi antara dua konformer sebuah gula, yang diketahui berbeda
+beberapa \unit{kJ/mol}, dengan ikatan hidrogen intramolekul pada salah
+satunya, harus dihitung. Pilihlah sebuah metode, sebuah \omterm{def:b3:computational-chemistry:basis}{himpunan basis}, dan
+pemeriksaan-pemeriksaan yang akan dijalankan, serta berikan alasannya.
+\end{exercise}
+
+\section{Soal: HeH\texorpdfstring{$^+$}{+}, Molekul Pertama}
+
+\begin{problem}[{Soal akhir pekan --- perhitungan Hartree--Fock basis minimal
+untuk ion helium hidrida: basisnya, tebakan inti, orbital yang konvergen, dan
+ikatan sebuah proton pada helium}]
+\label{pb:b3:computational-chemistry:1}
+% ledger: bse:He.sto3g.a1, bse:He.sto3g.a2, bse:He.sto3g.a3, bse:H.sto3g.a1, pa:He, ie:He, ie4:He2
+\ce{HeH+} dihitung pada $R = \qty{1.4632}{\bohr}$ dalam basis STO-3G
+(eksponen He 6.3624, 1.1589, 0.31365; eksponen H 3.4253, 0.62391, 0.16886;
+ketiga koefisiennya sama). Fungsi 1 berada pada He, fungsi 2 pada H. Program
+itu memberikan (satuan atom)
+\[
+\mathbf S = \begin{pmatrix}1 & 0.5368\\ 0.5368 & 1\end{pmatrix},\quad
+\mathbf h = \begin{pmatrix}-2.5983 & -1.4318\\ -1.4318 & -1.7318\end{pmatrix},\quad
+\mathbf F_{\mathrm{final}} = \begin{pmatrix}-1.5902 & -1.0610\\ -1.0610 & -0.8340
+\end{pmatrix},
+\]
+orbital terisi $\phi = 0.8766\chi_1 + 0.2025\chi_2$, energi-energi orbital
+$-1.6328$ dan \qty{-0.1725}{\hartree}, serta energi-energi SCF $-2.7978$,
+$-2.8404$, $-2.8418$, $-2.8418$. Atom helium dalam basis yang sama mempunyai
+energi \qty{-2.8078}{\hartree}. $\qty{1}{\hartree} = \qty{27.211}{eV} =
+\qty{2625.5}{kJ/mol}$.
+
+\medskip\noindent\textbf{Bagian I --- Basis.}
+\begin{enumerate}[beginpenalty=10000]
+  \item Apa arti ``STO-3G''?
+  \item Mengapa eksponen helium lebih besar daripada eksponen hidrogen?
+        Periksalah bahwa rasionya adalah $(1.69/1.24)^2$.
+  \item Berapa banyak fungsi basis, elektron, dan orbital terisi yang ada?
+  \item Hitunglah energi tolakan inti.
+  \item Tafsirkan $S_{12} = 0.5368$.
+  \item Mengapa $h_{11}$ lebih rendah daripada $h_{22}$?
+\end{enumerate}
+
+\medskip\noindent\textbf{Bagian II --- Tebakan inti.}
+\begin{enumerate}[resume, beginpenalty=10000]
+  \item Tuliskan persamaan sekular $\det(\mathbf h - \varepsilon\mathbf S) = 0$
+        sebagai persamaan kuadrat dalam $\varepsilon$.
+  \item Selesaikan persamaan itu.
+  \item Mengapa hasil ini hanya merupakan titik awal?
+  \item Berikan rumus matriks Fock dalam $\mathbf h$, matriks kerapatan, dan
+        integral-integral dua elektron.
+  \item Interaksi elektron mana yang dimuat $\mathbf F$ tetapi tidak dimuat
+        $\mathbf h$?
+  \item Jelaskan mengapa prosedur itu harus diiterasi.
+\end{enumerate}
+
+\medskip\noindent\textbf{Bagian III --- Orbital yang konvergen.}
+\begin{enumerate}[resume, beginpenalty=10000]
+  \item Periksalah bahwa $\phi$ ternormalisasi.
+  \item Populasinya adalah unsur-unsur diagonal $P\mathbf S$, $2c_1^2 + 2c_1c_2S$
+        pada He dan $2c_2^2 + 2c_1c_2S$ pada H. Hitunglah populasi itu.
+  \item Di manakah muatan positifnya berada? Apakah molekul itu lebih tepat
+        digambarkan sebagai \ce{He + H+} atau \ce{He+ + H}?
+  \item Gunakan \omterm{thm:b3:computational-chemistry:koopmans}{teorema Koopmans} untuk memperkirakan energi yang diperlukan
+        untuk mengeluarkan sebuah elektron dari \ce{HeH+}.
+  \item Hitunglah energi elektronik $E_{\mathrm{el}} = E - V_{\mathrm{nn}}$.
+  \item Berapa siklus yang diperlukan untuk konvergen sampai
+        \qty{e-4}{\hartree}? Mengapa energinya turun pada setiap siklus?
+  \item Dengan eksponen helium yang diskalakan ke $\zeta = 2.0925$, bukan
+        1.69, program yang sama memberikan \qty{-2.8607}{\hartree}. Basis
+        manakah yang lebih baik, dan mengapa hal itu dapat dikatakan?
+  \item Apa yang dinyatakan oleh energi orbital virtual,
+        \qty{-0.1725}{\hartree}?
+\end{enumerate}
+
+\medskip\noindent\textbf{Bagian IV --- Ikatan sebuah proton.}
+\begin{enumerate}[resume, beginpenalty=10000]
+  \item Berapakah energi sebuah proton telanjang? Dan energi \ce{He + H+} yang
+        saling berjauhan, dalam basis ini?
+  \item Hitunglah energi yang dilepaskan oleh \ce{He + H+ -> HeH+} pada tingkat
+        ini, dalam \unit{kJ/mol}.
+  \item Afinitas proton helium yang terukur adalah \qty{177.8}{kJ/mol}.
+        Berikan komentar.
+  \item Energi eksak helium adalah minus jumlah energi ionisasinya, 24.5874
+        dan \qty{54.4178}{eV}. Hitunglah energi itu dalam \unit{\hartree} dan
+        galat atom helium STO-3G.
+  \item Mengapa galat sebesar ini masih dapat memberikan geometri molekul
+        yang berguna?
+  \item Nyatakan hasilnya: energi total RHF/STO-3G \ce{HeH+} pada
+        \qty{1.4632}{\bohr}.
+\end{enumerate}
+\end{problem}

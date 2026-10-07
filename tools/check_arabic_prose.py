@@ -229,10 +229,13 @@ TITLED_ENVS = {
 
 # Environments whose body is drawing code, not prose. Node text and axis
 # labels are pulled out of them separately.
+# MOdiagram (modiagram: \atom{left}{1s = {0;up}}) is drawing code and omchartable
+# (a character table) is mathematics; both first met in chemistry Books 3-4,
+# where the hi/ar/id gates fired on "left", "pair", "up" (2026-10-06).
 DRAWING_ENVS = {"tikzpicture", "axis", "semilogxaxis", "semilogyaxis",
-                "loglogaxis", "groupplot", "scope", "circuitikz"}
+                "loglogaxis", "groupplot", "scope", "circuitikz", "MOdiagram"}
 
-MATH_ENVS = {"equation", "equation*", "align", "align*", "gather", "gather*",
+MATH_ENVS = {"omchartable", "equation", "equation*", "align", "align*", "gather", "gather*",
              "multline", "multline*", "eqnarray", "eqnarray*", "array",
              "cases", "split", "aligned", "gathered", "pmatrix", "bmatrix",
              "vmatrix", "matrix", "smallmatrix"}
@@ -1446,6 +1449,62 @@ ATTRIBUTION_EXTRA = re.compile(ATTRIBUTION_EXTRA.pattern + r"|Stephanb|Elcobbola
 # agent, 2026-10-04; the Hindi gate allows the same four).
 ALLOWED_WORDS |= {"pcl", "pag", "pbr", "pnh"}
 
+
+# Coordination-chemistry notation of Chemistry Book 3 (chapters 18-20): the
+# IUPAC stereodescriptors fac/mer (siblings of cis/trans, already allowed) and
+# the ligand abbreviation edta (en and ox are two letters and pass anyway).
+# Printed in Latin in every edition, like pH. Added by the Arabic Chemistry
+# Book 3 agent, 2026-10-06.
+ALLOWED_WORDS |= {"fac", "mer", "edta"}
+
+
+# chemfig's \schemestart[<angle>][<anchor>] takes a TikZ anchor ("west",
+# Chemistry Book 3 ch. 21) that survives here as "[west]"; it is an option,
+# never printed. Blanked only in that bracketed form, so the English word
+# "west" in prose still fires. Added by the Arabic Chemistry Book 3 agent,
+# 2026-10-06.
+ATTRIBUTION_EXTRA = re.compile(ATTRIBUTION_EXTRA.pattern + r"|\[west\]")
+
+# DIBAL-H (diisobutylaluminium hydride, Chemistry Book 3 ch. 24): a reagent
+# acronym printed in Latin in every script; the hyphen makes it too long for
+# the 4-letter uppercase escape (the Hindi gate allows the same token).
+# Added by the Arabic Chemistry Book 3 agent, 2026-10-06.
+ALLOWED_WORDS |= {"dibal-h"}
+
+# ICP-MS / ICP-OES (Chemistry Book 3 ch. 32): instrument acronyms printed in
+# Latin in every script. Each part alone passes the uppercase escape, but the
+# hyphen joins them into one token that is longer than four letters; the
+# hyphen rule accepts a compound only if every part is listed here.
+# Added by the Arabic Chemistry Book 3 agent, 2026-10-06.
+ALLOWED_WORDS |= {"icp", "oes", "ms"}
+
+# DEPT-135 / DEPT-90 (an NMR pulse-sequence name; LATIN_WORD keeps the
+# trailing hyphen, so the uppercase escape no longer applies) and PubChem (the
+# database cited as the data source, a proper name printed in Latin in every
+# edition), Chemistry Book 3 ch. 33. Added by the Arabic Chemistry Book 3
+# agent, 2026-10-06.
+ALLOWED_WORDS |= {"dept", "pubchem"}
+
+
+# Baldwin's ring-closure descriptors (Chemistry Book 4 ch. 27): "5-exo-trig",
+# "6-endo-dig" and the bare "(trig)"/"(dig)" glosses are international
+# notation, printed in Latin in every edition like cis/trans. Blanked only in
+# those exact forms, so the English word "dig" in prose still fires ("tet",
+# "exo" and "endo" are already allowed). Added by the Arabic Chemistry Book 4
+# agent, 2026-10-07.
+ATTRIBUTION_EXTRA = re.compile(ATTRIBUTION_EXTRA.pattern
+                               + r"|(?:exo|endo)-(?:tet|trig|dig)\b"
+                               + r"|\((?:tet|trig|dig)\)")
+
+# "Polimerek", "Shandchem", "Kaldari" and "Soramimi", Wikimedia Commons user
+# names in Chemistry Book 4 photo credits (ch. 33, 8, 24, 27), reproduced
+# verbatim as the licence requires, like "Dnn87" above (personal names are
+# transliterated); and "qNMR", the established acronym of quantitative NMR,
+# printed in Latin in every edition like ppm (its lowercase q defeats the
+# uppercase escape). Added by the Arabic Chemistry Book 4 agent, 2026-10-07.
+ATTRIBUTION_EXTRA = re.compile(ATTRIBUTION_EXTRA.pattern
+                               + r"|Polimerek|Shandchem|Kaldari|Soramimi")
+ALLOWED_WORDS |= {"qnmr"}
 
 if __name__ == "__main__":
     sys.exit(main())

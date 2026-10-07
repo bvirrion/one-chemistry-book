@@ -1,0 +1,641 @@
+\chapter{Toegepaste groepentheorie}\label{ch:b3:group-theory-applied}
+
+Koolstofdioxide maakt enkele honderden moleculen uit op elk miljoen
+moleculen lucht, stikstof en zuurstof vrijwel al de rest; toch is het
+koolstofdioxide, en niet stikstof of zuurstof, dat het infraroodlicht
+absorbeert dat de warme bodem naar de ruimte uitstraalt. Een molecuul
+absorbeert infraroodlicht alleen via een vibratie die zijn dipoolmoment
+verandert, en of een vibratie dat doet, wordt uitsluitend door de
+symmetrie bepaald: de enige vibratie van stikstof kan het niet, twee van
+de vier vibraties van koolstofdioxide wel. Dit hoofdstuk maakt van de
+karaktertabellen van
+\cref{ch:b3:point-groups} werktuigen: het reduceert representaties,
+bouwt symmetrieaangepaste orbitalen, telt en benoemt vibraties, en leidt
+de selectieregels van infrarood- en ramanspectroscopie af.
+
+\begin{recall}
+\Cref{ch:b3:point-groups} definieerde \omterm{def:b3:point-groups:operation}{symmetrieoperaties}, \omterm{def:b3:point-groups:point-group}{puntgroepen},
+klassen, representaties, \omterm{def:b3:point-groups:representation}{karakters} en karaktertabellen. Het deel van
+jaar~2 bouwde de moleculaire orbitalen van \ce{H2O}, \ce{NH3} en \ce{CH4}
+op uit fragmentorbitalen en symmetrieaangepaste combinaties van de
+$1s$-orbitalen van waterstof, en benoemde ze met labels die hier
+afgeleid worden. Het deel van jaar~1 las infraroodspectra in golfgetallen
+en definieerde de polariseerbaarheid van een molecuul.
+\end{recall}
+
+\section{Een representatie reduceren}
+
+Elke verzameling functies of vectoren die aan een molecuul vastzit,
+draagt een representatie van zijn \omterm{def:b3:point-groups:point-group}{puntgroep}. De meeste zijn reducibel.
+
+\begin{definition}[Reducibele representatie, totaalsymmetrische representatie]\label{def:b3:group-theory-applied:reducible}
+Een \emph{reducibele representatie}\index{reducibele representatie} is een
+representatie waarvan alle matrices door één basisverandering in dezelfde
+blokdiagonale vorm gebracht kunnen worden; ze is dan een som van
+\omterm{def:b3:point-groups:irrep}{irreducibele representaties}, geschreven als $\Gamma = \sum_in_i\Gamma_i$. De
+\omterm{def:b3:point-groups:irrep}{irreducibele representatie} waarvan alle \omterm{def:b3:point-groups:representation}{karakters} 1 zijn, is de
+\emph{totaalsymmetrische
+representatie}\index{totaalsymmetrische representatie} ($A_1$, $A_{1g}$,
+$A_1'$\dots).
+\end{definition}
+
+\begin{theorem}[Grote orthogonaliteitsstelling]\label{thm:b3:group-theory-applied:great-orthogonality}
+Voor twee \omterm{def:b3:point-groups:irrep}{irreducibele representaties} $\Gamma_i$, $\Gamma_j$ met dimensies $d_i$,
+$d_j$ van een groep van orde $h$, geschreven met unitaire matrices, geldt
+\[
+\sum_R D_i(R)_{mn}^*\,D_j(R)_{m'n'} = \frac{h}{d_i}\,\delta_{ij}\,\delta_{mm'}\,\delta_{nn'}.
+\]
+\end{theorem}
+\admitted
+
+Het bewijs, met de lemma's van Schur, hoort thuis in meer gevorderde
+cursussen; de chemie gebruikt de gevolgen voor de \omterm{def:b3:point-groups:representation}{karakters}, en elke
+\omterm{def:b3:point-groups:irrep}{karaktertabel} in dit boek wordt daaraan getoetst.
+
+\begin{corollary}[Orthogonaliteit van de karakters]\label{cor:b3:group-theory-applied:characters}
+Met $g_c$ het aantal operaties in klasse $c$ is
+\[
+\sum_cg_c\,\chi_i(c)^*\chi_j(c) = h\,\delta_{ij},
+\]
+en het aantal \omterm{def:b3:point-groups:irrep}{irreducibele representaties} is gelijk aan het aantal
+klassen, met $\sum_id_i^2 = h$.
+\end{corollary}
+
+\begin{proof}
+Stel $m = n$ en $m' = n'$ in de stelling en sommeer over $m$ en $m'$: het
+linkerlid wordt $\sum_R\chi_i(R)^*\chi_j(R)$, het rechterlid $\frac{h}{d_i}\delta_{ij}
+\sum_{m}\delta_{mm} = h\delta_{ij}$; groepeer de operaties per klasse. De
+rijen van de tabel zijn dus orthogonale vectoren in een ruimte waarvan de
+dimensie het aantal klassen is, zodat er hoogstens evenveel \omterm{def:b3:point-groups:irrep}{irreducibele
+representaties} als klassen zijn; de gelijkheid en $\sum d_i^2 = h$ volgen
+uit de toepassing van de stelling op de reguliere representatie
+(oefening 10).
+\end{proof}
+
+\begin{theorem}[De reductieformule]\label{thm:b3:group-theory-applied:reduction}
+Een representatie $\Gamma$ met \omterm{def:b3:point-groups:representation}{karakters} $\chi(c)$ bevat de \omterm{def:b3:point-groups:irrep}{irreducibele
+representatie} $\Gamma_i$ precies
+\[
+n_i = \frac1h\sum_cg_c\,\chi(c)\,\chi_i(c)^*
+\]
+keer. Dit is de \emph{reductieformule}\index{reductieformule}.
+\end{theorem}
+
+\begin{proof}
+Omdat $\Gamma = \sum_jn_j\Gamma_j$, zijn haar \omterm{def:b3:point-groups:representation}{karakters} $\chi(c) = \sum_jn_j\chi_j(c)$.
+Vermenigvuldig met $g_c\chi_i(c)^*$, sommeer over de klassen en gebruik het
+gevolg:
+$\sum_cg_c\chi(c)\chi_i(c)^* = \sum_jn_jh\delta_{ij} = hn_i$.
+\end{proof}
+
+\begin{example}[De waterstoforbitalen van ammoniak]\label{ex:b3:group-theory-applied:nh3}
+Neem de drie $1s$-orbitalen van de waterstofatomen van \ce{NH3} als basis. $E$
+laat ze alle drie op hun plaats ($\chi = 3$), $C_3$ verplaatst ze alle drie
+($\chi = 0$), een
+$\sigma_v$ laat er één op zijn plaats en verwisselt er twee ($\chi = 1$). Met de
+tabel van $C_{3v}$:
+$n_{A_1} = \frac16(3 + 0 + 3\times1) = 1$, $n_{A_2} = \frac16(3 + 0 - 3) = 0$,
+$n_E = \frac16(6 + 0 + 0) = 1$. Dus $\Gamma_{\mathrm H} = A_1 + E$: de drie
+waterstofatomen geven één totaalsymmetrische combinatie en een ontaard paar.
+\end{example}
+
+\begin{method}[Een representatie reduceren]\label{met:b3:group-theory-applied:reduce}
+\begin{enumerate}
+  \item Zoek voor elke klasse het \omterm{def:b3:point-groups:representation}{karakter}: voor een verzameling functies
+        gecentreerd op atomen is dat het aantal functies dat op zijn plaats
+        blijft, elk geteld met het teken dat het krijgt.
+  \item Pas de \omterm{thm:b3:group-theory-applied:reduction}{reductieformule} toe met de rij van elke \omterm{def:b3:point-groups:irrep}{irreducibele
+        representatie}, en weeg elke klasse met haar grootte.
+  \item Controleer: de resultaten zijn natuurlijke getallen, en $\sum_in_id_i$
+        is gelijk aan het \omterm{def:b3:point-groups:representation}{karakter} onder $E$ (de grootte van de basis).
+\end{enumerate}
+\end{method}
+
+\section{Symmetrieaangepaste orbitalen}
+
+\begin{definition}[Projectieoperator]\label{def:b3:group-theory-applied:projection}
+De \emph{projectieoperator}\index{projectieoperator} op de \omterm{def:b3:point-groups:irrep}{irreducibele
+representatie} $\Gamma_i$ is
+\[
+\hat P_i = \frac{d_i}{h}\sum_R\chi_i(R)^*\,\hat R,
+\]
+waarin $\hat R$ de operatie $R$ op een functie toepast.
+\end{definition}
+
+\begin{proposition}[Wat de projectieoperator doet]\label{prop:b3:group-theory-applied:projection}
+Toegepast op een willekeurige functie $f$ is $\hat P_if$ ofwel nul, ofwel
+een functie die transformeert als $\Gamma_i$ (een symmetrieaangepaste
+combinatie); voor een
+eendimensionale $\Gamma_i$ blijft ze, op het teken $\chi_i(S)$ na,
+onveranderd onder elke operatie $S$.
+\end{proposition}
+
+\begin{proof}[Gedeeltelijk bewijs]
+Voor $d_i = 1$: $\hat S\hat P_if = \frac1h\sum_R\chi_i(R)\hat S\hat Rf$. Stel $R' = SR$,
+dat de hele groep doorloopt wanneer $R$ dat doet; $\chi_i(R) = \chi_i(S^{-1}R') =
+\chi_i(S)\chi_i(R')$ voor een eendimensionale representatie (de \omterm{def:b3:point-groups:representation}{karakters}
+zijn de matrices zelf). Dus $\hat S\hat P_if = \chi_i(S)\hat P_if$. Het
+algemene geval gebruikt de grote orthogonaliteitsstelling en wordt hier
+aangenomen.
+\end{proof}
+
+\begin{method}[Symmetrieaangepaste combinaties opbouwen]\label{met:b3:group-theory-applied:salc}
+\begin{enumerate}
+  \item Kies één functie van de verzameling, $h_1$, en zet in een tabel naar
+        welke functie elke operatie haar stuurt.
+  \item Vermenigvuldig voor elke \omterm{def:b3:point-groups:irrep}{irreducibele representatie} elk beeld met
+        het \omterm{def:b3:point-groups:representation}{karakter} van de operatie, tel op en normeer (met verwaarlozing
+        van de overlap tussen de atoomfuncties).
+  \item Projecteer voor een ontaarde representatie een tweede functie om
+        een tweede lid te verkrijgen, en orthogonaliseer daarna.
+\end{enumerate}
+\end{method}
+
+\begin{example}[De combinaties van ammoniak en water]\label{ex:b3:group-theory-applied:salcs}
+In \ce{NH3} is $\hat P_{A_1}h_1 \propto h_1 + h_2 + h_3$ (alle \omterm{def:b3:point-groups:representation}{karakters} 1). Voor $E$
+(\omterm{def:b3:point-groups:representation}{karakters} $2, -1, 0$) is $\hat P_Eh_1 \propto 2h_1 - h_2 - h_3$; $h_2$
+projecteren en
+orthogonaliseren geeft de partner $h_2 - h_3$. Genormeerd: $a_1 =
+\frac{1}{\sqrt3}(h_1 + h_2 + h_3)$, $e = \frac{1}{\sqrt6}(2h_1 - h_2 - h_3)$,
+$\frac{1}{\sqrt2}(h_2 - h_3)$. In \ce{H2O}, geplaatst in het $xz$-vlak, is $h_1 + h_2$
+$a_1$ en $h_1 - h_2$ $b_1$ (het verandert van teken onder $C_2$ en onder $\sigma_v'(yz)$,
+die de waterstofatomen verwisselen). Met het molecuul in het $yz$-vlak,
+zoals sommige boeken verkiezen, zijn de labels $b_1$ en $b_2$ overal
+verwisseld.
+\end{example}
+
+\begin{omfigure}
+\begin{tikzpicture}[font=\small]
+  \foreach \x/\lab/\ca/\cb/\cc in {0/{$a_1$}/1/1/1, 4/{$e$}/2/-1/-1, 8/{$e$}/0/1/-1}{
+    \begin{scope}[xshift=\x cm]
+      \foreach \a/\c in {90/\ca,210/\cb,330/\cc}{
+        \pgfmathsetmacro{\r}{0.18+0.13*abs(\c)}
+        \ifdim \c pt > 0pt \fill[omDef!55, draw=omDef] (\a:1.0) circle (\r);
+        \else \ifdim \c pt < 0pt \fill[omThm!25, draw=omThm] (\a:1.0) circle (\r);
+        \else \draw[gray, densely dotted] (\a:1.0) circle (0.12); \fi\fi
+      }
+      \node[aN, minimum size=4.6mm] at (0,0) {};
+      \node[anchor=north] at (0,-1.45) {\lab};
+    \end{scope}}
+  \node[anchor=north, font=\footnotesize] at (0,-1.85) {$h_1 + h_2 + h_3$};
+  \node[anchor=north, font=\footnotesize] at (4,-1.85) {$2h_1 - h_2 - h_3$};
+  \node[anchor=north, font=\footnotesize] at (8,-1.85) {$h_2 - h_3$};
+\end{tikzpicture}
+
+{\small De symmetrieaangepaste combinaties van de drie $1s$-orbitalen van
+waterstof in ammoniak, gezien langs de $C_3$-as ($h_1$ bovenaan). Blauw:
+positieve coëfficiënt, rood: negatieve; de grootte van elke schijf groeit
+met de coëfficiënt; gestippeld: nul.}
+\end{omfigure}
+
+\begin{example}[Zes liganden rond een metaal]\label{ex:b3:group-theory-applied:ml6}
+Voor zes $\sigma$-orbitalen van liganden die vanuit de hoekpunten van een
+octaëder naar een metaal wijzen, zijn de \omterm{def:b3:point-groups:representation}{karakters} op de klassen van $O_h$ ($E$, $8C_3$, $6C_2$, $6C_4$,
+$3C_2$, $i$, $6S_4$, $8S_6$, $3\sigma_h$, $6\sigma_d$) gelijk aan $6, 0, 0, 2, 2, 0, 0, 0, 4,
+2$, en de reductie geeft $\Gamma_\sigma = A_{1g} + E_g + T_{1u}$. De orbitalen
+$s$
+($a_{1g}$), $d_{z^2}$ en $d_{x^2-y^2}$ ($e_g$) en $p$ ($t_{1u}$) van het metaal
+vinden partners bij de liganden; zijn $d_{xy}$, $d_{xz}$, $d_{yz}$
+($t_{2g}$) vinden er geen en blijven niet-bindend
+voor $\sigma$ --- de oorsprong van de opsplitsing $t_{2g}$/$e_g$ uit het
+deel van jaar~2,
+uitgewerkt in \cref{ch:b3:organometallic-bonding,ch:b3:complex-spectra-magnetism}.
+\end{example}
+
+\begin{omfigure}
+\begin{tikzpicture}[font=\small, yscale=0.95]
+  % O orbitals (left), MOs (centre), H combinations (right); schematic energies
+  \foreach \y/\l in {0/{$2s\ (a_1)$}}{\draw[omstate] (0,\y) -- (1.2,\y); \node[anchor=east] at (-0.05,\y) {\l};}
+  \draw[omstate] (0,3.0) -- (0.36,3.0) (0.42,3.0) -- (0.78,3.0) (0.84,3.0) -- (1.2,3.0);
+  \node[anchor=east] at (-0.05,3.0) {$2p\ (b_1, a_1, b_2)$};
+  \draw[omstate] (6.8,3.9) -- (8.0,3.9); \node[anchor=west] at (8.05,3.9) {$h_1 - h_2\ (b_1)$};
+  \draw[omstate] (6.8,3.6) -- (8.0,3.6); \node[anchor=west] at (8.05,3.5) {$h_1 + h_2\ (a_1)$};
+  \foreach \y/\l in {-0.6/{$2a_1$}, 1.6/{$1b_1$}, 2.4/{$3a_1$}, 3.0/{$1b_2$}, 5.6/{$4a_1$}, 6.2/{$2b_1$}}{
+    \draw[omstate] (3.4,\y) -- (4.6,\y); \node[anchor=west] at (4.65,\y) {\l};}
+  \foreach \y in {-0.6,1.6,2.4,3.0}{\node[font=\scriptsize] at (4.0,\y+0.16) {$\uparrow\downarrow$};}
+  \draw[densely dotted, gray] (1.2,0) -- (3.4,-0.6) (1.2,3.0) -- (3.4,1.6) (1.2,3.0) -- (3.4,2.4) (1.2,3.0) -- (3.4,3.0)
+     (6.8,3.6) -- (4.6,-0.6) (6.8,3.9) -- (4.6,1.6) (6.8,3.6) -- (4.6,2.4) (1.2,3.0) -- (3.4,6.2) (6.8,3.9) -- (4.6,6.2) (6.8,3.6) -- (4.6,5.6);
+  \node[anchor=north] at (0.6,-1.0) {O};
+  \node[anchor=north] at (4.0,-1.0) {\ce{H2O}};
+  \node[anchor=north] at (7.4,-1.0) {2 H};
+  \draw[->] (-2.3,-0.9) -- (-2.3,6.4) node[above] {$E$};
+\end{tikzpicture}
+
+{\small Moleculaire valentieorbitalen van water (schematische energieën,
+molecuul in het $xz$-vlak). Alleen orbitalen met dezelfde symmetrie
+mengen: de $b_1$-combinatie van waterstof met $2p_x$, de $a_1$-combinatie
+met $2s$ en $2p_z$; $2p_y$ ($b_2$) heeft geen partner en blijft een
+niet-bindend vrij elektronenpaar, de hoogste bezette orbitaal.}
+\end{omfigure}
+
+\section{Normaaltrillingen}
+
+\begin{definition}[Normaaltrilling]\label{def:b3:group-theory-applied:normal-mode}
+Een \emph{normaaltrilling}\index{normaaltrilling} van een molecuul is een
+collectieve vibratie waarin alle atomen met dezelfde frequentie en in fase
+oscilleren, langs de eigenvector van de massagewogen hessematrix
+(\cref{prop:b3:computational-chemistry:hessian}). Elke normaaltrilling
+transformeert als een \omterm{def:b3:point-groups:irrep}{irreducibele representatie} van de \omterm{def:b3:point-groups:point-group}{puntgroep}.
+\end{definition}
+
+\begin{proposition}[De representatie van alle bewegingen]\label{prop:b3:group-theory-applied:gamma-3n}
+Hecht aan elk atoom drie verplaatsingsvectoren $x$, $y$, $z$. Onder een
+operatie $R$ is het \omterm{def:b3:point-groups:representation}{karakter} van deze $3N$-dimensionale representatie
+\[
+\chi_{3N}(R) = (\text{aantal atomen dat op zijn plaats blijft}) \times \chi_{xyz}(R),
+\]
+met $\chi_{xyz} = 1 + 2\cos\theta$ voor een rotatie over $\theta$ en $-1 + 2\cos\theta$
+voor een oneigenlijke rotatie (dus 3 voor $E$, $-1$ voor $C_2$, 0 voor $C_3$, 1 voor $\sigma$,
+$-3$ voor $i$).
+\end{proposition}
+
+\begin{proof}
+Een atoom dat naar een andere positie verplaatst wordt, neemt zijn
+vectoren mee buiten de diagonaal van de matrix: het draagt niets bij aan
+het spoor. Bij een atoom dat op zijn plaats blijft, worden de drie
+vectoren getransformeerd door de $3\times3$-matrix van $R$, waarvan het
+spoor berekend wordt in een assenstelsel met $z$ langs de as: $\cos\theta + \cos\theta + 1$ voor een
+rotatie, waarbij het laatste element $-1$ wordt voor een oneigenlijke.
+\end{proof}
+
+\begin{proposition}[Vibraties tellen]\label{prop:b3:group-theory-applied:mode-count}
+$\Gamma_{\mathrm{vib}} = \Gamma_{3N} - \Gamma_{\mathrm{trans}} - \Gamma_{\mathrm{rot}}$, waarin
+$\Gamma_{\mathrm{trans}}$ de representatie van $(x, y, z)$ is en $\Gamma_{\mathrm{rot}}$ die
+van $(R_x, R_y, R_z)$; een niet-lineair molecuul heeft $3N - 6$ vibraties,
+een lineair
+$3N - 5$.
+\end{proposition}
+
+\begin{proof}
+De $3N$ verplaatsingen beschrijven elke beweging: drie translaties van het
+massamiddelpunt, drie rotaties (twee voor een lineair molecuul, omdat een
+draaiing om de eigen as geen enkele kern verplaatst), en de vibraties.
+Deze deelruimten mengen niet onder de operaties, dus hun representaties
+tellen op.
+\end{proof}
+
+\begin{example}[Water]\label{ex:b3:group-theory-applied:water}
+% ledger: vib:H2O.sym, vib:H2O.bend, vib:H2O.asym
+\ce{H2O} in $C_{2v}$, molecuul in het $xz$-vlak. Atomen die op hun plaats
+blijven: 3, 1, 3, 1;
+$\chi_{xyz}$: $3, -1, 1, 1$; dus $\chi_{3N} = 9, -1, 3, 1$. De reductie geeft $3A_1 +
+A_2 + 3B_1 + 2B_2$. Na aftrek van de translaties $A_1 + B_1 + B_2$ en de
+rotaties $A_2 + B_1 + B_2$ blijft
+over: $\Gamma_{\mathrm{vib}} = 2A_1 + B_1$. De twee $a_1$-trillingen zijn de
+symmetrische strekvibratie (\qty{3657}{cm^{-1}}) en de buigvibratie
+(\qty{1595}{cm^{-1}}); de $b_1$-trilling is de antisymmetrische
+strekvibratie (\qty{3756}{cm^{-1}}).
+\end{example}
+
+\begin{omfigure}
+\begin{tikzpicture}[font=\small, >=Stealth]
+  \foreach \x/\name/\lab in {0/sym/{$\nu_1$, $a_1$,\\ symmetrische strekvibratie}, 4.3/bend/{$\nu_2$, $a_1$,\\ buigvibratie}, 8.6/asym/{$\nu_3$, $b_1$,\\ antisymmetrische strekvibratie}}{
+    \begin{scope}[xshift=\x cm]
+      \node[aO] (o\name) at (0,0.35) {};
+      \node[aH] (a\name) at (-0.8,-0.25) {};
+      \node[aH] (b\name) at (0.8,-0.25) {};
+      \begin{scope}[on background layer]\draw[bond] (o\name.center) -- (a\name.center) (o\name.center) -- (b\name.center);\end{scope}
+      \node[anchor=north, align=center, font=\footnotesize] at (0,-0.9) {\lab};
+    \end{scope}}
+  % symmetric stretch: H outward along the bonds, O up a little
+  \draw[->, omThm, thick] (-0.95,-0.36) -- (-1.42,-0.71);
+  \draw[->, omThm, thick] (0.95,-0.36) -- (1.42,-0.71);
+  \draw[->, omThm, thick] (0,0.74) -- (0,0.98);
+  % bend: each H moves perpendicular to its bond, closing the angle; O up
+  \draw[->, omThm, thick] (4.3-0.92,-0.36) -- (4.3-0.62,-0.76);
+  \draw[->, omThm, thick] (4.3+0.92,-0.36) -- (4.3+0.62,-0.76);
+  \draw[->, omThm, thick] (4.3,0.74) -- (4.3,0.98);
+  % antisymmetric stretch: one H out, the other in, O sideways
+  \draw[->, omThm, thick] (8.6-0.95,-0.36) -- (8.6-1.42,-0.71);
+  \draw[->, omThm, thick] (8.6+1.02,0.0) -- (8.6+0.70,0.24);
+  \draw[->, omThm, thick] (8.6-0.05,0.80) -- (8.6+0.25,0.80);
+\end{tikzpicture}
+
+{\small De drie \omterm{def:b3:group-theory-applied:normal-mode}{normaaltrillingen} van water (pijlen: verplaatsingen, niet op
+schaal). Beide $a_1$-trillingen behouden de volledige symmetrie van het
+molecuul; de $b_1$-trilling verandert van teken onder $C_2$.}
+\end{omfigure}
+
+\begin{example}[Nog vier moleculen]\label{ex:b3:group-theory-applied:table}
+Dezelfde procedure (berekend en gecontroleerd in de figuurgegevens van dit
+hoofdstuk) geeft:
+\begin{center}\small
+\begin{tabular}{llll}
+\hline
+molecuul & groep & $\Gamma_{\mathrm{vib}}$ & trillingen \\ \hline
+\ce{NH3} & $C_{3v}$ & $2A_1 + 2E$ & 6 \\
+\ce{CH4} & $T_d$ & $A_1 + E + 2T_2$ & 9 \\
+\ce{CO2} & $D_{\infty h}$ (via $D_{2h}$) & $\Sigma_g^+ + \Sigma_u^+ + \Pi_u$ ($A_g + B_{1u} + B_{2u} + B_{3u}$) & 4 \\
+\ce{BF3} & $D_{3h}$ & $A_1' + 2E' + A_2''$ & 6 \\
+\ce{XeF4} & $D_{4h}$ & $A_{1g} + B_{1g} + B_{2g} + A_{2u} + B_{2u} + 2E_u$ & 9 \\
+\ce{SF6} & $O_h$ & $A_{1g} + E_g + T_{2g} + 2T_{1u} + T_{2u}$ & 15 \\ \hline
+\end{tabular}
+\end{center}
+Voor een lineair molecuul wordt de oneindige groep vervangen door haar
+\omterm{def:b3:point-groups:class}{ondergroep} $D_{2h}$,
+waarin de ontaarde buigvibratie $\Pi_u$ opsplitst in $B_{2u} + B_{3u}$.
+\end{example}
+
+\section{Selectieregels}
+
+\begin{definition}[Direct product van representaties]\label{def:b3:group-theory-applied:direct-product}
+Het \emph{direct product}\index{direct product} $\Gamma_i\otimes\Gamma_j$ van twee
+representaties is de representatie die gedragen wordt door de producten
+van hun basisfuncties; haar \omterm{def:b3:point-groups:representation}{karakters} zijn de producten $\chi_i(R)\chi_j(R)$.
+\end{definition}
+
+\begin{theorem}[Integralen die nul zijn]\label{thm:b3:group-theory-applied:vanishing-integral}
+Een integraal $\int f_1f_2f_3\,\dd\tau$ over de hele ruimte kan alleen
+verschillen van nul als het
+\omterm{def:b3:group-theory-applied:direct-product}{direct product} $\Gamma_1\otimes\Gamma_2\otimes\Gamma_3$ de \omterm{def:b3:group-theory-applied:reducible}{totaalsymmetrische
+representatie} bevat.
+\end{theorem}
+
+\begin{proof}
+Een \omterm{def:b3:point-groups:operation}{symmetrieoperatie} hernummert alleen de punten van de ruimte, zodat de
+waarde van de integraal onveranderd blijft wanneer de integrand door een
+willekeurige $R$ getransformeerd wordt. Neem het gemiddelde van de
+getransformeerde integrand over de groep: het gemiddelde van de componenten van
+de integrand die bij elke \omterm{def:b3:point-groups:irrep}{irreducibele representatie} horen, is
+$\frac1h\sum_R\hat R(\cdot)$, de projectie op de \omterm{def:b3:group-theory-applied:reducible}{totaalsymmetrische
+representatie} (\cref{def:b3:group-theory-applied:projection} met alle
+$\chi = 1$). Elke andere component heeft gemiddelde nul; als het product
+geen totaalsymmetrisch deel bevat, is de integraal nul.
+\end{proof}
+
+\begin{definition}[IR-actief, Raman-actief]\label{def:b3:group-theory-applied:activity}
+Een fundamentele vibratie is \emph{IR-actief}\index{IR-actief} als ze
+infraroodlicht kan absorberen, en \emph{Raman-actief}\index{Raman-actief}
+als ze in het
+ramanspectrum verschijnt (\cref{ch:b3:rovibrational-spectroscopy}).
+\end{definition}
+
+\begin{corollary}[Selectieregels voor infrarood en Raman]\label{cor:b3:group-theory-applied:ir-raman}
+Een fundamentele overgang (van het grondniveau, totaalsymmetrisch, naar
+één kwantum van een trilling met symmetrie $\Gamma$) is alleen \omterm{def:b3:group-theory-applied:activity}{IR-actief}
+als $\Gamma$ de
+representatie van $x$, $y$ of $z$ is, en alleen \omterm{def:b3:group-theory-applied:activity}{Raman-actief} als $\Gamma$ de
+representatie van een kwadratische functie ($x^2$, $xy$, \dots) is.
+\end{corollary}
+
+\begin{proof}
+De absorptie-intensiteit hangt af van $\int\psi_0\,\mu_k\,\psi_1\dd\tau$ met de
+dipoolcomponenten $\mu_k$, die transformeren als $x$, $y$, $z$; $\psi_0$ is
+totaalsymmetrisch en $\psi_1$ transformeert als $\Gamma$. Volgens de
+stelling kan de integraal alleen verschillen van nul
+als $\Gamma\otimes\Gamma_{\mu_k}$ $A_1$ bevat, en dat gebeurt alleen als $\Gamma =
+\Gamma_{\mu_k}$ (het product van twee \omterm{def:b3:point-groups:irrep}{irreducibele representaties} bevat de
+totaalsymmetrische alleen als ze gelijk zijn, voor reële \omterm{def:b3:point-groups:representation}{karakters}).
+Ramanverstrooiing hangt af van de componenten $\alpha_{kl}$ van de
+polariseerbaarheid, die
+transformeren als de producten $kl$.
+\end{proof}
+
+\begin{proposition}[Regel van wederzijdse uitsluiting]\label{prop:b3:group-theory-applied:mutual-exclusion}
+In een molecuul met een \omterm{def:b3:point-groups:inversion}{inversiecentrum} is geen enkele fundamentele
+overgang tegelijk IR- en \omterm{def:b3:group-theory-applied:activity}{Raman-actief}: de \emph{regel van wederzijdse
+uitsluiting}\index{regel van wederzijdse uitsluiting}.
+\end{proposition}
+
+\begin{proof}
+Met een \omterm{def:b3:point-groups:inversion}{inversiecentrum} is elke \omterm{def:b3:point-groups:irrep}{irreducibele representatie} $g$ of $u$. De
+coördinaten $x$, $y$, $z$ veranderen van teken onder $i$ (ze zijn $u$);
+kwadratische functies niet ($g$). Een trilling is alleen \omterm{def:b3:group-theory-applied:activity}{IR-actief} als ze
+$u$ is, en alleen \omterm{def:b3:group-theory-applied:activity}{Raman-actief} als ze
+$g$ is.
+\end{proof}
+
+\begin{example}[Koolstofdioxide en het broeikaseffect]\label{ex:b3:group-theory-applied:co2}
+% ledger: vib:CO2.sym, vib:CO2.bend, vib:CO2.asym, ir:CO2.asym.int, ir:CO2.bend.int
+\ce{CO2} heeft een \omterm{def:b3:point-groups:inversion}{inversiecentrum}. Zijn symmetrische strekvibratie ($\Sigma_g^+$,
+\qty{1333}{cm^{-1}}) is alleen \omterm{def:b3:group-theory-applied:activity}{Raman-actief}; de antisymmetrische
+strekvibratie ($\Sigma_u^+$,
+\qty{2349}{cm^{-1}}) en de buigvibratie ($\Pi_u$, \qty{667}{cm^{-1}}) zijn
+alleen \omterm{def:b3:group-theory-applied:activity}{IR-actief}.
+De buigvibratie absorbeert rond \qty{15}{\micro m}, dicht bij het maximum
+van de thermische straling van de aarde: daarom is koolstofdioxide een
+broeikasgas. \ce{N2} en
+\ce{O2} hebben één enkele vibratie, $\Sigma_g^+$: IR-inactief.
+\end{example}
+
+\begin{omfigure}
+\begin{tikzpicture}
+\begin{axis}[omir, width=0.92\linewidth, height=4.4cm, xmin=400, xmax=2600,
+  ymin=0, ymax=1.3, ytick=\empty, xlabel={golfgetal / cm$^{-1}$},
+  ylabel={signaal}, legend cell align=left,
+  legend style={font=\small, at={(0.98,0.95)}, anchor=north east, draw=none}]
+\addplot[omDef, thick] table[x=nu, y=ir] {figdata/out/bachelor-3-co2-spectra.dat};
+\addlegendentry{infraroodabsorptie}
+\addplot[omThm, thick, dashed] table[x=nu, y=raman] {figdata/out/bachelor-3-co2-spectra.dat};
+\addlegendentry{ramanverstrooiing}
+\node[font=\small, anchor=south] at (axis cs:2349,1.02) {$\Sigma_u^+$};
+\node[font=\small, anchor=south] at (axis cs:667,0.1) {$\Pi_u$};
+\node[font=\small, anchor=south, omThm] at (axis cs:1333,1.02) {$\Sigma_g^+$};
+\end{axis}
+\end{tikzpicture}
+
+{\small Synthetische spectra van gasvormig \ce{CO2} (bandposities en
+relatieve infraroodintensiteiten uit de gemeten waarden; vormen
+schematisch, zonder rotatiestructuur). Wederzijdse uitsluiting: geen enkele
+band komt in beide voor.}
+\end{omfigure}
+
+\begin{method}[Een vibratiespectrum voorspellen]\label{met:b3:group-theory-applied:vibrations}
+\begin{enumerate}
+  \item Zoek de \omterm{def:b3:point-groups:point-group}{puntgroep}; bereken $\chi_{3N}$ uit de atomen die op hun
+        plaats blijven.
+  \item Reduceer, trek translaties en rotaties af: $\Gamma_{\mathrm{vib}}$.
+  \item Markeer met de kolommen rechts in de tabel elke trilling als
+        \omterm{def:b3:group-theory-applied:activity}{IR-actief} ($x$, $y$, $z$) en/of \omterm{def:b3:group-theory-applied:activity}{Raman-actief} (kwadratisch); een
+        trilling die geen van beide is, is stil.
+  \item Tel de banden: één per actieve trilling, waarbij een ontaarde
+        trilling één band geeft.
+\end{enumerate}
+\end{method}
+
+\begin{method}[CO-strekvibraties tellen]\label{met:b3:group-theory-applied:co-count}
+Neem in een metaalcarbonyl de $n$ bindingsvectoren C--O als basis (een
+atoom dat op zijn plaats blijft telt 1, al de rest niets): reduceer om
+$\Gamma_{\mathrm{CO}}$ te verkrijgen, en pas daarna
+de regels voor IR en Raman toe. Het aantal sterke banden rond
+\qtyrange{1850}{2150}{cm^{-1}} identificeert het isomeer.
+\end{method}
+
+\begin{example}[Cis en trans]\label{ex:b3:group-theory-applied:cis-trans}
+cis-\ce{ML4(CO)2}, $C_{2v}$: \omterm{def:b3:point-groups:representation}{karakters} $2, 0, 2, 0$, $\Gamma_{\mathrm{CO}} = A_1 + B_1$,
+twee IR-banden. trans-\ce{ML4(CO)2}, $D_{4h}$: $\Gamma_{\mathrm{CO}} = A_{1g} + A_{2u}$, één
+IR-band ($A_{2u}$) en één ramanband ($A_{1g}$). Eén enkele CO-band in het
+infrarood betekent trans.
+\end{example}
+
+\section{Toepassingen op elektronische overgangen}
+
+Dezelfde stelling geldt voor elektronische overgangen: een elektronische
+overgang tussen de toestanden $\Psi_1$ en $\Psi_2$ is alleen toegestaan
+als $\Gamma_1\otimes\Gamma_2$
+de representatie van $x$, $y$ of $z$ bevat, en het licht ervan is
+gepolariseerd langs die as.
+
+\begin{example}[Overgangen van water en formaldehyde]\label{ex:b3:group-theory-applied:electronic}
+In water ($C_{2v}$, $xz$-vlak) geeft de promotie van een elektron van $1b_2$ (het vrije elektronenpaar)
+naar $4a_1$ een aangeslagen toestand met symmetrie $B_2\otimes A_1 = B_2$,
+die $y$ is: toegestaan, gepolariseerd loodrecht op het molecuulvlak. In
+formaldehyde
+($C_{2v}$) gaat de overgang $n\to\pi^*$ van een vrij elektronenpaar van
+zuurstof in het vlak ($b_1$)
+naar de $\pi^*$-orbitaal, opgebouwd uit $p$-orbitalen loodrecht op het vlak
+($b_2$; molecuul in het $xz$-vlak, C=O langs $z$): $B_1\otimes B_2 = A_2$,
+dat geen van $x$, $y$, $z$ is: symmetrieverboden, en daarom is de band
+ervan (\cref{ch:b3:electronic-spectroscopy}) zo zwak.
+\end{example}
+
+\begin{history}[Wigner, Bethe en de symmetrie van moleculen]
+De groepentheorie deed haar intrede in de kwantummechanica met het werk
+van Eugene Wigner over atoomspectra (1927--31) en het artikel van Hans
+Bethe over de opsplitsing van atoomtermen in kristallen (1929). E. Bright
+Wilson paste haar in 1934 toe op moleculaire vibraties; Robert Mulliken
+gaf de labels die nog steeds voor orbitalen en toestanden gebruikt worden.
+\end{history}
+
+\begin{inthelab}[Infrarood en Raman naast elkaar]
+Een infraroodspectrometer meet het licht dat een monster absorbeert; een
+ramanspectrometer belicht het met een laser en analyseert het zwakke
+verstrooide licht bij verschoven golflengten. Beide spectra van dezelfde
+verbinding opnemen is de klassieke test op een symmetriecentrum: als geen
+enkele band samenvalt, is het molecuul waarschijnlijk centrosymmetrisch.
+Ramanlasers zijn van klasse 3B of 4: de bundel wordt afgeschermd en de
+gebruikers dragen een veiligheidsbril die geschikt is voor de golflengte.
+\end{inthelab}
+
+\section{Oefeningen}
+
+\begin{exercise}[$\star$]\label{exo:b3:group-theory-applied:1}
+Reduceer de representatie van $C_{2v}$ met \omterm{def:b3:point-groups:representation}{karakters} $(5, -1, 3, 1)$ op $(E, C_2,
+\sigma_v(xz), \sigma_v'(yz))$. Controleer de dimensie.
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:group-theory-applied:2}
+\ce{SO2} is gebogen, zoals water. Geef $\Gamma_{\mathrm{vib}}$ en zeg welke
+trillingen IR- en \omterm{def:b3:group-theory-applied:activity}{Raman-actief} zijn.
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:group-theory-applied:3}
+Bereken in $C_{2v}$ de directe producten $B_1\otimes B_2$, $A_2\otimes B_1$, en
+$E\otimes E$ in $C_{3v}$ (reduceer dat laatste).
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:group-theory-applied:4}
+% ledger: vib:CH4.nu1, vib:CH4.nu2, vib:CH4.nu3, vib:CH4.nu4
+\ce{CH4} heeft fundamentele banden bij 2917 ($a_1$), 1534 ($e$), 3019 en 1306 (beide $t_2$)
+\unit{cm^{-1}}. Welke verschijnen in het infraroodspectrum, welke in het
+ramanspectrum?
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:group-theory-applied:5}
+Leid voor \ce{BF3} $\Gamma_{\mathrm{vib}} = A_1' + 2E' + A_2''$ af uit de atomen
+die op hun plaats blijven, en tel daarna de IR- en ramanbanden. Welke
+trilling ziet men in slechts één van de twee spectra, en welke in beide?
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:group-theory-applied:6}
+Hoeveel IR- en ramanbanden vertoont \ce{SF6}? Welke trilling is stil? Waarom
+verschijnt geen enkele band in beide spectra?
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:group-theory-applied:7}
+Pas de \omterm{def:b3:group-theory-applied:projection}{projectieoperator} toe op $h_2$ voor de representatie $E$ van $C_{3v}$ en
+toon aan dat het resultaat, orthogonaal gemaakt ten opzichte van $2h_1 - h_2 - h_3$, $h_2 - h_3$ geeft.
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:group-theory-applied:8}
+Voorspel het aantal CO-banden in het IR-spectrum van fac- en
+mer-\ce{ML3(CO)3}, en van
+\ce{M(CO)6}.
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:group-theory-applied:9}
+Toon aan dat de zes $\sigma$-orbitalen van de liganden van een octaëdrisch
+complex
+$A_{1g} + E_g + T_{1u}$ overspannen, en zeg met welke metaalorbitalen elk
+ervan kan combineren.
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:group-theory-applied:10}
+De reguliere representatie heeft $\chi(E) = h$ en $\chi(R) = 0$ voor $R \ne E$. Toon
+met de \omterm{thm:b3:group-theory-applied:reduction}{reductieformule} aan dat ze elke \omterm{def:b3:point-groups:irrep}{irreducibele
+representatie} $\Gamma_i$ precies $d_i$ keer bevat, en leid $\sum_id_i^2 = h$ af.
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:group-theory-applied:11}
+Acetyleen \ce{HC#CH} is lineair. Werk in $D_{2h}$, bepaal $\Gamma_{\mathrm{vib}}$,
+hergroepeer het
+in labels van $D_{\infty h}$, en voorspel de IR- en ramanspectra.
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:group-theory-applied:12}
+Welke van deze promoties van één elektron in water ($xz$-vlak) geven
+toegestane overgangen, en met welke polarisatie: $1b_2 \to 4a_1$, $3a_1 \to 4a_1$,
+$1b_2 \to 2b_1$, $1b_1 \to 4a_1$?
+\end{exercise}
+
+\section{Probleem: cis of trans? Een carbonylcomplex gelezen aan zijn spectrum}
+
+\begin{problem}[{Weekendprobleem --- puntgroepen en representaties van de
+CO-strekvibraties van vier isomeren, hun infrarood- en ramanbanden, en de
+identificatie van een product aan de hand van zijn gemeten spectrum}]
+\label{pb:b3:group-theory-applied:1}
+% ledger: ct:C2v, ct:C3v, ct:D4h
+Een octaëdrisch metaal M draagt carbonylliganden en andere liganden L (elk
+L geteld als een punt). Vier isomeren worden bekeken: cis- en
+trans-\ce{ML4(CO)2}, en fac- en mer-\ce{ML3(CO)3}. Neem aan dat de liganden L
+de symmetrie niet verder verlagen dan hun posities opleggen. Een synthese
+van
+\ce{ML3(CO)3} levert een product waarvan het infraroodspectrum drie sterke
+banden vertoont bij 2048, 1965 en \qty{1938}{cm^{-1}} (gegevens van het
+probleem); zijn ramanspectrum vertoont drie banden op vrijwel dezelfde
+posities.
+
+\medskip\noindent\textbf{Deel I --- \omterm{def:b3:point-groups:point-group}{Puntgroepen}.}
+\begin{enumerate}
+  \item Teken de vier isomeren op een octaëder.
+  \item Geef de \omterm{def:b3:point-groups:point-group}{puntgroep} van cis-\ce{ML4(CO)2}.
+  \item Van trans-\ce{ML4(CO)2}.
+  \item Van fac-\ce{ML3(CO)3}.
+  \item Van mer-\ce{ML3(CO)3}.
+  \item Welke van de vier hebben een \omterm{def:b3:point-groups:inversion}{inversiecentrum}?
+\end{enumerate}
+
+\medskip\noindent\textbf{Deel II --- De CO-strekvibraties.}
+\begin{enumerate}[resume]
+  \item Leg uit waarom de bindingsvectoren C--O een representatie dragen
+        waarin een operatie 1 bijdraagt per CO dat op zijn plaats blijft.
+  \item Bepaal $\Gamma_{\mathrm{CO}}$ van het cis-isomeer.
+  \item Van het trans-isomeer.
+  \item Van het fac-isomeer.
+  \item Van het mer-isomeer.
+  \item Controleer elke dimensie aan de hand van het aantal CO-liganden.
+\end{enumerate}
+
+\medskip\noindent\textbf{Deel III --- Activiteit.}
+\begin{enumerate}[resume]
+  \item Tel de IR-actieve CO-strekvibraties van elk isomeer.
+  \item Tel de Raman-actieve.
+  \item Welk isomeer volgt de \omterm{prop:b3:group-theory-applied:mutual-exclusion}{regel van wederzijdse uitsluiting}?
+  \item Beschrijf in het trans-isomeer de IR-actieve trilling: strekken de
+        twee CO in fase of in tegenfase?
+  \item Waarom geven de drie CO in het fac-isomeer maar twee banden?
+  \item Wat zou één enkele band (IR) je vertellen?
+\end{enumerate}
+
+\medskip\noindent\textbf{Deel IV --- Het product.}
+\begin{enumerate}[resume]
+  \item Op welk isomeer wijst het infraroodspectrum van het product?
+  \item Is het ramanspectrum daarmee in overeenstemming?
+  \item De hoogste band is de strekvibratie in fase van de CO-groepen. Tot
+        welke \omterm{def:b3:point-groups:irrep}{irreducibele representatie} behoort ze in dat isomeer?
+  \item Zou het spectrum van een mengsel van de twee isomeren kunnen komen?
+        Welke bijkomende meting zou de knoop doorhakken?
+  \item Formuleer het resultaat: het aantal IR-actieve CO-strekvibraties
+        van het mer-isomeer, tegenover dat van het fac-isomeer.
+\end{enumerate}
+\end{problem}

@@ -1,0 +1,673 @@
+\chapter{अभिकलनात्मक रसायन: हार्ट्री--फ़ॉक और DFT}\label{ch:b3:computational-chemistry}
+
+हीलियम हाइड्राइड आयन, \ce{HeH+}, को वह पहला अणु माना जाता है जो
+युवा ब्रह्मांड के ठंडा होने पर बना: एक प्रोटॉन को थामे एक हीलियम परमाणु। उसे
+1925 में प्रयोगशाला की एक विसर्जन नलिका में बनाया गया, परंतु अंतरिक्ष में दशकों
+तक खोजने पर भी वह नहीं मिला, जब तक कि 2019 में एक ग्रहीय नीहारिका में उसकी घूर्णी
+रेखा का संसूचन नहीं हुआ। तब तक उसकी आबंध लंबाई, उसकी कंपनिक आवृत्तियाँ और
+उसकी रेखाओं के तरंगदैर्घ्य बहुत पहले से ज्ञात थे --- परिकलन से। इलेक्ट्रॉनों के
+\omterm{thm:b3:quantum-model-systems:schrodinger}{श्रोडिंगर समीकरण} को सन्निकटतः हल करने वाला कोई कंप्यूटर प्रोग्राम ऐसे अणु की
+आकृति, ऊर्जा और स्पेक्ट्रम की भविष्यवाणी कर सकता है जिसे किसी ने बोतल में नहीं रखा।
+यह अध्याय समझाता है कि ऐसे प्रोग्राम कैसे काम करते हैं, नाभिकों और इलेक्ट्रॉनों के
+पृथक्करण से लेकर हार्ट्री--फ़ॉक सिद्धांत और \omterm{def:b3:computational-chemistry:dft}{घनत्व-फलनक सिद्धांत} तक, और उनकी संख्याओं
+पर किस बात के लिए भरोसा किया जा सकता है और किसके लिए नहीं।
+
+\begin{recall}
+\Cref{ch:b3:quantum-model-systems} ने \omterm{def:b3:quantum-model-systems:schrodinger}{हैमिल्टनी संकारक}, \omterm{thm:b3:quantum-model-systems:schrodinger}{श्रोडिंगर
+समीकरण} और हाइड्रोजन परमाणु दिए; \cref{ch:b3:many-electron-atoms} ने \omterm{def:b3:many-electron-atoms:slater}{स्लेटर
+सारणिक} और \omterm{def:b3:many-electron-atoms:exchange}{विनिमय समाकल}। द्वितीय वर्ष के खंड ने आण्विक
+कक्षकों को परमाणु कक्षकों के रैखिक संयोजनों (LCAO) के रूप में बनाया, अतिव्यापन,
+कूलॉम और अनुनाद समाकलों तथा एक सेकुलर सारणिक के साथ, और
+ह्युकेल विधि हल की; उसने कक्षक ऊर्जाएँ देखने के लिए प्रकाशइलेक्ट्रॉन स्पेक्ट्रमों का भी उपयोग किया।
+\end{recall}
+
+\begin{omfigure}
+\includegraphics[width=0.6\linewidth]{images/book4/ai/b3-03-cluster.jpg}
+
+{\small एक अभिकलन क्लस्टर: सर्वरों की पंक्तियाँ, जिन पर आज अधिकांश क्वांटम-रासायनिक
+परिकलन चलते हैं, प्रायः प्रति अणु घंटों या दिनों तक।}
+\end{omfigure}
+
+\section{बॉर्न--ओपेनहाइमर और स्थितिज ऊर्जा पृष्ठ}
+
+किसी अणु के \omterm{def:b3:quantum-model-systems:schrodinger}{हैमिल्टनी संकारक} में उसके नाभिकों और इलेक्ट्रॉनों की गतिज ऊर्जाएँ
+और उनकी सभी कूलॉम अन्योन्यक्रियाएँ होती हैं। नाभिक इलेक्ट्रॉनों से कम से कम 1836
+गुना भारी हैं: समान बलों के लिए वे कहीं अधिक धीरे चलते हैं, और
+इलेक्ट्रॉन नाभिकों की हर स्थिति के अनुसार लगभग तत्क्षण समायोजित हो जाते हैं।
+
+\begin{definition}[बॉर्न--ओपेनहाइमर सन्निकटन]\label{def:b3:computational-chemistry:born-oppenheimer}
+\emph{बॉर्न--ओपेनहाइमर सन्निकटन}\index{बॉर्न--ओपेनहाइमर सन्निकटन} में
+इलेक्ट्रॉनिक \omterm{thm:b3:quantum-model-systems:schrodinger}{श्रोडिंगर समीकरण} ऐसे नाभिकों के लिए हल किया जाता है जो
+स्थितियों $\mathbf R$ पर स्थिर रखे गए हैं,
+\[
+\hat H_{\mathrm{el}}\,\psi_{\mathrm{el}}(\mathbf r;\mathbf R) =
+E_{\mathrm{el}}(\mathbf R)\,\psi_{\mathrm{el}}(\mathbf r;\mathbf R),
+\]
+और फिर नाभिक विभव $E_{\mathrm{el}}(\mathbf R) +
+V_{\mathrm{nn}}(\mathbf R)$ में गति करते हैं, जो इलेक्ट्रॉनिक ऊर्जा और नाभिकों
+के प्रतिकर्षण का योग है।
+\end{definition}
+
+\begin{definition}[स्थितिज ऊर्जा पृष्ठ, स्थिर बिंदु, ज्यामिति इष्टतमीकरण]\label{def:b3:computational-chemistry:pes}
+किसी अणु का \emph{स्थितिज ऊर्जा पृष्ठ}\index{स्थितिज ऊर्जा पृष्ठ} (PES)
+फलन $U(\mathbf R) = E_{\mathrm{el}}(\mathbf R) +
+V_{\mathrm{nn}}(\mathbf R)$ है, उसके नाभिकीय निर्देशांकों का। \emph{स्थिर
+बिंदु}\index{स्थिर बिंदु} वह बिंदु है जहाँ $U$ के सभी प्रथम अवकलज
+लुप्त होते हैं; निम्निष्ठ एक \emph{साम्य ज्यामिति}\index{साम्य ज्यामिति} है।
+किसी आरंभिक संरचना से, बलों
+$-\nabla U$ का अनुसरण करते हुए, ऐसे बिंदु की खोज \emph{ज्यामिति इष्टतमीकरण}\index{ज्यामिति इष्टतमीकरण} है।
+\end{definition}
+
+द्विपरमाणुक अणु के लिए PES एक वक्र $U(R)$ है; त्रिपरमाणुक के लिए
+तीन निर्देशांकों का फलन; $N$ परमाणुओं के लिए $3N - 6$ का। नाभिकों का
+द्रव्यमान $\hat H_{\mathrm{el}}$ में प्रवेश नहीं करता: \ce{H2}, \ce{HD} और \ce{D2} का
+PES एक ही है, आबंध लंबाई और \omterm{def:b3:quantum-model-systems:oscillator}{बल स्थिरांक} भी वही, और वे केवल इसमें भिन्न हैं कि
+उस पर नाभिक कैसे गति करते हैं (\omterm{def:b3:quantum-model-systems:oscillator}{शून्य-बिंदु ऊर्जा}, \cref{ch:b3:quantum-model-systems})।
+
+\begin{proposition}[हेसियन से आवृत्तियाँ]\label{prop:b3:computational-chemistry:hessian}
+निम्निष्ठ के पास $U \approx U_0 + \frac12\sum_{ij}H_{ij}\,\delta q_i\,\delta q_j$, जहाँ
+हेसियन $H_{ij} = \partial^2U/\partial q_i\partial q_j$ है। द्रव्यमान-भारित
+निर्देशांकों $\delta q_i\sqrt{m_i}$ में, द्रव्यमान-भारित हेसियन के \omterm{def:b3:quantum-model-systems:operator}{अभिलक्षणिक मान} $\lambda_k$
+प्रसामान्य विधाओं की आवर्ती कोणीय आवृत्तियाँ $\omega_k =
+\sqrt{\lambda_k}$ देते हैं। निम्निष्ठ पर सभी $\lambda_k$
+धनात्मक होते हैं (छह, या रैखिक अणु के लिए पाँच, शून्य होते हैं: स्थानांतरण और
+घूर्णन); प्रथम-कोटि पल्याण बिंदु पर ठीक एक ऋणात्मक होता है।
+\end{proposition}
+
+\begin{proof}[आंशिक उपपत्ति]
+द्विपरमाणुक के लिए $U \approx U_0 + \frac12k(R - R_e)^2$, जहाँ $k = U''(R_e)$, और
+\cref{ch:b3:quantum-model-systems} का दोलित्र $\omega =
+\sqrt{k/\mu}$ देता है। सामान्यतः, चिरसम्मत समीकरण $m_i\ddot q_i =
+-\sum_jH_{ij}q_j$, द्रव्यमान-भारित निर्देशांकों $x_i = \sqrt{m_i}q_i$ में,
+$\ddot{\mathbf x} = -\tilde H\mathbf x$ बन जाते हैं, सममित आव्यूह $\tilde H_{ij} =
+H_{ij}/\sqrt{m_im_j}$ के साथ; उसके अभिलक्षणिक सदिश स्वतंत्र रूप से
+$\sqrt{\lambda_k}$ पर दोलन करते हैं। ऋणात्मक $\lambda_k$ एक काल्पनिक आवृत्ति देता है: उस
+दिशा में ऊर्जा घटती है, अर्थात् अधिकतम। \cref{ch:b3:group-theory-applied} की
+प्रसामान्य विधाएँ यही अभिलक्षणिक सदिश हैं।
+\end{proof}
+
+\begin{omfigure}
+\begin{tikzpicture}[font=\small, scale=0.95]
+  \fill[omDef!8] (0,0) ellipse (1.9 and 1.15);
+  \foreach \s in {1.0,0.75,0.5,0.25}{\draw[omDef!70] (0,0) ellipse ({1.9*\s} and {1.15*\s});}
+  \fill[omThm!8] (6,0.4) ellipse (1.6 and 1.0);
+  \foreach \s in {1.0,0.75,0.5,0.25}{\draw[omThm!70] (6,0.4) ellipse ({1.6*\s} and {1.0*\s});}
+  \draw[gray] (2.1,-0.15) .. controls (2.9,0.55) and (3.4,0.55) .. (4.3,0.35);
+  \draw[gray] (2.2,0.9) .. controls (3.0,0.35) and (3.5,0.35) .. (4.1,1.2);
+  \node[omsaddle] at (3.15,0.42) {};
+  \draw[ompath] (0,0) .. controls (1.8,0.6) and (2.4,0.5) .. (3.15,0.42) .. controls (4.0,0.35) and (4.8,0.4) .. (6,0.4);
+  \node[anchor=north] at (0,-1.25) {निम्निष्ठ A (अभिकारक)};
+  \node[anchor=north] at (6,-0.7) {निम्निष्ठ B (उत्पाद)};
+  \node[anchor=south] at (3.15,1.25) {पल्याण बिंदु};
+  \draw[->, gray] (3.15,1.25) -- (3.15,0.6);
+  \fill (0,0) circle (1.2pt) (6,0.4) circle (1.2pt);
+  \draw[->] (-2.3,-2.2) -- (8.2,-2.2) node[right] {$q_1$};
+  \draw[->] (-2.3,-2.2) -- (-2.3,1.8) node[above] {$q_2$};
+\end{tikzpicture}
+
+{\small ऊपर से देखा गया \omterm{def:b3:computational-chemistry:pes}{स्थितिज ऊर्जा पृष्ठ}, दो
+नाभिकीय निर्देशांकों पर समोच्च मानचित्र के रूप में (योजनात्मक)। दो निम्निष्ठ, एक पल्याण
+बिंदु (क्रॉस) से होकर, न्यूनतम ऊर्जा वाले पथ (खंडित रेखा) से जुड़े हैं: यही न्यूनतम ऊर्जा पथ
+\cref{ch:b3:rate-theories} में अध्ययन किया गया है।}
+\end{omfigure}
+
+\section{विचरण सिद्धांत}
+
+एक से अधिक इलेक्ट्रॉन वाले किसी भी अणु के लिए इलेक्ट्रॉनिक \omterm{thm:b3:quantum-model-systems:schrodinger}{श्रोडिंगर समीकरण}
+यथार्थतः हल नहीं किया जा सकता। सन्निकटनों को एक ही
+प्रमेय से परखा जाता है।
+
+\begin{theorem}[विचरण सिद्धांत]\label{thm:b3:computational-chemistry:variational}
+किसी भी प्रसामान्यीकरणीय परीक्षण फलन $\phi$ के लिए, जो समस्या के परिसीमा
+प्रतिबंधों को संतुष्ट करता है,
+\[
+E[\phi] = \frac{\langle\phi|\hat H|\phi\rangle}{\langle\phi|\phi\rangle} \ge E_0,
+\]
+जहाँ $E_0$ \omterm{def:b3:quantum-model-systems:operator}{संकारक} $\hat H$ का निम्नतम \omterm{def:b3:quantum-model-systems:operator}{अभिलक्षणिक मान} है; समता केवल तभी होती है जब $\phi$
+मूल-अवस्था का \omterm{def:b3:quantum-model-systems:operator}{अभिलक्षणिक फलन} हो। यही \emph{विचरण
+सिद्धांत}\index{विचरण सिद्धांत} है।
+\end{theorem}
+
+\begin{proof}
+$\phi = \sum_nc_n\psi_n$ का प्रसार $\hat H$ के प्रसामान्य-लांबिक \omterm{def:b3:quantum-model-systems:operator}{अभिलक्षणिक फलनों} पर कीजिए
+(\cref{thm:b3:quantum-model-systems:hermitian-real})। तब $\langle\phi|\hat
+H|\phi\rangle = \sum_n|c_n|^2E_n \ge E_0\sum_n|c_n|^2 = E_0\langle\phi|\phi\rangle$,
+क्योंकि हर $E_n \ge E_0$; समता के लिए आवश्यक है कि $c_n = 0$ जब भी $E_n > E_0$।
+\end{proof}
+
+परीक्षण फलन की ऊर्जा जितनी कम, वह उतना अच्छा; हर समायोज्य
+प्राचल $E$ को न्यूनतम करके निर्धारित किया जाता है।
+
+\begin{proposition}[आवरित आवेश वाला हीलियम]\label{prop:b3:computational-chemistry:helium-zeta}
+हीलियम के लिए परीक्षण फलन $\phi = \eu^{-\zeta(r_1 + r_2)}$ (परमाणु इकाइयों में:
+लंबाइयाँ $a_0$ में, ऊर्जाएँ $E_h$ में) $E(\zeta) = \zeta^2 - \frac{27}{8}\zeta$ देता है,
+जो $\zeta = \frac{27}{16}$ के लिए न्यूनतम है, जहाँ $E = -(\frac{27}{16})^2 E_h =
+\qty{-2.8477}{\hartree}$।
+\end{proposition}
+
+\begin{proof}
+$\eu^{-\zeta r}$ में एक इलेक्ट्रॉन के लिए $\langle T\rangle = \zeta^2/2$ और
+$\langle 1/r\rangle = \zeta$; एक ही $1s$
+फलन में दो इलेक्ट्रॉनों का प्रतिकर्षण $\frac58\zeta$ है (एक मानक समाकल, स्वीकृत)। अतः $E = 2\cdot\frac12
+\zeta^2 - 2\cdot2\zeta + \frac58\zeta = \zeta^2 - \frac{27}{8}\zeta$, और $\dd E/\dd
+\zeta = 0$ से $\zeta = 27/16 = 1.6875$ मिलता है।
+\end{proof}
+
+\begin{example}[यह कितना अच्छा है?]\label{ex:b3:computational-chemistry:helium}
+% ledger: ie:He, ie4:He2, const:Eh, const:eV
+हीलियम की कुल ऊर्जा उसकी दोनों आयनन ऊर्जाओं के योग का ऋणात्मक है,
+$-(24.5874 + 54.4178)\,\unit{eV} = \qty{-2.9034}{\hartree}$। एक-प्राचल वाला
+फलन \qty{0.056}{\hartree} (\qty{1.5}{eV}) बहुत ऊँचा है: हर इलेक्ट्रॉन को
+दूसरे द्वारा $Z_{\mathrm{eff}} = 1.69$ तक आवरित नाभिक दिखता है, जैसा स्लेटर के नियम
+सुझाते हैं, परंतु इलेक्ट्रॉन एक-दूसरे से ऐसे ढंग से भी बचते हैं जिसका वर्णन दो
+फलनों का कोई गुणनफल नहीं कर सकता।
+\end{example}
+
+\begin{proposition}[रैखिक विचरण]\label{prop:b3:computational-chemistry:linear-variation}
+परीक्षण फलन $\phi = \sum_{i=1}^n c_i\chi_i$ के लिए, जो $n$ नियत फलनों पर बना है,
+और जहाँ $H_{ij} = \langle\chi_i|\hat H|\chi_j\rangle$ तथा $S_{ij} = \langle\chi_i|\chi_j
+\rangle$, $E$ के स्थिर मान $\det(H - ES) = 0$ के मूल हैं, और
+निम्नतम मूल $E_0$ की एक उपरि सीमा है।
+\end{proposition}
+
+\begin{proof}
+$E\sum_{ij}c_ic_jS_{ij} = \sum_{ij}c_ic_jH_{ij}$ (वास्तविक गुणांक)। इसका
+$c_k$ के सापेक्ष अवकलन कीजिए और $\partial E/\partial c_k = 0$ रखिए: $\sum_j(H_{kj} -
+ES_{kj})c_j = 0$, हर $k$ के लिए। शून्येतर हल के लिए सारणिक का
+लुप्त होना आवश्यक है। निम्नतम मूल उसके अभिलक्षणिक सदिश के लिए $E[\phi]$ है, अतः $\ge E_0$।
+\end{proof}
+
+द्वितीय वर्ष के खंड की ह्युकेल विधि यही प्रतिज्ञप्ति है, $p$
+कक्षकों और आनुभविक $H_{ij}$ के साथ। आगे की हर विधि यही विचार है,
+बेहतर फलनों और बेहतर आव्यूह अवयवों के साथ।
+
+\section{आधार समुच्चय}
+
+\begin{definition}[आधार समुच्चय, न्यूनतम आधार, स्लेटर- और गाउसी-प्रकार कक्षक]\label{def:b3:computational-chemistry:basis}
+\emph{आधार समुच्चय}\index{आधार समुच्चय} नियत फलनों $\chi_i$ का वह समुच्चय है,
+जो परमाणुओं पर केंद्रित हैं, जिनसे आण्विक कक्षक बनाए जाते हैं।
+\emph{न्यूनतम आधार समुच्चय}\index{न्यूनतम आधार समुच्चय} में हर
+अधिकृत परमाणु कक्षक के लिए एक फलन होता है (H के लिए एक $1s$, C के लिए पाँच)।
+\emph{स्लेटर-प्रकार कक्षक}\index{स्लेटर-प्रकार कक्षक} (STO) का त्रिज्य रूप
+$r^{n-1}\eu^{-\zeta r}$ है; \emph{गाउसी-प्रकार कक्षक}\index{गाउसी-प्रकार कक्षक}
+(GTO) का रूप $\eu^{-\alpha r^2}$ गुणा $x$, $y$,
+$z$ में एक बहुपद है। \emph{संकुचित गाउसी फलन}\index{संकुचित गाउसी फलन}
+आद्य गाउसी फलनों का एक नियत संयोजन $\sum_kd_k\,\eu^{-\alpha_kr^2}$ है।
+\end{definition}
+
+स्लेटर फलनों की आकृति सही है (नाभिक पर एक नुकीला शीर्ष, एक चरघातांकी
+पूँछ), परंतु अनेक केंद्रों पर उनके द्वि-इलेक्ट्रॉन समाकल बहुत
+महँगे हैं; गाउसी फलनों की आकृति गलत है, परंतु भिन्न केंद्रों पर स्थित दो
+गाउसी फलनों का गुणनफल उनके बीच के किसी बिंदु पर एक गाउसी फलन होता है, अतः
+हर समाकल एक बंद सूत्र में बदल जाता है। संकुचन दोनों का लाभ लेते हैं:
+STO-3G आधार में हर स्लेटर फलन के स्थान पर उस पर समंजित तीन गाउसी फलनों का
+एक नियत योग रखा जाता है।
+
+\begin{example}[हाइड्रोजन का STO-3G फलन]\label{ex:b3:computational-chemistry:sto3g}\emergencystretch=3em
+% ledger: bse:H.sto3g.a1, bse:H.sto3g.a2, bse:H.sto3g.a3, bse:sto3g.c1, bse:sto3g.c2, bse:sto3g.c3
+STO-3G का हाइड्रोजन $1s$ फलन $0.15433\,g(3.42525) + 0.53533\,
+g(0.62391) + 0.44463\,g(0.16886)$ है, जहाँ $g(\alpha)$ प्रसामान्यीकृत गाउसी फलन
+$(2\alpha/\pi)^{3/4}\eu^{-\alpha r^2}$ है (घातांक $a_0^{-2}$ में)। यह
+घातांक $\zeta = 1.24$ वाले स्लेटर फलन की नकल करता है --- एक हाइड्रोजन परमाणु जो थोड़ा
+संपीडित है, जैसा वह अणुओं में होता है। समान घातांक वाले यथार्थ $1s$ फलन के साथ
+इसका अतिव्यापन $0.9998$ है; केवल नाभिक पर नुकीला शीर्ष और दूर की
+पूँछ छूट जाते हैं (नीचे का चित्र)।
+\end{example}
+
+\begin{definition}[विभक्त-संयोजकता, ध्रुवण और विसरित फलन]\label{def:b3:computational-chemistry:split-valence}
+\emph{विभक्त-संयोजकता आधार समुच्चय}\index{विभक्त-संयोजकता आधार समुच्चय} हर
+संयोजकता कक्षक का वर्णन भिन्न आकारों के दो (या अधिक) फलनों से करता है, ताकि
+अणु में कक्षक बढ़ या सिकुड़ सके। \emph{ध्रुवण
+फलन}\index{ध्रुवण फलन} का $l$ अधिकृत कक्षकों से ऊँचा होता है
+(H पर $p$, C पर $d$) और वह घनत्व को परमाणु से हटने देता है;
+\emph{विसरित फलन}\index{विसरित फलन} का घातांक छोटा होता है और वह
+ऋणायनों तथा नाभिकों से दूर की दुर्बल अन्योन्यक्रियाओं का वर्णन करता है।
+\end{definition}
+
+6-31G(d) जैसा नाम यह बताता है: हर कोर फलन के लिए छह आद्य फलन, संयोजकता
+तीन के एक संकुचन और एक अकेले आद्य फलन में विभक्त, और भारी परमाणुओं पर $d$
+\omterm{def:b3:computational-chemistry:split-valence}{ध्रुवण फलन}। आधार के बढ़ने के साथ परिणाम
+\emph{आधार-समुच्चय सीमा} की ओर अभिसरित होते हैं; कोई परिकलन उतना ही अच्छा है जितना
+उसका आधार।
+
+\begin{omfigure}
+\begin{tikzpicture}
+\begin{axis}[width=0.46\linewidth, height=5.4cm, xmin=0, xmax=5, ymin=0,
+  ymax=0.6, axis lines=left, xlabel={$r$ / $a_0$}, ylabel={$\phi(r)$},
+  legend cell align=left, legend style={font=\small, draw=none},
+  tick label style={font=\small}, label style={font=\small},
+  title={\small STO-3G बनाम $\eu^{-r}$ ($\zeta = 1$)}]
+\addplot[black, thick] table[x=r, y=slater] {figdata/out/bachelor-3-minimal-basis-hf-sto.dat};
+\addlegendentry{स्लेटर}
+\addplot[omDef, thick, dashed] table[x=r, y=g3] {figdata/out/bachelor-3-minimal-basis-hf-sto.dat};
+\addlegendentry{STO-3G}
+\addplot[omThm, thick, dotted] table[x=r, y=g1] {figdata/out/bachelor-3-minimal-basis-hf-sto.dat};
+\addlegendentry{एक गाउसी फलन}
+\end{axis}
+\end{tikzpicture}\hfill
+\begin{tikzpicture}
+\begin{axis}[width=0.46\linewidth, height=5.4cm, xmin=0.5, xmax=8.5,
+  ymin=-2.86, ymax=-2.78, axis lines=left, xlabel={SCF चक्र},
+  ylabel={$E$ / $E_h$}, ytick={-2.85,-2.83,-2.81,-2.79},
+  yticklabel style={/pgf/number format/fixed, /pgf/number format/precision=2},
+  tick label style={font=\small}, label style={font=\small},
+  title={\small \ce{HeH+} का SCF}]
+\addplot[omDef, thick, mark=*] table[x=it, y=E] {figdata/out/bachelor-3-minimal-basis-hf-heh-scf.dat};
+\addplot[gray, dashed, domain=0.5:8.5] {-2.84184};
+\end{axis}
+\end{tikzpicture}
+
+{\small बाएँ: STO-3G संकुचन (खंडित) नाभिक को छोड़कर $1s$ स्लेटर
+फलन का निकटता से पुनरुत्पादन करता है; एक अकेला गाउसी फलन (बिंदुकित) नहीं करता।
+दाएँ: \qty{1.4632}{\bohr} पर \ce{HeH+} की ऊर्जा, \omterm{def:b3:computational-chemistry:hartree-fock}{स्व-संगत क्षेत्र}
+पुनरावृत्तियों के दौरान (STO-3G); वह कुछ ही चक्रों में ऊपर से
+\qty{-2.8418}{\hartree} तक अभिसरित होती है, और हर पुनरावृत्त मान \omterm{thm:b3:computational-chemistry:variational}{विचरण
+सिद्धांत} का पालन करता है।}
+\end{omfigure}
+
+\section{हार्ट्री--फ़ॉक सिद्धांत}
+
+$N$ इलेक्ट्रॉनों का सबसे सरल \omterm{def:b3:many-electron-atoms:indistinguishable}{प्रतिसममित तरंग फलन} एक \omterm{def:b3:many-electron-atoms:slater}{स्लेटर
+सारणिक} है। हार्ट्री--फ़ॉक सिद्धांत उनमें से सबसे अच्छा ढूँढ़ता है।
+
+\begin{definition}[हार्ट्री--फ़ॉक विधि, फ़ॉक संकारक, स्व-संगत क्षेत्र]\label{def:b3:computational-chemistry:hartree-fock}
+\emph{हार्ट्री--फ़ॉक विधि}\index{हार्ट्री--फ़ॉक विधि} मूल अवस्था का सन्निकटन
+न्यूनतम ऊर्जा वाले एकल \omterm{def:b3:many-electron-atoms:slater}{स्लेटर सारणिक} से करती है। उसके कक्षक
+\emph{फ़ॉक संकारक}\index{फ़ॉक संकारक} के \omterm{def:b3:quantum-model-systems:operator}{अभिलक्षणिक फलन} हैं:
+\[
+\hat f(1) = \hat h(1) + \sum_b\big[2\hat J_b(1) - \hat K_b(1)\big],
+\]
+यह पूर्ण-कोश स्थिति में है: $\hat h$ एक इलेक्ट्रॉन की गतिज ऊर्जा और नाभिकों के प्रति
+आकर्षण है, $\hat J_b$ कक्षक $b$ के आवेश-मेघ द्वारा प्रतिकर्षण, और $\hat K_b$ विनिमय \omterm{def:b3:quantum-model-systems:operator}{संकारक},
+जिसके \omterm{def:b3:quantum-model-systems:hermitian}{प्रत्याशा मान} \cref{ch:b3:many-electron-atoms} के \omterm{def:b3:many-electron-atoms:exchange}{विनिमय समाकल} हैं। चूँकि $\hat f$
+उन्हीं कक्षकों पर निर्भर करता है जिन्हें वह निर्धारित करता है, समीकरण
+पुनरावृत्ति द्वारा तब तक हल किए जाते हैं जब तक कक्षक बदलना बंद न कर दें: यही \emph{स्व-संगत
+क्षेत्र}\index{स्व-संगत क्षेत्र} (SCF) है।
+\end{definition}
+
+\begin{theorem}[रूथान--हॉल समीकरण]\label{thm:b3:computational-chemistry:roothaan}
+हर कक्षक को किसी आधार में लिखने पर, $\phi_a = \sum_\mu C_{\mu a}\chi_\mu$,
+पूर्ण-कोश हार्ट्री--फ़ॉक समीकरण यह आव्यूह अभिलक्षणिक समस्या बन जाते हैं:
+\[
+\mathbf F\mathbf C = \mathbf S\mathbf C\boldsymbol\varepsilon, \qquad F_{\mu\nu} =
+h_{\mu\nu} + \sum_{\lambda\sigma}P_{\lambda\sigma}\big[(\mu\nu|\sigma\lambda) -
+\tfrac12(\mu\lambda|\sigma\nu)\big],
+\]
+जहाँ घनत्व आव्यूह $P_{\lambda\sigma} = 2\sum_a^{\mathrm{occ}}C_{\lambda a}C_{\sigma
+a}$ है और द्वि-इलेक्ट्रॉन समाकल $(\mu\nu|\lambda\sigma) = \iint\chi_\mu(1)\chi_\nu(1)
+r_{12}^{-1}\chi_\lambda(2)\chi_\sigma(2)$ (परमाणु इकाइयाँ)।
+\end{theorem}
+
+\begin{proof}[आंशिक उपपत्ति]
+सारणिक की ऊर्जा $E = \sum_{\mu\nu}P_{\mu\nu}h_{\mu\nu} + \frac12
+\sum P_{\mu\nu}P_{\lambda\sigma}[(\mu\nu|\sigma\lambda) - \frac12(\mu\lambda|\sigma\nu)]$ है,
+गुणांकों का एक द्विघाती फलन। इसे इन प्रतिबंधों के अधीन न्यूनतम कीजिए
+कि कक्षक प्रसामान्य-लांबिक बने रहें, $\mathbf C^{\mathsf T}\mathbf S\mathbf C = \mathbf 1$,
+हर प्रतिबंध के लिए एक लाग्रांज गुणक के साथ: स्थिरता के
+प्रतिबंध $\mathbf F\mathbf C = \mathbf S\mathbf C\boldsymbol\varepsilon$ हैं, जहाँ
+गुणक एक ऐसा आव्यूह बनाते हैं जिसे अधिकृत कक्षकों के आपस में घूर्णन द्वारा
+विकर्ण बनाया जा सकता है। बीजगणित स्वीकार किया गया है।
+\end{proof}
+
+\begin{method}[SCF प्रक्रिया]\label{met:b3:computational-chemistry:scf}
+\begin{enumerate}
+  \item समाकल $S_{\mu\nu}$, $h_{\mu\nu}$ और $(\mu\nu|\lambda\sigma)$ एक बार परिकलित कीजिए।
+  \item घनत्व आव्यूह का अनुमान लगाइए (उदाहरण के लिए केवल
+        $\mathbf h$ के अभिलक्षणिक सदिशों से, ``कोर'' अनुमान)।
+  \item $\mathbf F$ बनाइए, $\mathbf P$ से; $\mathbf F\mathbf C = \mathbf S\mathbf C
+        \boldsymbol\varepsilon$ हल कीजिए ($\mathbf S^{-1/2}$ से लांबिकीकरण, फिर विकर्णन)।
+  \item निम्नतम कक्षकों को भरिए, हर एक में दो इलेक्ट्रॉन; नया $\mathbf P$
+        और ऊर्जा बनाइए।
+  \item चरण 3 से दोहराइए जब तक ऊर्जा और $\mathbf P$ में परिवर्तन किसी
+        देहली से कम न हो जाए।
+\end{enumerate}
+\end{method}
+
+\begin{omfigure}
+\begin{tikzpicture}[font=\small, node distance=4mm,
+  box/.style={draw=black!60, rounded corners=2pt, fill=omDef!6, align=center,
+  text width=4.4cm, inner sep=4pt}]
+  \node[box] (a) {समाकल $S$, $h$, $(\mu\nu|\lambda\sigma)$};
+  \node[box, below=of a] (b) {$\mathbf P$ का अनुमान};
+  \node[box, below=of b] (c) {$\mathbf F(\mathbf P)$ बनाइए};
+  \node[box, below=of c] (d) {$\mathbf F\mathbf C = \mathbf S\mathbf C\boldsymbol\varepsilon$ हल कीजिए};
+  \node[box, below=of d] (e) {नया $\mathbf P$, ऊर्जा $E$};
+  \node[diamond, aspect=2.4, draw=black!60, fill=omThm!6, below=of e, inner sep=1pt] (f) {अभिसरित?};
+  \node[box, below=of f, fill=omProp!8] (g) {कक्षक, $\varepsilon$, $E$};
+  \draw[->] (a) -- (b); \draw[->] (b) -- (c); \draw[->] (c) -- (d);
+  \draw[->] (d) -- (e); \draw[->] (e) -- (f);
+  \draw[->] (f) -- node[left] {हाँ} (g);
+  \draw[->] (f.east) -- ++(1.6,0) |- node[pos=0.25, right] {नहीं} (c.east);
+\end{tikzpicture}
+
+{\small हार्ट्री--फ़ॉक परिकलन का \omterm{def:b3:computational-chemistry:hartree-fock}{स्व-संगत क्षेत्र} चक्र।}
+\end{omfigure}
+
+\begin{example}[न्यूनतम आधार में \ce{H2}]\label{ex:b3:computational-chemistry:h2}
+% ledger: re:H2, janaf:H.dfH0, diat:H2.we, diat:H2.wexe
+हर परमाणु पर एक STO-3G फलन के साथ, आबंधी कक्षक सममिति द्वारा निर्धारित है,
+$\sigma_g \propto \chi_A + \chi_B$, और SCF को एक ही चरण चाहिए। $R =
+\qty{1.4}{\bohr}$ पर अतिव्यापन $S_{AB} = 0.6593$ है और ऊर्जा
+\qty{-1.1167}{\hartree}; निम्निष्ठ \qty{1.346}{\bohr} (\qty{71.2}{pm},
+मापे गए \qty{74.1}{pm} के विरुद्ध) और \qty{-1.1175}{\hartree} पर है। नीचे का चित्र
+इस वक्र की तुलना वास्तविक वक्र से करता है, जो मापे गए स्पेक्ट्रमी
+आँकड़ों और वियोजन ऊर्जा से बना है (एक मोर्स वक्र, \cref{ch:b3:rovibrational-spectroscopy})।
+\end{example}
+
+\begin{omfigure}
+\begin{tikzpicture}
+\begin{axis}[width=0.7\linewidth, height=6cm, xmin=0.8, xmax=10, ymin=-1.2,
+  ymax=-0.45, axis lines=left, xlabel={$R$ / $a_0$}, ylabel={$E$ / $E_h$},
+  legend cell align=left, legend style={font=\small, at={(0.04,0.98)}, anchor=north west, draw=none},
+  tick label style={font=\small}, label style={font=\small}]
+\addplot[omDef, thick] table[x=R, y=rhf] {figdata/out/bachelor-3-minimal-basis-hf-h2.dat};
+\addlegendentry{RHF/STO-3G}
+\addplot[black, thick, dashed] table[x=R, y=morse] {figdata/out/bachelor-3-minimal-basis-hf-h2.dat};
+\addlegendentry{मापित (मोर्स रूप)}
+\addplot[gray, dotted, domain=0.8:10] {-1.0};
+\addplot[omThm, dotted, domain=0.8:10] {-0.93316};
+\node[font=\scriptsize, anchor=north] at (axis cs:8,-1.005) {दो यथार्थ H परमाणु};
+\node[font=\scriptsize, anchor=south, omThm] at (axis cs:8,-0.930) {दो STO-3G H परमाणु};
+\end{axis}
+\end{tikzpicture}
+
+{\small अंतरनाभिकीय दूरी के विरुद्ध \ce{H2} की ऊर्जा: STO-3G आधार में प्रतिबंधित
+हार्ट्री--फ़ॉक (सतत रेखा) और वास्तविक वक्र (खंडित, मापे गए
+$D_0$, $\omega_e$, $\omega_ex_e$, $r_e$ से बना मोर्स रूप)। निम्निष्ठ के पास
+RHF अच्छा है; बड़े $R$ पर वह दो हाइड्रोजन परमाणुओं से बहुत ऊपर उठ जाता है।}
+\end{omfigure}
+
+\begin{proposition}[प्रतिबंधित हार्ट्री--फ़ॉक वियोजन पर विफल क्यों होता है]\label{prop:b3:computational-chemistry:rhf-dissociation}
+न्यूनतम आधार में \ce{H2} का RHF तरंग फलन,
+प्रसामान्यीकरण को छोड़कर, $\sigma_g(1)\sigma_g(2) \propto \chi_A(1)\chi_B(2) + \chi_B(1)\chi_A(2)
++ \chi_A(1)\chi_A(2) + \chi_B(1)\chi_B(2)$ है: किसी भी दूरी पर, आधा सहसंयोजी और आधा
+आयनिक (\ce{H+ H-})। बड़े $R$ पर उसकी ऊर्जा दो उदासीन परमाणुओं और एक
+आयन-युग्म के माध्य की ओर प्रवृत्त होती है, दो परमाणुओं की ऊर्जा की ओर नहीं।
+\end{proposition}
+
+\begin{proof}
+$(\chi_A + \chi_B)(1)(\chi_A + \chi_B)(2)$ का प्रसार कीजिए: दो तिर्यक पद हर परमाणु
+पर एक इलेक्ट्रॉन रखते हैं, दो वर्ग पद दोनों को एक ही परमाणु पर, और $R$ जो भी हो,
+भार बराबर रहते हैं। सारणिक इन भारों को नहीं बदल सकता।
+\end{proof}
+
+\begin{definition}[इलेक्ट्रॉन सहसंबंध, सहसंबंध ऊर्जा]\label{def:b3:computational-chemistry:correlation}
+\emph{इलेक्ट्रॉन सहसंबंध}\index{इलेक्ट्रॉन सहसंबंध} इलेक्ट्रॉनों के पारस्परिक
+परिहार का वह भाग है जिसका वर्णन एकल सारणिक नहीं करता (जिसके
+विपरीत चक्रणों वाले इलेक्ट्रॉन एक-दूसरे के औसत क्षेत्र में स्वतंत्र रूप से गति करते हैं)।
+\emph{सहसंबंध ऊर्जा}\index{सहसंबंध ऊर्जा} पूर्ण आधार में यथार्थ
+ऊर्जा घटा हार्ट्री--फ़ॉक ऊर्जा है; यह सदा
+ऋणात्मक होती है।
+\end{definition}
+
+\omterm{def:b3:computational-chemistry:correlation}{सहसंबंध ऊर्जा} प्रति इलेक्ट्रॉन युग्म लगभग \qty{-0.04}{\hartree} है, कुल ऊर्जा का
+एक प्रतिशत, परंतु किसी अभिक्रिया की ऊर्जा के तुल्य:
+जो विधियाँ इसे जोड़ती हैं (विन्यास अन्योन्यक्रिया, विक्षोभ सिद्धांत,
+युग्मित गुच्छ) वे हार्ट्री--फ़ॉक से कहीं अधिक महँगी हैं, जिसकी लागत स्वयं
+आधार फलनों की संख्या की लगभग चौथी घात के रूप में बढ़ती है।
+
+\begin{theorem}[कूपमान्स प्रमेय]\label{thm:b3:computational-chemistry:koopmans}
+हार्ट्री--फ़ॉक सिद्धांत में, अधिकृत कक्षक $a$ से एक इलेक्ट्रॉन हटाने के लिए
+आवश्यक ऊर्जा, शेष सभी कक्षकों को स्थिर रखते हुए, $-\varepsilon_a$ है। अतः
+मापी गई आयनन ऊर्जाएँ लगभग कक्षक ऊर्जाओं के ऋणात्मक होती हैं:
+यही \emph{कूपमान्स प्रमेय}\index{कूपमान्स प्रमेय} है।
+\end{theorem}
+
+\begin{proof}
+पूर्ण-कोश सारणिक की ऊर्जा $\sum_a2h_{aa} + \sum_{ab}(2J_{ab} -
+K_{ab})$ है, और $\varepsilon_a = h_{aa} + \sum_b(2J_{ab} - K_{ab})$। कक्षकों को बदले बिना
+$a$ से एक इलेक्ट्रॉन हटाइए: खोए गए पद $h_{aa}$ हैं, उस इलेक्ट्रॉन की
+बाकी सभी के साथ अन्योन्यक्रियाएँ, $\sum_b(2J_{ab} - K_{ab}) -
+J_{aa}$, और उसके पूर्व साथी के साथ $J_{aa}$ --- कुल मिलाकर ठीक
+$\varepsilon_a$। अतः $E^+ - E = -\varepsilon_a$।
+\end{proof}
+
+\begin{example}[\ce{H2} का आयनन]\label{ex:b3:computational-chemistry:koopmans}
+% ledger: ie4:H2
+\qty{1.4}{\bohr} पर $\sigma_g$ की STO-3G कक्षक ऊर्जा
+\qty{-0.5782}{\hartree} है: कूपमान्स \qty{15.73}{eV} की भविष्यवाणी करता है, मापे गए
+\qty{15.43}{eV} के विरुद्ध। स्थिर कक्षक आयन की ऊर्जा को अधिक आँकते हैं (वह
+शिथिल होता), लुप्त सहसंबंध उलटी दिशा में कार्य करता है; संयोजकता
+आयननों के लिए दोनों त्रुटियाँ बहुत हद तक एक-दूसरे को निरस्त कर देती हैं, इसीलिए द्वितीय वर्ष के
+खंड के प्रकाशइलेक्ट्रॉन स्पेक्ट्रमों को कक्षक आरेखों से पढ़ा जा सकता है।
+\end{example}
+
+\section{घनत्व-फलनक सिद्धांत, और परिकलन क्या बता सकता है}
+
+$N$ इलेक्ट्रॉनों का तरंग फलन $3N$ निर्देशांकों पर निर्भर करता है;
+\omterm{def:b3:computational-chemistry:dft}{इलेक्ट्रॉन घनत्व} तीन पर।
+
+\begin{definition}[इलेक्ट्रॉन घनत्व, घनत्व-फलनक सिद्धांत]\label{def:b3:computational-chemistry:dft}
+\emph{इलेक्ट्रॉन घनत्व}\index{इलेक्ट्रॉन घनत्व} $\rho(\mathbf r)$ बिंदु
+$\mathbf r$ पर प्रति एकक आयतन इलेक्ट्रॉनों की संख्या है, सभी इलेक्ट्रॉनों पर जोड़ी गई:
+$\int\rho\,\dd\tau = N$। \emph{घनत्व-फलनक सिद्धांत}\index{घनत्व-फलनक सिद्धांत}
+(DFT) मूल-अवस्था ऊर्जा को $\rho$ के एक फलनक के रूप में परिकलित करता है।
+व्यवहार में $\rho = \sum_a|\phi_a|^2$, \emph{कोन--शैम
+कक्षकों}\index{कोन--शैम कक्षक} से बनाया जाता है, जो ऐसे काल्पनिक स्वतंत्र
+इलेक्ट्रॉनों के कक्षक हैं जिनका घनत्व वास्तविक इलेक्ट्रॉनों जैसा ही है, और विनिमय तथा
+सहसंबंध के सभी प्रभाव एक \emph{विनिमय--सहसंबंध
+फलनक}\index{विनिमय--सहसंबंध फलनक} $E_{\mathrm{xc}}[\rho]$ में एकत्र किए जाते हैं।
+\end{definition}
+
+\begin{theorem}[होहेनबर्ग--कोन]\label{thm:b3:computational-chemistry:hohenberg-kohn}
+इलेक्ट्रॉनों के किसी निकाय का मूल-अवस्था घनत्व बाह्य
+विभव (नाभिकों) को एक अचर तक निर्धारित करता है, अतः \omterm{def:b3:quantum-model-systems:schrodinger}{हैमिल्टनी संकारक} और हर
+मूल-अवस्था गुणधर्म को भी; और घनत्व का ऊर्जा फलनक
+वास्तविक घनत्व पर न्यूनतम होता है।
+\end{theorem}
+\admitted
+
+उपपत्ति अधिक उन्नत पाठ्यक्रमों में दी जाती है। यह गारंटी देती है कि एक यथार्थ
+फलनक का अस्तित्व है, यह नहीं कि वह क्या है: हर व्यावहारिक फलनक एक
+सन्निकटन है, जिसे एक पदानुक्रम से चुना जाता है --- स्थानीय घनत्व, प्रवणता
+संशोधन, कुछ हार्ट्री--फ़ॉक विनिमय मिलाने वाले संकर फलनक --- और
+संदर्भ आँकड़ों पर अंशांकित किया जाता है। कोन--शैम समीकरण
+हार्ट्री--फ़ॉक वाले ही SCF चक्र से हल किए जाते हैं, लगभग उतनी ही लागत पर, परंतु उनमें सहसंबंध सम्मिलित है;
+इसीलिए DFT रसायन विज्ञान का मुख्य साधन बन गया।
+
+\begin{method}[किसी परिकलन को पढ़ना]\label{met:b3:computational-chemistry:read-calculation}
+\begin{enumerate}
+  \item जाँचिए कि SCF अभिसरित हुआ और \omterm{def:b3:computational-chemistry:pes}{ज्यामिति इष्टतमीकरण}
+        देहली से कम बलों पर समाप्त हुआ।
+  \item उसी स्तर पर आवृत्ति परिकलन चलाइए: सभी आवृत्तियाँ वास्तविक हों तो
+        निम्निष्ठ; एक काल्पनिक आवृत्ति हो तो संक्रमण संरचना, जिसकी
+        प्रसामान्य विधा अवरोध के पार की गति है।
+  \item समान की तुलना समान से कीजिए: एक ही स्तर पर परिकलित संरचनाओं के बीच
+        ऊर्जा-अंतर, भिन्न स्तरों की निरपेक्ष ऊर्जाएँ कभी नहीं।
+  \item प्रयोग से तुलना उस स्तर की विशिष्ट त्रुटियों को जानते हुए कीजिए:
+        आवर्ती आवृत्तियों को प्रायः 0.9 से 0.97 के गुणक से घटाया जाता है;
+        संकर फलनक और ध्रुवित आधार के साथ आबंध लंबाइयाँ लगभग 1 pm तक सही होती हैं;
+        अभिक्रिया ऊर्जाएँ अधिक से अधिक कुछ \unit{kJ/mol} तक।
+\end{enumerate}
+\end{method}
+
+\begin{method}[सिद्धांत का स्तर चुनना]\label{met:b3:computational-chemistry:choose-level}
+कार्बनिक अणुओं की ज्यामितियाँ और आवृत्तियाँ: ध्रुवित विभक्त-संयोजकता आधार के साथ
+एक संकर फलनक। दुर्बल अन्योन्यक्रियाएँ: परिक्षेपण
+संशोधन और \omterm{def:b3:computational-chemistry:split-valence}{विसरित फलन} जोड़िए। अभिक्रिया अवरोध और परिशुद्ध
+ऊर्जिकी: DFT ज्यामितियों पर सहसंबद्ध तरंग-फलन विधियाँ, जहाँ तक
+बजट अनुमति दे। बड़े निकाय (प्रोटीन, सतहें): एक छोटा क्षेत्र क्वांटम-यांत्रिक
+रूप से, किसी चिरसम्मत बल क्षेत्र के भीतर। चुने गए स्तर को सदा किसी
+संबंधित अणु पर परखिए जिसका उत्तर ज्ञात हो।
+\end{method}
+
+\begin{inthelab}[एक अभिकलनात्मक प्रयोग]
+परिकलन किसी प्रयोग की तरह चलाया जाता है और नोटबुक में अभिलिखित किया जाता है:
+प्रोग्राम और उसका संस्करण, विधि, आधार, अभिसरण देहलियाँ,
+आरंभिक संरचना, और कच्चे आँकड़ों के रूप में रखी गई आउटपुट फ़ाइलें। एक विशिष्ट
+क्रम यह है: अणु बनाइए, किसी साधारण स्तर पर उसकी ज्यामिति इष्टतम कीजिए,
+निम्निष्ठ की पुष्टि के लिए आवृत्तियाँ परिकलित कीजिए, फिर उस ज्यामिति पर किसी
+ऊँचे स्तर पर ऊर्जा परिकलित कीजिए।
+\end{inthelab}
+
+\begin{history}[पहले परिकलन से ज्ञात एक अणु]
+% ledger: hist4:HeHp.2019
+\ce{HeH+} को प्रयोगशाला में 1925 में बनाया गया। उसके गुणधर्म
+1930 के दशक से विस्तार से परिकलित किए गए, और भविष्यवाणी की गई कि वह
+कुछ खगोलभौतिक गैसों में प्रचुर होगा; परंतु उसकी पहली घूर्णी रेखा सुदूर
+अवरक्त में है, जिसे वायुमंडल अवशोषित कर लेता है। 2019 में एक वायुवाहित वेधशाला ने
+उसे ग्रहीय नीहारिका NGC 7027 में ठीक उसी आवृत्ति पर संसूचित किया जिसकी भविष्यवाणी परिकलनों
+और प्रयोगशाला स्पेक्ट्रमों ने की थी।
+\end{history}
+
+\section{अभ्यास}
+
+\begin{exercise}[$\star$]\label{exo:b3:computational-chemistry:1}
+हाइड्रोजन परमाणु के लिए परीक्षण फलन $\eu^{-\alpha r^2}$ लीजिए। परमाणु
+इकाइयों में $E(\alpha) = \frac32\alpha - 2\sqrt{2\alpha/\pi}$। सर्वोत्तम $\alpha$ और
+संगत ऊर्जा ज्ञात कीजिए; $-\frac12E_h$ से तुलना कीजिए।
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:computational-chemistry:2}
+STO-3G आधार में बेंज़ीन पर एक परिकलन कितने आधार फलनों का उपयोग करता है?
+6-31G(d) में कितने, जहाँ हर कार्बन पर छह कार्तीय $d$ फलन और हर हाइड्रोजन पर दो $s$
+फलन हैं?
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:computational-chemistry:3}
+समझाइए कि \ce{H2} और \ce{D2} की आबंध लंबाई और \omterm{def:b3:quantum-model-systems:oscillator}{बल
+स्थिरांक} समान होते हुए भी उनकी कंपनिक तरंग-संख्याएँ भिन्न क्यों हैं। आप किस अनुपात की अपेक्षा करते हैं?
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:computational-chemistry:4}
+सूत्र \ce{C2H5F} वाली एक संरचना पर आवृत्ति परिकलन 17 वास्तविक
+आवृत्तियाँ और एक काल्पनिक आवृत्ति, $487\iu$~\unit{cm^{-1}}, देता है। यह किस प्रकार का
+\omterm{def:b3:computational-chemistry:pes}{स्थिर बिंदु} है? आप कुल कितनी आवृत्तियों की अपेक्षा करते थे?
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:computational-chemistry:5}
+% ledger: ie:He, ie4:He2
+$E(\zeta) = \zeta^2 - \frac{27}{8}\zeta$ का उपयोग करके हीलियम की सर्वोत्तम विचरण
+ऊर्जा \unit{\hartree} और eV में परिकलित कीजिए, और यथार्थ
+$\qty{-2.9034}{\hartree}$ के सापेक्ष उसकी त्रुटि। त्रुटि कुल ऊर्जा का कितना अंश है?
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:computational-chemistry:6}
+दो आधार फलन $H_{11} = \qty{-1.0}{\hartree}$, $H_{22} =
+\qty{-0.5}{\hartree}$, $H_{12} = \qty{-0.2}{\hartree}$, $S_{12} = 0.3$ देते हैं।
+सेकुलर समीकरण हल कीजिए। क्या निम्नतर मूल $H_{11}$ से नीचे है?
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:computational-chemistry:7}
+STO-3G में बेंज़ीन के लिए एक हार्ट्री--फ़ॉक परिकलन 10 मिनट लेता है। यह मानकर कि
+लागत आधार फलनों की संख्या की चौथी घात के समानुपाती है,
+6-31G(d) में समय का आकलन कीजिए।
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:computational-chemistry:8}
+% ledger: ie4:H2
+\qty{1.4}{\bohr} पर \ce{H2} की STO-3G कक्षक ऊर्जा
+\qty{-0.5782}{\hartree} है। आयनन ऊर्जा का कूपमान्स आकलन eV में दीजिए
+और \qty{15.43}{eV} से तुलना कीजिए। उनके भिन्न होने के दो कारण और उनकी
+दिशाएँ बताइए।
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:computational-chemistry:9}
+STO-3G में एक हाइड्रोजन परमाणु की ऊर्जा \qty{-0.4666}{\hartree} है और \qty{10}{\bohr} पर
+\ce{H2} की RHF ऊर्जा \qty{-0.5960}{\hartree} है। उस दूरी पर RHF ऊर्जा
+दो परमाणुओं से eV में कितनी ऊपर है? आयनिक
+पदों से समझाइए।
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:computational-chemistry:10}
+वास्तविक फलनों के साथ $\phi = c_1\chi_1 + c_2\chi_2$ के लिए $E(c_1,c_2)$ लिखिए और
+$\partial E/\partial c_1 =
+\partial E/\partial c_2 = 0$ रखकर दोनों सेकुलर समीकरण व्युत्पन्न कीजिए।
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:computational-chemistry:11}
+% ledger: aw:H, diat:H2.we
+\ce{H2} की RHF/STO-3G ऊर्जा $-1.116871$, $-1.117501$ और
+$\qty{-1.116714}{\hartree}$ है, क्रमशः $R = 1.30$, 1.35 और \qty{1.40}{\bohr} पर। परिमित
+अंतर से \omterm{def:b3:quantum-model-systems:oscillator}{बल स्थिरांक} का आकलन कीजिए, उसे \unit{N/m} में बदलिए
+($\qty{1}{\hartree\per\bohr\squared} = \qty{1556.9}{N/m}$), और आवर्ती
+तरंग-संख्या परिकलित कीजिए। $\tilde\omega_e = \qty{4401}{cm^{-1}}$ से तुलना कीजिए।
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:computational-chemistry:12}
+आपको किसी शर्करा के दो संरूपणों के बीच ऊर्जा-अंतर परिकलित करना है,
+जो कुछ \unit{kJ/mol} के अंतर के लिए ज्ञात हैं, और जिनमें से एक में अंतराण्विक हाइड्रोजन आबंध
+है। एक विधि, एक \omterm{def:b3:computational-chemistry:basis}{आधार समुच्चय} और वे जाँचें चुनिए जो आप
+चलाएँगे, और उनका औचित्य दीजिए।
+\end{exercise}
+
+\section{समस्या: HeH\texorpdfstring{$^+$}{+}, पहला अणु}
+
+\begin{problem}[{सप्ताहांत समस्या --- हीलियम हाइड्राइड आयन का न्यूनतम-आधार
+हार्ट्री--फ़ॉक परिकलन: आधार, कोर अनुमान,
+अभिसरित कक्षक, और हीलियम से एक प्रोटॉन का बंधन}]
+\label{pb:b3:computational-chemistry:1}
+% ledger: bse:He.sto3g.a1, bse:He.sto3g.a2, bse:He.sto3g.a3, bse:H.sto3g.a1, pa:He, ie:He, ie4:He2
+\ce{HeH+} को $R = \qty{1.4632}{\bohr}$ पर STO-3G आधार में परिकलित किया जाता है (He
+के घातांक 6.3624, 1.1589, 0.31365; H के घातांक 3.4253, 0.62391, 0.16886; वही
+तीन गुणांक)। फलन 1, He पर है, फलन 2, H पर। प्रोग्राम
+यह देता है (परमाणु इकाइयाँ):
+\[
+\mathbf S = \begin{pmatrix}1 & 0.5368\\ 0.5368 & 1\end{pmatrix},\quad
+\mathbf h = \begin{pmatrix}-2.5983 & -1.4318\\ -1.4318 & -1.7318\end{pmatrix},\quad
+\mathbf F_{\mathrm{final}} = \begin{pmatrix}-1.5902 & -1.0610\\ -1.0610 & -0.8340
+\end{pmatrix},
+\]
+अधिकृत कक्षक $\phi = 0.8766\chi_1 + 0.2025\chi_2$, कक्षक ऊर्जाएँ
+$-1.6328$ और \qty{-0.1725}{\hartree}, और SCF ऊर्जाएँ $-2.7978$, $-2.8404$,
+$-2.8418$, $-2.8418$। उसी आधार में एक हीलियम परमाणु की ऊर्जा
+\qty{-2.8078}{\hartree} है। $\qty{1}{\hartree} = \qty{27.211}{eV} =
+\qty{2625.5}{kJ/mol}$।
+
+\medskip\noindent\textbf{भाग I --- आधार।}
+\begin{enumerate}
+  \item ``STO-3G'' का क्या अर्थ है?
+  \item हीलियम के घातांक हाइड्रोजन के घातांकों से बड़े क्यों हैं? जाँचिए
+        कि उनका अनुपात $(1.69/1.24)^2$ है।
+  \item आधार फलन, इलेक्ट्रॉन और अधिकृत कक्षक कितने-कितने हैं?
+  \item नाभिकीय प्रतिकर्षण ऊर्जा परिकलित कीजिए।
+  \item $S_{12} = 0.5368$ की व्याख्या कीजिए।
+  \item $h_{11}$, $h_{22}$ से नीचे क्यों है?
+\end{enumerate}
+
+\medskip\noindent\textbf{भाग II --- कोर अनुमान।}
+\begin{enumerate}[resume]
+  \item सेकुलर समीकरण $\det(\mathbf h - \varepsilon\mathbf S) = 0$ को
+        $\varepsilon$ में एक द्विघाती के रूप में लिखिए।
+  \item इसे हल कीजिए।
+  \item यह केवल एक आरंभ-बिंदु क्यों है?
+  \item फ़ॉक आव्यूह का सूत्र $\mathbf h$,
+        घनत्व आव्यूह और द्वि-इलेक्ट्रॉन समाकलों के पदों में दीजिए।
+  \item $\mathbf F$ में कौन-सी इलेक्ट्रॉन अन्योन्यक्रियाएँ हैं जो $\mathbf h$ में नहीं हैं?
+  \item समझाइए कि प्रक्रिया की पुनरावृत्ति क्यों आवश्यक है।
+\end{enumerate}
+
+\medskip\noindent\textbf{भाग III --- अभिसरित कक्षक।}
+\begin{enumerate}[resume]
+  \item जाँचिए कि $\phi$ प्रसामान्यीकृत है।
+  \item समष्टियाँ $P\mathbf S$ के विकर्ण अवयव हैं, He पर $2c_1^2 + 2c_1c_2S$
+        और H पर $2c_2^2 + 2c_1c_2S$। इन्हें परिकलित कीजिए।
+  \item धनावेश कहाँ स्थित है? क्या अणु का वर्णन
+        \ce{He + H+} के रूप में बेहतर है या \ce{He+ + H} के रूप में?
+  \item \ce{HeH+} से एक इलेक्ट्रॉन हटाने के लिए आवश्यक ऊर्जा का आकलन
+        \omterm{thm:b3:computational-chemistry:koopmans}{कूपमान्स प्रमेय} से कीजिए।
+  \item इलेक्ट्रॉनिक ऊर्जा $E_{\mathrm{el}} = E - V_{\mathrm{nn}}$ परिकलित कीजिए।
+  \item \qty{e-4}{\hartree} तक अभिसरण के लिए कितने चक्र लगे? हर चक्र में
+        ऊर्जा क्यों घटी?
+  \item हीलियम के घातांकों को 1.69 के स्थान पर $\zeta = 2.0925$ पर मापित करने पर
+        वही प्रोग्राम \qty{-2.8607}{\hartree} देता है। कौन-सा आधार बेहतर है, और
+        आप ऐसा क्यों कह सकते हैं?
+  \item रिक्त कक्षक की ऊर्जा, \qty{-0.1725}{\hartree}, क्या निरूपित करती है?
+\end{enumerate}
+
+\medskip\noindent\textbf{भाग IV --- एक प्रोटॉन का बंधन।}
+\begin{enumerate}[resume]
+  \item एक अनावृत प्रोटॉन की ऊर्जा क्या है? इस आधार में, एक-दूसरे से दूर
+        \ce{He + H+} की ऊर्जा क्या है?
+  \item इस स्तर पर \ce{He + H+ -> HeH+} द्वारा मुक्त ऊर्जा
+        \unit{kJ/mol} में परिकलित कीजिए।
+  \item हीलियम की मापी गई प्रोटॉन बंधुता \qty{177.8}{kJ/mol} है।
+        टिप्पणी कीजिए।
+  \item हीलियम की यथार्थ ऊर्जा उसकी आयनन ऊर्जाओं, 24.5874 और \qty{54.4178}{eV},
+        के योग का ऋणात्मक है। इसे \unit{\hartree} में परिकलित कीजिए, तथा
+        STO-3G हीलियम परमाणु की त्रुटि भी।
+  \item इस आकार की त्रुटि फिर भी उपयोगी आण्विक
+        ज्यामितियाँ क्यों दे सकती है?
+  \item परिणाम बताइए: \qty{1.4632}{\bohr} पर \ce{HeH+} की RHF/STO-3G कुल ऊर्जा।
+\end{enumerate}
+\end{problem}

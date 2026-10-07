@@ -1,0 +1,384 @@
+\chapter{Determinación estructural: RMN de \texorpdfstring{$^{13}$C}{13C}, EM e IR combinadas}\label{ch:b2:structure-determination}
+
+Un laboratorio de perfumería recibe un vial de un líquido incoloro que huele a jazmín. Nadie ha
+escrito una etiqueta. Un \omterm{def:b2:mass-spec-atomic:spectrum}{espectro de masas} da su fórmula molecular, un espectro infrarrojo sus grupos
+funcionales, un espectro de carbono 13 su esqueleto y un espectro de protón la manera en que se unen las piezas; en una
+hora el líquido tiene nombre. Este capítulo añade la \omterm{def:b2:structure-determination:c13}{RMN de carbono 13} a la RMN de protón y a la espectroscopia infrarroja
+del volumen del primer año y a la \omterm{def:b2:mass-spec-atomic:spectrum}{espectrometría de masas} del \cref{ch:b2:mass-spec-atomic}, y convierte las cuatro
+en un solo método.
+
+\begin{recall}
+El volumen del primer año: desplazamiento químico y apantallamiento, protones equivalentes, integración, acoplamiento espín--espín
+y regla $n + 1$, números de onda infrarrojos de los grupos funcionales y región de la huella dactilar, grado
+de insaturación, resolución de una estructura a partir de tres espectros. \Cref{ch:b2:mass-spec-atomic}: el \omterm{def:b2:mass-spec-atomic:molecular-ion}{ion
+molecular}, los \omterm{def:b2:mass-spec-atomic:isotope-pattern}{perfiles isotópicos}, la fragmentación.
+\end{recall}
+
+\section{RMN de carbono 13}
+
+El carbono 12, el isótopo principal, no tiene espín nuclear y no da señal de RMN. El carbono 13 tiene un espín de
+$\tfrac12$, como el protón, pero solo constituye el 1.1~\% del carbono natural y su señal es más débil,
+núcleo por núcleo, que la de un protón; un espectro de carbono necesita por ello más muestra o más acumulaciones.
+% ledger: iso:C13
+
+\begin{definition}[RMN de carbono 13]\label{def:b2:structure-determination:c13}
+La \emph{RMN de carbono 13}\index{RMN de carbono 13} registra las resonancias de los núcleos \ce{^{13}C} de una muestra.
+Suele realizarse con \emph{desacoplamiento de banda ancha}\index{desacoplamiento de banda ancha}: los protones se
+irradian en todo su intervalo de frecuencias durante la medida, lo que elimina todo
+acoplamiento carbono--protón, de modo que cada tipo de carbono da una sola línea. Los \emph{carbonos
+equivalentes}\index{carbonos equivalentes}, intercambiados por una simetría de la molécula (o por una rotación rápida),
+dan la misma línea.
+\end{definition}
+
+\begin{proposition}[Sin acoplamiento carbono--carbono]\label{prop:b2:structure-determination:no-cc-coupling}
+Los acoplamientos entre átomos de carbono vecinos no aparecen en un espectro de \ce{^{13}C} en abundancia
+natural.
+\end{proposition}
+
+\begin{proof}
+Un acoplamiento entre dos carbonos solo se observa en las moléculas en las que ambos son \ce{^{13}C}. Para dos posiciones
+vecinas dadas, la probabilidad es $a_{13}^2 = 0.011^2 \approx 1.2 \times 10^{-4}$: alrededor de una
+molécula de cada ocho mil. La señal de cada carbono procede casi enteramente de moléculas en las que sus
+vecinos son \ce{^{12}C}, invisibles para el espectrómetro; los satélites acoplados son cien veces
+más débiles que el ruido de un espectro ordinario.
+\end{proof}
+
+\begin{proposition}[Número de líneas]\label{prop:b2:structure-determination:signals}
+Un espectro de \ce{^{13}C} desacoplado muestra una línea por cada conjunto de \omterm{def:b2:structure-determination:c13}{carbonos equivalentes}, salvo que dos conjuntos
+tengan por casualidad el mismo desplazamiento.
+\end{proposition}
+
+\begin{proof}[Argumento]
+Los \omterm{def:b2:structure-determination:c13}{carbonos equivalentes} están en entornos idénticos, de modo que tienen el mismo desplazamiento; los carbonos no equivalentes
+suelen diferir. Eliminados los acoplamientos con los protones y ausentes los acoplamientos entre carbonos
+(\cref{prop:b2:structure-determination:no-cc-coupling}), nada desdobla una línea. El solapamiento accidental
+se produce cuando dos carbonos distintos tienen desplazamientos más próximos que la resolución espectral, lo que es frecuente para los
+carbonos de un anillo bencénico hacia \qty{128}{ppm}.
+\end{proof}
+
+Los desplazamientos se extienden sobre unos \qty{220}{ppm}, veinte veces el intervalo de los protones, de modo que los solapamientos son más raros que
+en los espectros de protón, y el desplazamiento por sí solo indica el tipo de carbono. El gráfico siguiente muestra los desplazamientos
+medidos para los compuestos de este capítulo.
+
+\begin{omfigure}
+\begin{tikzpicture}
+\begin{axis}[width=0.86\linewidth, height=4.6cm, xmin=0, xmax=220, ymin=-0.6, ymax=4.6, x dir=reverse,
+  xlabel={$\delta$ (ppm)}, label style={font=\small}, tick label style={font=\scriptsize},
+  ytick={0,1,2,3,4}, yticklabels={C alquílico, C--O, C aromático, C=O de éster, C=O de cetona},
+  xtick={0,20,40,60,80,100,120,140,160,180,200,220}, grid=major, grid style={black!10}]
+\addplot[only marks, mark=|, mark size=5pt, thick, omDef] table[x=shift, y=cls] {figdata/out/bachelor-2-nmr-spectra-d.dat};
+\end{axis}
+\end{tikzpicture}
+
+{\small Desplazamientos de \ce{^{13}C} medidos para la butan-2-ona, la pentan-2-ona, el benzoato de etilo y el etanoato de bencilo,
+ordenados por tipo de carbono (CDCl$_3$; datos de PubChem). Los carbonilos de cetona se sitúan hacia 209, los de éster hacia
+167--171, los carbonos \omterm{def:b2:huckel:aromatic}{aromáticos} entre 128 y 137, los carbonos unidos a un oxígeno de éster hacia 61--66, y los
+carbonos alquílicos por debajo de 46.}
+% figdata: bachelor-2/nmr-spectra.py part d
+% ledger: c13:butanone, c13:pentan-2-one, c13:ethylbenzoate, c13:benzylacetate
+\end{omfigure}
+
+\begin{proposition}[Las alturas no son recuentos]\label{prop:b2:structure-determination:intensities}
+En un espectro de \ce{^{13}C} desacoplado de rutina, las alturas de las líneas no son proporcionales a los
+números de carbonos que representan; los carbonos sin hidrógenos dan líneas débiles.
+\end{proposition}
+
+\begin{proof}[Argumento]
+Los espectros de rutina repiten la medida más deprisa de lo que los carbonos más lentos tardan en relajarse al equilibrio, y
+los carbonos sin protones unidos se relajan lentamente, de modo que su señal está parcialmente saturada. El desacoplamiento además
+refuerza las señales de los carbonos que llevan protones, en una cantidad que depende de su entorno.
+En la butan-2-ona, la línea del carbonilo es la más débil de las cuatro, aunque representa un carbono como
+las demás. La integración, tan útil para los protones, no se usa por tanto en los espectros de carbono de rutina.
+\end{proof}
+
+\section{DEPT}
+
+\begin{definition}[DEPT]\label{def:b2:structure-determination:dept}
+El \emph{DEPT}\index{DEPT} (siglas inglesas de refuerzo sin distorsión por transferencia de polarización) es un conjunto de experimentos
+de carbono 13 que dan a las señales de los carbonos con protones unidos un signo o una ausencia según
+su número de hidrógenos. Un \emph{carbono cuaternario}\index{carbono cuaternario} no lleva hidrógeno
+(está unido a otros cuatro átomos, o es un carbono carbonílico o \omterm{def:b2:huckel:aromatic}{aromático} sin H); no da señal en DEPT.
+\end{definition}
+
+\begin{proposition}[Leer un DEPT]\label{prop:b2:structure-determination:dept}
+En DEPT-135, los carbonos \ce{CH} y \ce{CH3} apuntan hacia arriba, los carbonos \ce{CH2} hacia abajo y los \omterm{def:b2:structure-determination:dept}{carbonos cuaternarios}
+están ausentes. En DEPT-90 solo aparecen los carbonos \ce{CH}.
+\end{proposition}
+
+\admitted
+
+El experimento transfiere magnetización de los protones al carbono al que están unidos, mediante una
+secuencia de pulsos de radiofrecuencia cuyo último ángulo selecciona la respuesta; cómo lo hacen los pulsos se
+explica en el volumen del tercer año. Comparar el espectro desacoplado con el DEPT-135 y el DEPT-90 clasifica cada
+línea como C, CH, \ce{CH2} o \ce{CH3}.
+
+\begin{omfigure}
+\pgfplotsset{dept/.style={width=\linewidth, height=2.9cm, ycomb, x dir=reverse, ymin=-1, ymax=1.15,
+  ytick=\empty, axis y line=none, axis x line=middle, x axis line style={-}, tick label style={font=\tiny},
+  title style={font=\scriptsize, at={(0.0,0.95)}, anchor=north west}, every axis plot/.append style={thick}}}
+\begin{minipage}[t]{0.49\linewidth}\centering
+{\small butan-2-ona}\par
+\begin{tikzpicture}
+\begin{axis}[dept, xmin=0, xmax=220, xtick={0,50,100,150,200}, title={desacoplado}]
+\addplot[omDef] table[x=shift, y=dec] {figdata/out/bachelor-2-nmr-spectra-a.dat};
+\end{axis}
+\end{tikzpicture}\par
+\begin{tikzpicture}
+\begin{axis}[dept, xmin=0, xmax=220, xtick={0,50,100,150,200}, title={DEPT-135}]
+\addplot[omThm] table[x=shift, y=d135] {figdata/out/bachelor-2-nmr-spectra-a.dat};
+\end{axis}
+\end{tikzpicture}\par
+\begin{tikzpicture}
+\begin{axis}[dept, xmin=0, xmax=220, xtick={0,50,100,150,200}, title={DEPT-90}]
+\addplot[omMeth] table[x=shift, y=d90] {figdata/out/bachelor-2-nmr-spectra-a.dat};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\linewidth}\centering
+{\small benzoato de etilo}\par
+\begin{tikzpicture}
+\begin{axis}[dept, xmin=0, xmax=220, xtick={0,50,100,150,200}, title={desacoplado}]
+\addplot[omDef] table[x=shift, y=dec] {figdata/out/bachelor-2-nmr-spectra-b.dat};
+\end{axis}
+\end{tikzpicture}\par
+\begin{tikzpicture}
+\begin{axis}[dept, xmin=0, xmax=220, xtick={0,50,100,150,200}, title={DEPT-135}]
+\addplot[omThm] table[x=shift, y=d135] {figdata/out/bachelor-2-nmr-spectra-b.dat};
+\end{axis}
+\end{tikzpicture}\par
+\begin{tikzpicture}
+\begin{axis}[dept, xmin=0, xmax=220, xtick={0,50,100,150,200}, title={DEPT-90}]
+\addplot[omMeth] table[x=shift, y=d90] {figdata/out/bachelor-2-nmr-spectra-b.dat};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}
+
+{\small Espectros de \ce{^{13}C} desacoplados (desplazamientos y alturas medidos, datos de PubChem) con las respuestas
+\omterm{def:b2:structure-determination:dept}{DEPT} (signos según la \cref{prop:b2:structure-determination:dept}, alturas esquemáticas). Butan-2-ona: C=O
+209.3 (ausente en \omterm{def:b2:structure-determination:dept}{DEPT}), \ce{CH2} 36.9 (hacia abajo), \ce{CH3} 29.4 y 7.9 (hacia arriba). Benzoato de etilo: el C=O 166.5 y
+el carbono del anillo que lleva el éster, 130.6, desaparecen; tres CH \omterm{def:b2:huckel:aromatic}{aromáticos} (132.8, 129.6, 128.3) permanecen en
+DEPT-90; el \ce{OCH2} 60.9 apunta hacia abajo.}
+% figdata: bachelor-2/nmr-spectra.py parts a, b
+\end{omfigure}
+
+\section{Combinar las técnicas}
+
+Cada técnica responde a su propia pregunta, y las respuestas se ensamblan en un orden fijo: primero la fórmula,
+porque acota todo lo demás; después los grupos funcionales y el esqueleto; después las
+conexiones.
+
+\begin{method}[Resolver una sustancia desconocida]\label{met:b2:structure-determination:solve}
+\begin{enumerate}
+  \item Fórmula: \omterm{def:b2:mass-spec-atomic:molecular-ion}{ion molecular}, $M+1$ para el número de carbonos, \omterm{def:b2:mass-spec-atomic:isotope-pattern}{perfiles isotópicos}, \omterm{def:b2:mass-spec-atomic:nitrogen-rule}{regla del nitrógeno}; una
+        masa exacta si se dispone de ella. Grado de insaturación.
+  \item Infrarrojo: \ce{C=O} (y de qué tipo), \ce{O-H}, \ce{N-H}, \ce{C#N}, \ce{C-H} \omterm{def:b2:huckel:aromatic}{aromático} o
+        alquénico por encima de \qty{3000}{cm^{-1}}.
+  \item Carbono 13 y \omterm{def:b2:structure-determination:dept}{DEPT}: número de tipos de carbono (simetría), sus clases según los desplazamientos, y
+        C, CH, \ce{CH2}, \ce{CH3} según el \omterm{def:b2:structure-determination:dept}{DEPT}. Compárese con la fórmula.
+  \item RMN de protón: integraciones, desplazamientos, multiplicidades; vecinos según la regla $n + 1$.
+  \item Ensámblense los fragmentos; escríbanse todas las estructuras candidatas.
+  \item Compruébese cada candidata frente a cada dato, incluidos los fragmentos del \omterm{def:b2:mass-spec-atomic:spectrum}{espectro de masas}; consérvese la que
+        los explica todos.
+\end{enumerate}
+\end{method}
+
+\begin{omfigure}
+\begin{tikzpicture}[x=1cm, y=1cm, st/.style={draw=black!70, rounded corners=2pt, fill=white,
+  font=\small, align=center, minimum height=0.9cm, inner sep=3pt, text width=2.3cm}]
+\node[st, fill=omDef!10] (ms) at (0,0) {EM\\fórmula, $M+1$};
+\node[st] (dbe) at (2.9,0) {grado de\\insaturación};
+\node[st, fill=omDef!10] (ir) at (5.8,0) {IR\\grupos funcionales};
+\node[st, fill=omDef!10] (c13) at (8.7,0) {\ce{^{13}C}, DEPT\\esqueleto};
+\node[st, fill=omDef!10] (h1) at (8.7,-1.8) {\ce{^1H}\\conexiones};
+\node[st] (cand) at (5.8,-1.8) {estructuras\\candidatas};
+\node[st, fill=omThm!10] (chk) at (2.9,-1.8) {comprobar\\cada dato};
+\node[st] (ans) at (0,-1.8) {estructura};
+\draw[->, thick] (ms) -- (dbe); \draw[->, thick] (dbe) -- (ir); \draw[->, thick] (ir) -- (c13);
+\draw[->, thick] (c13) -- (h1); \draw[->, thick] (h1) -- (cand); \draw[->, thick] (cand) -- (chk);
+\draw[->, thick] (chk) -- (ans);
+\draw[->, thick, densely dashed] (chk.south) -- ++(0,-0.5) -| node[pos=0.25, below, font=\footnotesize]
+  {un dato sin explicar: volver a las candidatas} (cand.south);
+\end{tikzpicture}
+\par\vspace{4pt}
+
+{\small El orden de trabajo ante una sustancia desconocida (\cref{met:b2:structure-determination:solve}). La última etapa
+es la que más a menudo se omite: una estructura que deja un pico sin explicar no es todavía la respuesta.}
+\end{omfigure}
+
+\section{Casos resueltos}
+
+\begin{example}[Una cetona, C$_5$H$_{10}$O]\label{ex:b2:structure-determination:ketone}
+Una sustancia desconocida tiene $M = 86$, una banda IR hacia \qty{1715}{cm^{-1}}, líneas de carbono en 208.9, 45.7, 29.8, 17.4 y
+13.7~ppm, y señales de protón en 2.41 (t, 2H), 2.13 (s, 3H), 1.61 (sextuplete, 2H) y 0.91 (t, 3H).
+Un grado de insaturación, una cetona saturada (sin protón aldehídico hacia 9.7). Cinco carbonos, cinco líneas:
+ninguna simetría. El singlete de tres protones en 2.13 es un \ce{CH3} contiguo al carbonilo; la secuencia triplete,
+sextuplete, triplete es un grupo propilo cuyo \ce{CH2} en 2.41 toca el carbonilo. Pentan-2-ona,
+\ce{CH3COCH2CH2CH3}. Su isómero simétrico, la pentan-3-ona, mostraría tres líneas de carbono y ningún singlete;
+su \omterm{def:b2:mass-spec-atomic:spectrum}{espectro de masas} tiene el ion de McLafferty en 58 que le falta a la pentan-3-ona (\cref{ch:b2:mass-spec-atomic}).
+% ledger: c13:pentan-2-one, nmr:pentan-2-one, ir:CO-ketone, ms:pentan-2-one
+\end{example}
+
+\begin{example}[Un éster aromático, C$_9$H$_{10}$O$_2$]\label{ex:b2:structure-determination:ester}
+Una sustancia desconocida de fórmula \ce{C9H10O2} (cinco grados de insaturación) muestra una banda de carbonilo y siete
+líneas de carbono: 166.5 (C), 132.8 (CH), 130.6 (C), 129.6 (CH), 128.3 (CH), 60.9 (\ce{CH2}) y 14.3
+(\ce{CH3}). Su espectro de protón: 8.05 (m, 2H), 7.35--7.63 (m, 3H), 4.37 (c, 2H), 1.38 (t, 3H). Un
+anillo bencénico monosustituido (cuatro líneas de carbono \omterm{def:b2:huckel:aromatic}{aromático}, dos de ellas de dos carbonos cada una; cinco
+protones \omterm{def:b2:huckel:aromatic}{aromáticos}) da cuenta de cuatro insaturaciones, y el carbonilo, de la quinta. El par cuadruplete--triplete
+es un grupo etilo; su \ce{CH2} en 4.37 (y en 60.9 en carbono) está unido a un oxígeno. El carbonilo de éster
+en 166.5 está unido al anillo: los dos protones en 8.05, contiguos a él, están desplazados a campo bajo. Benzoato de
+etilo, \ce{C6H5COOCH2CH3}.
+% ledger: c13:ethylbenzoate, nmr:ethylbenzoate
+\end{example}
+
+\section{Trampas}
+
+\begin{itemize}
+  \item \emph{Protones intercambiables} (\ce{O-H}, \ce{N-H}): dan señales anchas a desplazamientos variables, a
+        menudo no están acoplados a sus vecinos, y desaparecen cuando se agita la muestra con una gota de \ce{D2O}.
+  \item \emph{Señales solapadas}: dos carbonos de un anillo bencénico, o varios \ce{CH2} de una cadena, pueden
+        compartir una línea; cuéntense las líneas frente a la fórmula antes de concluir sobre la simetría.
+  \item \emph{Protones diastereotópicos}: los dos protones de un \ce{CH2} contiguo a un estereocentro no son
+        equivalentes, pueden tener desplazamientos distintos y acoplarse entre sí.
+  \item \emph{Sistemas de segundo orden}: cuando dos protones acoplados tienen desplazamientos más próximos que unas pocas veces su
+        constante de acoplamiento, los multipletes se inclinan uno hacia otro y la regla $n+1$ falla; un
+        espectrómetro de campo más intenso restablece multipletes sencillos.
+\end{itemize}
+
+\begin{safety}{\ghs[5mm]{GHS02}\,\ghs[5mm]{GHS07}\,\ghs[5mm]{GHS08}}
+La butan-2-ona es inflamable. El imán de un espectrómetro de RMN está siempre activo: nada de herramientas de acero, botellas de
+gas ni tarjetas magnéticas cerca de él, y ningún acceso para personas con marcapasos.
+% ledger: ghs:butanone, ghs:benzylacetate
+\end{safety}
+
+\section{Ejercicios}
+
+\begin{exercise}[$\star$]\label{exo:b2:structure-determination:1}
+¿Cuántas líneas muestra el espectro de \ce{^{13}C} desacoplado de cada xileno (1,2-, 1,3- y
+1,4-dimetilbenceno)?
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b2:structure-determination:2}
+Prevéanse los espectros DEPT-135 y DEPT-90 del butan-2-ol.
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b2:structure-determination:3}
+¿A qué tipo de carbono pertenece con más probabilidad una línea en 209, 170, 129, 64 y 14~ppm?
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b2:structure-determination:4}
+Calcúlese el grado de insaturación de \ce{C8H8O2} y propóngase una estructura que contenga un anillo bencénico.
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b2:structure-determination:5}
+Un líquido \ce{C4H8O} muestra una banda IR en \qty{1715}{cm^{-1}} y líneas de carbono en 209, 37, 29 y 8~ppm
+(DEPT-135: 37 hacia abajo, 29 y 8 hacia arriba, 209 ausente). Identifíquese.
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b2:structure-determination:6}
+¿Cómo se distinguiría la pentan-2-ona de la pentan-3-ona solo con RMN de \ce{^{13}C}? ¿Con RMN de protón? ¿Con
+\omterm{def:b2:mass-spec-atomic:spectrum}{espectrometría de masas}?
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b2:structure-determination:7}
+Un éster tiene $M = 88$ y señales de protón en 4.12 (c, 2H), 2.04 (s, 3H) y 1.26 (t, 3H) (datos de
+ejercicio). Identifíquese.
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b2:structure-determination:8}
+Distíngase el 1,2-diclorobenceno del 1,4-diclorobenceno por RMN de \ce{^{13}C}.
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b2:structure-determination:9}
+En el 2-clorobutano, ¿por qué no son equivalentes los dos protones del grupo \ce{CH2}? ¿Qué efecto tiene eso sobre
+el espectro de protón?
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b2:structure-determination:10}
+Una sustancia desconocida \ce{C9H10O} muestra una banda IR en \qty{1690}{cm^{-1}}, líneas de carbono en 200.8 (C), 137.0 (C),
+132.9 (CH), 128.6 (CH), 128.0 (CH), 31.8 (\ce{CH2}) y 8.3 (\ce{CH3}), y señales de protón en 7.95 (m,
+2H), 7.40--7.55 (m, 3H), 2.98 (c, 2H) y 1.22 (t, 3H) (datos de ejercicio). Identifíquese, y explíquese el
+bajo número de onda del carbonilo.
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b2:structure-determination:11}
+Cuatro isómeros \ce{C5H10O2}: ácido pentanoico, butanoato de metilo, propanoato de etilo y etanoato de propilo.
+Dese para cada uno un rasgo de su espectro IR o de RMN de protón que lo distinga de los otros tres.
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b2:structure-determination:12}
+Un informe asigna la línea en 166.5~ppm del benzoato de etilo al carbono del anillo que lleva el éster y
+la línea en 130.6~ppm al carbono carbonílico. Muéstrese, con los datos \omterm{def:b2:structure-determination:dept}{DEPT} y el gráfico de desplazamientos, que la
+asignación no puede ser correcta.
+\end{exercise}
+
+\section{Problema: cuatro espectros del jazmín}
+
+\begin{problem}[{Problema de fin de semana --- la fórmula a partir del ion molecular, la banda infrarroja del carbonilo,
+el carbono 13 y el DEPT, el espectro de protón, y una estructura contrastada con los fragmentos}]
+\label{pb:b2:structure-determination:1}
+Un líquido incoloro de olor floral a jazmín da los datos siguientes. \omterm{def:b2:mass-spec-atomic:spectrum}{Espectro de masas} (NIST
+WebBook): $m/z$ 150 (31.7), 151 (3.1), 108 (100), 91 (71.7), 90 (40.6), 43 (37.6). Infrarrojo (datos de
+ejercicio): bandas intensas en 1740 y \qty{1230}{cm^{-1}}, bandas débiles justo por encima de \qty{3000}{cm^{-1}}, ninguna
+banda ancha hacia \qty{3300}{cm^{-1}}. Carbono 13, CDCl$_3$ (datos de PubChem): 170.70, 136.14, 128.56,
+128.24, 66.24, 20.82~ppm. Protón, CDCl$_3$, \qty{90}{MHz}: 7.33 (m, 5H), 5.09 (s, 2H), 2.06 (s, 3H).
+% ledger: use:benzylacetate, ms:benzylacetate, c13:benzylacetate, nmr:benzylacetate, ir:CO-ester, iso:C12, iso:C13, mass:C12, mass:H1, mass:O16
+
+\begin{center}
+\begin{tikzpicture}
+\pgfplotsset{dept/.style={width=0.8\linewidth, height=3.2cm, ycomb, x dir=reverse, ymin=0, ymax=1.15,
+  xmin=0, xmax=200, ytick=\empty, axis y line=none, axis x line=bottom, x axis line style={-}, tick label style={font=\tiny},
+  title style={font=\scriptsize, at={(0.02,0.82)}, anchor=west}, every axis plot/.append style={thick}}}
+\begin{axis}[dept, title={desacoplado}, xtick={0,20,40,60,80,100,120,140,160,180,200}]
+\addplot[omDef] table[x=shift, y=dec] {figdata/out/bachelor-2-nmr-spectra-c.dat};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+% figdata: bachelor-2/nmr-spectra.py part c
+
+\medskip
+\noindent\textbf{Parte I --- La fórmula.}
+\begin{enumerate}
+  \item A partir de la razón 151/150, estímese el número de carbonos.
+  \item ¿Qué dice la \omterm{def:b2:mass-spec-atomic:nitrogen-rule}{regla del nitrógeno}?
+  \item Con nueve carbonos, ¿qué queda de la masa 150? Propóngase una fórmula con oxígeno.
+  \item ¿Por qué es menos probable \ce{C10H14O}, también de masa nominal 150?
+  \item Calcúlese el grado de insaturación.
+  \item Calcúlese la \omterm{def:b2:mass-spec-atomic:exact-mass}{masa monoisotópica} de la fórmula elegida.
+\end{enumerate}
+
+\medskip
+\noindent\textbf{Parte II --- Infrarrojo.}
+\begin{enumerate}[resume]
+  \item Asígnese la banda en \qty{1740}{cm^{-1}}. ¿Qué familia sugiere su posición?
+  \item Asígnese la banda en \qty{1230}{cm^{-1}}.
+  \item ¿Qué indican las bandas débiles por encima de \qty{3000}{cm^{-1}}?
+  \item ¿Qué excluye la ausencia de una banda ancha hacia \qty{3300}{cm^{-1}}?
+  \item ¿Está el carbonilo conjugado con el anillo? Explíquese a partir de su número de onda.
+\end{enumerate}
+
+\medskip
+\noindent\textbf{Parte III --- Carbono 13 y \omterm{def:b2:structure-determination:dept}{DEPT}.}
+\begin{enumerate}[resume]
+  \item Asígnese cada línea a un tipo de carbono.
+  \item ¿Qué línea apunta hacia abajo en DEPT-135?
+  \item ¿Qué líneas desaparecen en DEPT-135?
+  \item ¿Qué líneas permanecen en DEPT-90?
+  \item ¿Cuántos tipos de carbono tiene un anillo bencénico monosustituido? Explíquese por qué solo aparecen dos líneas
+        de CH \omterm{def:b2:huckel:aromatic}{aromático}.
+  \item La línea en 128.24 es la más alta. ¿Representa el mayor número de carbonos?
+\end{enumerate}
+
+\medskip
+\noindent\textbf{Parte IV --- RMN de protón y estructura.}
+\begin{enumerate}[resume]
+  \item Asígnense las tres señales de protón.
+  \item ¿Por qué son singletes las señales en 5.09 y 2.06?
+  \item ¿Por qué está tan desplazado a campo bajo el \ce{CH2} en 5.09?
+  \item Ensámblese la estructura y nómbrese.
+  \item Su isómero, el 2-feniletanoato de metilo, \ce{C6H5CH2COOCH3}, tiene la misma fórmula. ¿Qué dato lo
+        descarta?
+  \item Explíquense los fragmentos en 108, 91 y 43.
+  \item ¿Cuántas líneas mostraría un espectro de \ce{^{13}C} desacoplado perfectamente resuelto del compuesto, y
+        cuántas de ellas apuntan hacia abajo en DEPT-135?
+\end{enumerate}
+\end{problem}

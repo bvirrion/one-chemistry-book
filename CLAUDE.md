@@ -10,8 +10,9 @@ Structure, theme and tooling mirror `one-biology-book` (scaffolded from it on
 2026-10-02): same One Course brand, environments, label conventions,
 term-link engine.
 
-**All four books are written in English (2026-10-02/03), uncommitted; Books 1 and 2
-also ship in `fr`, `nl`, `es`, `pt`, `hi`, `ar`, `id` (2026-10-04, see "Language editions"):**
+**All four books are written in English (2026-10-02/03) and all four also ship in
+`fr`, `nl`, `es`, `pt`, `hi`, `ar`, `id` — Books 1–2 on 2026-10-04, Books 3–4 on
+2026-10-06/07: thirty-two editions (see "Language editions"):**
 
 | Book | Entry file | Years | Ch. | Pages | Figures | AI | Photos | Ledger rows | Links | figdata |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -186,15 +187,19 @@ System `python3` has no numpy and no `ensurepip`; the repo venv is made with
     (0.99705).
   - NBS C514's 78.54 for water's permittivity is superseded by IAPWS 78.4.
 
-## Language editions (Books 1–2, 2026-10-04)
+## Language editions (Books 1–2, 2026-10-04; Books 3–4, 2026-10-06/07)
 
 **Books 1 and 2 ship in eight languages** — English plus `fr`, `nl`, `es`,
 `pt` (Brazilian), `hi`, `ar`, `id`: fourteen editions, one agent per edition,
-four waves of at most four (user rule), 96/100 each except Arabic at 95. Books
-3–4 are English only. Run file `sources/TRANSLATION_BOOKS_1-2.md`; what each
-wave found, and what the next wave was told, in `sources/WAVE{1,2,3}_FINDINGS.md`.
+four waves of at most four (user rule), 96/100 each except Arabic at 95. **Books
+3–4** followed with the same toolchain (run file `sources/TRANSLATION_BOOKS_3-4.md`,
+findings `sources/WAVE{1,2}_FINDINGS_B34.md`): one agent per edition, three waves
+of at most **six** (user rule for that run: 6/5/3), 96/100 each except Arabic at
+95. Books 1–2 run file `sources/TRANSLATION_BOOKS_1-2.md`; what each wave found,
+and what the next wave was told, in `sources/WAVE{1,2,3}_FINDINGS.md`.
 Read the workspace-root `translation_instruction.md` before touching any of
-this — its "Lessons from the first chemistry translations" section is the
+this — its "Lessons from the first chemistry translations" and "Lessons from the second
+chemistry translations" sections are the
 generic half of what follows.
 
 | | B1 pages | B1 links / targets | B2 pages | B2 links / targets |
@@ -213,6 +218,54 @@ each a target English links once or twice). Dutch is lower in links because it
 welds compounds the linker does not enter. Every edition: 0 errors, 0
 undefined, 0 overfull, `nullfont` 0, 0 "Missing character", `.fls` = files on
 disk, `check_translation.sh` green for every year, linker idempotent.
+
+**Books 3–4** (English after every canon fix: Book 3 373 pp, 1,811 links / 180
+targets; Book 4 405 pp, 1,632 / 253):
+
+| | B3 pages | B3 links / targets | B4 pages | B4 links / targets |
+|---|---:|---:|---:|---:|
+| `fr` | 391 | 1,893 / 185 | 431 | 1,778 / 258 |
+| `nl` | 387 | 1,712 / 181 | 424 | 1,537 / 259 |
+| `es` | 389 | 1,858 / 184 | 425 | 1,777 / 256 |
+| `pt` | 381 | 1,862 / 183 | 419 | 1,751 / 258 |
+| `hi` | 359 | 1,851 / 182 | 396 | 1,755 / 259 |
+| `ar` | 348 | 1,614 / 183 | 387 | 1,549 / 261 |
+| `id` | 388 | 1,922 / 185 | 425 | 1,787 / 257 |
+
+Every edition reaches every English target. Build baselines: Book 4 has
+`nullfont` = "Missing character" = **17** in every edition (the 17 contour levels
+of the ch. 12 `contour prepared` plot set a backtick in nullfont: harmless); the
+hi/ar editions add invisible control codes (U+000A, U+007F), so their "Missing
+character" baseline is **3** (Book 3) and **23** (Book 4). Any other line is a
+dropped glyph.
+
+- **Canon defects found by the Books 3–4 translators and fixed** (about 40;
+  exact list in the WAVE files): `\qty{…}{\AA}` dropping Å at 8 sites
+  (`\angstrom`), English words frozen inside `\ce{}` and unit arguments, a
+  wrong HCl line position (R(0) 2905.57 → 2905.58, which made 62.64 consistent),
+  "a few ppm" of ozone for 15 ppm, a benzyl β carbon given a hydrogen, a garbled
+  NMR answer and an ellipsis-garbled sentence, rounded-intermediate chains,
+  figure collisions and clipped labels, and link-layer gaps (the bare *enolate*
+  and *activation volume* never linked their definitions; *indistinguishable*
+  linked in its everyday sense).
+- **New notation owned by a census**: `\termsym`/`\kv` in `id_apply`'s `chem`
+  class (gate 12); `MOdiagram` drawing code, `omchartable` mathematics for every
+  prose gate.
+- **Tool fixes made during the run** (all lenient): mixed `\arrow` labels compare
+  only their `\ce`/math parts (gates 10 and 12 used to contradict each other),
+  brace-aware arrow-label parsing, `NODE_TEXT` with options after the coordinate,
+  the orphan gate skipping `\pgfplotsset`/`\tikzset`/`\chemmove` bodies, gating
+  *and/so/its* (it found a live "so" in shipped Book 1 French), and refusing an
+  unusable path instead of passing over nothing.
+- **Arabic right-to-left fixes no log reports**: `MOdiagram` drew every MO
+  diagram mirrored (central `env/MOdiagram` LTR hook); character tables mirrored
+  inside every cell, "₂ᵥC" for C₂ᵥ (central `env/omchartable` hook); inline
+  matrices mirrored their first cell (no hook helps: `\babelsublr{$…$}` in the
+  source); brackets at the edge of Arabic node text face outward (wrap the node
+  text in `\shortstack`, one `\foreignlanguage` per line). **The shipped Book 1
+  Arabic edition has that bracket defect** (p. 85 and a few more; not fixed).
+- `\textperthousand` (‰) is taken from Latin Modern in the hi/ar editions (the
+  Noto faces lack it); never type Unicode superscripts, µ or ‰ in prose.
 
 - **Toolchain** (ported from biology, then taught chemistry): `id_apply.py`
   has a `chem` census — every `\ce`, `\chemfig`, scheme, `\ghs`,

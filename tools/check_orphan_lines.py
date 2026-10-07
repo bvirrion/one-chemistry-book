@@ -59,12 +59,17 @@ ENGLISH_ONLY = {
     "cannot", "does", "doing", "done", "being", "makes", "make", "made",
     "take", "takes", "taken", "find", "finds", "found", "means", "meaning",
     "called", "known", "written", "given", "seen", "let", "let's",
+    # an untranslated "so" and "and" passed every gate in the French chemistry
+    # Book 4 edition (2026-10-06). Not "or"/"but"/"is"/"of"/"an": French or
+    # Dutch words.
+    "and", "so", "its", "it's",
 }
 
 DRAW_ENVS = ("tikzpicture", "axis", "scope", "circuitikz", "pgfonlayer",
-             "semilogxaxis", "semilogyaxis", "loglogaxis", "groupplot")
+             "semilogxaxis", "semilogyaxis", "loglogaxis", "groupplot",
+             "MOdiagram")  # modiagram code (chemistry Books 3-4)
 
-MATH_ENVS = ("equation", "align", "gather", "multline", "split", "cases",
+MATH_ENVS = ("omchartable", "equation", "align", "gather", "multline", "split", "cases",
              "array", "matrix", "pmatrix", "bmatrix", "vmatrix", "aligned")
 
 
@@ -115,8 +120,17 @@ def scan_file(tpath: pathlib.Path, epath: pathlib.Path):
 
     hits = []
     depth = 0
+    # A \pgfplotsset{...} / \tikzset{...} / \setchemfig{...} body is style code
+    # even OUTSIDE a picture: its pgf keys ("every node near coord", "every axis
+    # plot") fired this gate in three chemistry Book 3 editions, which reflowed
+    # code lines to get past it (2026-10-06). Skip the whole brace group.
+    setdepth = 0
     for i, raw in enumerate(tlines, 1):
         t = raw.strip()
+        code = re.sub(r"(?<!\\)%.*", "", raw)
+        if setdepth > 0 or re.match(r"^\\(pgfplotsset|tikzset|setchemfig|chemmove)\b", t):
+            setdepth = max(0, setdepth + code.count("{") - code.count("}"))
+            continue
         # track drawing / math environments: their content is copied on
         # purpose and is not prose
         m = re.match(r"^\\begin\{([a-zA-Z*]+)\}", t)
@@ -144,19 +158,29 @@ def main():
     args = ap.parse_args()
 
     total = 0
+    pairs = []
     for d in args.dirs:
         d = pathlib.Path(d)
         # parts/<year>/<lang> -> parts/<year> ; parts/<year>/solutions/<lang>
-        english_dir = d.parent
-        for tpath in sorted(d.glob("[0-9]*.tex")):
-            epath = english_dir / tpath.name
-            if not epath.exists():
-                continue
-            for line_no, text, bad in scan_file(tpath, epath):
-                total += 1
-                if not args.quiet:
-                    print("%s:%d  english-only %s\n    %s"
-                          % (tpath, line_no, bad, text))
+        if d.is_dir():
+            pairs.extend((t, d.parent / t.name) for t in sorted(d.glob("[0-9]*.tex")))
+        elif d.is_file() and d.suffix == ".tex":
+            # a single translated file: its twin is two levels up. Handed a
+            # file, this gate used to scan NOTHING and exit 0 (Dutch chemistry
+            # Book 3 agent, 2026-10-06) -- a gate must never pass over nothing.
+            pairs.append((d, d.parent.parent / d.name))
+        else:
+            print("check_orphan_lines: not a directory or .tex file: %s" % d,
+                  file=sys.stderr)
+            return 2
+    for tpath, epath in pairs:
+        if not epath.exists():
+            continue
+        for line_no, text, bad in scan_file(tpath, epath):
+            total += 1
+            if not args.quiet:
+                print("%s:%d  english-only %s\n    %s"
+                      % (tpath, line_no, bad, text))
     if not args.quiet:
         print("\norphan English lines: %d" % total)
     return 1 if total else 0

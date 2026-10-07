@@ -326,6 +326,12 @@
     \DeclareSIPrefix{\micro}{\ensuremath{\mu}}{-6}%
     \DeclareSIUnit{\ohm}{\ensuremath{\Omega}}%
   }%
+  % The per-mil sign: \textperthousand prints U+2030, which neither face has,
+  % so the delta-18-O values of Book 4 (ch. 11) lost their unit in the hi/ar
+  % probes ("Missing character: There is no ‰", exit 0). Take the glyph from
+  % Latin Modern, which TeX Live ships as OpenType (2026-10-06).
+  \newfontfamily\om@latinsym{lmroman10-regular.otf}%
+  \AtBeginDocument{\renewcommand{\textperthousand}{{\om@latinsym\symbol{"2030}}}}%
 \fi
 % Unbreakable in-text figure block: keeps a picture and its caption line
 % on the same page. Use in place of "center" around tikzpicture figures.
@@ -396,6 +402,18 @@
   %    node, so Arabic node text reads correctly.
   \AddToHook{env/tikzpicture/before}{\leavevmode\begingroup\bbl@textdir\z@}%
   \AddToHook{env/tikzpicture/after}{\endgroup}%
+  %    modiagram's MOdiagram is not reached by the tikzpicture hook: every MO
+  %    diagram came out mirrored (correlation lines flying off to the right,
+  %    labels "*σ1" for σ*1s, side-by-side diagrams overlapping), with a clean
+  %    log (Arabic chemistry Book 3 agent, 2026-10-06). Same cure.
+  \AddToHook{env/MOdiagram/before}{\leavevmode\begingroup\bbl@textdir\z@}%
+  \AddToHook{env/MOdiagram/after}{\endgroup}%
+  %    The character tables (omchartable) set an array in INLINE math, which
+  %    the RTL paragraph reversed inside every cell: "C_{2v}" printed "2v C",
+  %    "A_1" printed "1 A" (Arabic chemistry Book 4, ch. 4; found on the rendered
+  %    page by the coordinator, 2026-10-07; no gate or log sees it).
+  \AddToHook{env/omchartable/before}{\begingroup\bbl@textdir\z@\bbl@pardir\z@}%
+  \AddToHook{env/omchartable/after}{\endgroup}%
   % 3. ... but tcolorbox builds its content INSIDE that left-to-right picture
   %    scope, so without this the Arabic inside every definition, theorem and
   %    exercise box came out in reversed word order. Put the box body back to
