@@ -1,0 +1,655 @@
+\chapter{反应速率理论}\label{ch:b3:rate-theories}
+
+2017 年，一种药物获批，它与一种较老的药物唯一的区别在于
+其两个甲氧基中的六个氢原子是氘原子。肝脏
+通过断开恰好这些 C--H 键来分解药物，而 C--D 键
+的断裂要慢数倍：这种较重的分子在
+血液中停留更久，服用剂量更小、频次更低。阿伦尼乌斯定律中并无任何内容
+能解释为何原子核中的中子会使反应变慢。本章
+由分子性质推导速率常数：先从碰撞出发，
+再从势能面的形状和
+过渡态理论的配分函数出发，该理论可预测此类同位素效应的大小；
+最后讨论溶液中的反应，其中溶剂
+会设定速率的上限。
+
+\begin{recall}
+本科一年级分册定义了速率常数、阿伦尼乌斯定律 $k =
+A\eu^{-E_a/RT}$ 及其活化能与指前因子、基元
+反应、过渡态、沿反应坐标的能量曲线，
+以及哈蒙德假设。本科二年级分册定义了离子强度与活度
+系数，以及德拜–休克尔极限律 $\log\gamma_i = -Az_i^2\sqrt I$ （$A \approx
+0.51$ 为水在 \qty{25}{\celsius} 时的值），并拟合了最小二乘直线。
+在\Cref{ch:b3:computational-chemistry}中介绍了势能面；
+在\cref{ch:b3:partition-functions,ch:b3:statistical-thermo-applied}中，
+由配分函数与零点能计算了平衡常数。来自物理学的有：
+分子速率的麦克斯韦–玻尔兹曼分布，以及
+扩散的菲克定律。
+\end{recall}
+
+\begin{omfigure}
+\includegraphics[width=0.6\linewidth]{images/book4/ai/b3-12-pharmacy.jpg}
+
+{\small 药房货架上的药品。将肝脏最先攻击的键上的氢
+换成氘，可延长药物在体内的停留时间。}
+\end{omfigure}
+
+\section{碰撞理论}
+
+气体中的两个分子只有相遇才能发生反应。将它们视为硬球，
+直径分别为 $d_{\mathrm A}$ 和 $d_{\mathrm B}$：当两者中心相距不超过 $d =
+\frac12(d_{\mathrm A} + d_{\mathrm B})$ 时即发生碰撞。
+
+\begin{definition}[碰撞截面，空间因子]\label{def:b3:rate-theories:collision}
+两个分子的\emph{碰撞截面}\index{碰撞截面}
+是与其相对速度垂直的圆盘面积 $\sigma = \pi d^2$，
+一个分子的中心须穿过该圆盘，才能撞上另一分子。
+\emph{空间因子}\index{空间因子} $P$ 是反应的实测指前因子与
+碰撞理论预言的指前因子之比。
+\end{definition}
+
+\begin{omfigure}
+\begin{tikzpicture}[font=\small, >=Stealth]
+  \shade[ball color=omDef!40] (0,0) circle (0.45);
+  \node at (0,0) {A};
+  \draw[black!50, dashed] (-0.0,0.85) -- (5.2,0.85) (-0.0,-0.85) -- (5.2,-0.85);
+  \draw[black!60] (0,0) ellipse (0.25 and 0.85);
+  \draw[<->] (-0.45,0) -- (-0.45,0.85) node[midway, left] {$d$};
+  \shade[ball color=omThm!40] (3.3,0.55) circle (0.4);
+  \node at (3.3,0.55) {B};
+  \shade[ball color=omThm!20] (4.6,1.45) circle (0.4);
+  \node at (4.6,1.45) {B};
+  \draw[->, thick] (0.6,0) -- (2.2,0) node[midway, below] {$v_{\mathrm{rel}}\,\Delta t$};
+  \node[anchor=west, align=left, font=\scriptsize] at (5.3,0) {圆柱体 \\ 截面积 \\ $\sigma = \pi d^2$};
+  \node[font=\scriptsize, anchor=south] at (3.3,1.0) {命中};
+  \node[font=\scriptsize, anchor=south] at (4.6,1.9) {未命中};
+\end{tikzpicture}
+
+{\small 碰撞圆柱。分子 A 以相对速率 $v_{\mathrm{rel}}$ 运动，
+在时间 $\Delta t$ 内扫过截面积为 $\sigma = \pi d^2$ 的圆柱，
+其中 $d$ 为两半径之和；中心位于柱内的每个 B 均被撞上。}
+\end{omfigure}
+
+\begin{theorem}[碰撞理论速率常数]\label{thm:b3:rate-theories:collision}
+若沿中心连线的动能超过某一
+阈值 $E_0$（每摩尔）的每次碰撞都能引发反应，则 $\mathrm{A + B} \to$
+生成物的速率常数为
+\[
+  k = \sigma\bar v_{\mathrm{rel}}N_A\,\eu^{-E_0/RT}, \qquad \bar v_{\mathrm{rel}} = \sqrt{\frac{8kT}{\pi\mu}},\
+  \mu = \frac{m_{\mathrm A}m_{\mathrm B}}{m_{\mathrm A} + m_{\mathrm B}} .
+\]
+\end{theorem}
+
+\begin{proof}[部分证明]
+在时间 $\Delta t$ 内，分子 A 扫过体积 $\sigma v_{\mathrm{rel}}\Delta t$，并撞上
+其中所含的 $n_{\mathrm B}\sigma v_{\mathrm{rel}}\Delta t$ 个 B 分子：单位体积的碰撞速率
+为 $\sigma\bar v_{\mathrm{rel}}n_{\mathrm A}n_{\mathrm B}$，其中 $\bar v_{\mathrm{rel}}$ 为平均相对速率，由
+麦克斯韦–玻尔兹曼分布给出（在本阶段不加证明地承认，取约化
+质量）。按速率对每次碰撞加权，
+保留沿中心连线的能量超过阈值的碰撞，得到碰撞速率的
+$\eu^{-E_0/RT}$ 份额（对碰撞参数的积分
+在本阶段不加证明地承认）。将数密度换算为物质的量浓度时，乘以
+$N_A$。
+\end{proof}
+
+由于 $\bar v_{\mathrm{rel}} \propto \sqrt T$，活化能 $E_a = RT^2\,\dd\ln k/\dd T$ 为 $E_0 + \frac12RT$，
+与阈值相近。指前因子的数量级为
+$10^{11}$~\unit{L.mol^{-1}.s^{-1}}，对小分子而言。实测因子往往
+小得多：$P \ll 1$，适用于必须以特定
+取向相遇的分子；截面对实际分子也没有唯一的值，
+原因在于实际分子并非硬球。碰撞理论给出数量级与
+温度依赖关系，却无法给出 $E_0$，后者需要
+势能面。
+
+\section{势能面}
+
+该反应 $\mathrm{H_A + H_BH_C \to H_AH_B + H_C}$ 是最简单的反应。对于共线
+接近，能量取决于两个距离 $r_{\mathrm{AB}}$ 和 $r_{\mathrm{BC}}$，可以
+画成一张图。
+
+\begin{definition}[鞍点，最小能量路径]\label{def:b3:rate-theories:saddle}
+势能面的\emph{鞍点}\index{鞍点}是
+梯度为零的点，沿一个方向能量取极大值，
+沿其余所有方向取极小值。\emph{最小能量路径}\index{最小能量路径}
+是从鞍点通往反应物
+与生成物谷的最速下降路径；沿该路径量得的长度为反应坐标，
+鞍点即为过渡态。
+\end{definition}
+
+\begin{omfigure}
+\begin{tikzpicture}
+\begin{axis}[ompes, width=0.62\linewidth, xmin=0.4, xmax=3.0, ymin=0.4, ymax=3.0,
+  xlabel={$r_{\mathrm{AB}}$ / \AA}, ylabel={$r_{\mathrm{BC}}$ / \AA},
+  colorbar, colorbar style={ylabel={$E$ / eV}, ylabel style={font=\small},
+  yticklabel style={font=\small}}, point meta min=-4.7, point meta max=-0.8]
+\addplot3[contour prepared={labels=false}, thick] table {figdata/out/bachelor-3-pes-collinear-contours.dat};
+\addplot3[ompath] table[x=x, y=y, z expr=0] {figdata/out/bachelor-3-pes-collinear-mep.dat};
+\node[omsaddle] at (axis cs:0.918,0.918,0) {};
+\node[font=\small, anchor=south west] at (axis cs:0.95,0.95,0) {鞍点};
+\node[font=\small, anchor=west, fill=white, fill opacity=0.85, text opacity=1, inner sep=1.5pt] at (axis cs:2.05,1.0,0) {$\mathrm{H_A + H_BH_C}$};
+\node[font=\small, anchor=west, fill=white, fill opacity=0.85, text opacity=1, inner sep=1.5pt] at (axis cs:0.95,2.55,0) {$\mathrm{H_AH_B + H_C}$};
+\node[font=\small, anchor=north east] at (axis cs:2.95,2.95,0) {$\ce{H + H + H}$};
+\end{axis}
+\end{tikzpicture}
+
+{\small 共线 $\ce{H + H2}$ 的一个模型势能面（LEPS 形式，
+由 \ce{H2} 的莫尔斯曲线构造，取佐藤参数 0.17 作为模型常数）。
+等值线从 \qty{-4.65}{eV} 到 \qty{-0.8}{eV}，三个孤立原子的能量零点取为零；
+谷底位于 \qty{-4.75}{eV}，即 \ce{H2} 的势阱深度。虚线为最小能量路径，
+它穿过对称鞍点 $r_{\mathrm{AB}} = r_{\mathrm{BC}} = \qty{0.92}{\angstrom}$，
+在该模型中比谷底高 \qty{0.27}{eV}。}
+\end{omfigure}
+
+路径从反应物谷爬出，此时 A 逼近而 $r_{\mathrm{BC}}$ 保持在 \ce{H2} 键长附近，
+随后越过鞍点，下降进入生成物谷。
+在鞍点处两个键都拉伸至 \qty{0.92}{\angstrom}：旧键断裂一半，
+新键形成一半，这种折中的能量代价即为势垒。
+对于对称反应，鞍点位于对角线上；
+对于放热反应，鞍点偏向反应物谷（早势垒，过渡态类似反应物，
+即哈蒙德假设所述），
+对于吸热反应则偏向生成物谷（晚势垒）。
+位置决定哪种能量有助于反应：平动能沿入口谷方向，
+能帮助分子越过早势垒；晚势垒位于拐角处，
+借助断裂键中的振动能更容易越过。
+这些即为波拉尼规则，
+已由分子束实验证实。
+
+\section{过渡态理论}
+
+\begin{definition}[活化络合物]\label{def:b3:rate-theories:activated-complex}
+一个基元反应的\emph{活化络合物}\index{活化络合物}是
+反应体系在鞍点附近一薄层内的构型集合，
+该薄层与最小能量路径垂直；
+它被当作一种物种 $\ce{AB^{\ddagger}}$ 处理，具有自己的配分函数。
+\end{definition}
+
+\begin{definition}[过渡态理论，透射系数]\label{def:b3:rate-theories:tst}
+\emph{过渡态理论}\index{过渡态理论}假设：
+活化络合物与反应物处于平衡，
+凡穿过鞍点区域走向生成物的络合物都会转化为生成物，
+且沿反应坐标的运动为自由平动。
+\emph{透射系数}\index{透射系数} $\kappa \le 1$ 用于修正
+那些重新穿回反应物的络合物。
+\end{definition}
+
+\begin{theorem}[艾林方程]\label{thm:b3:rate-theories:eyring}
+对于一个基元反应 $\mathrm{A + B} \to \mathrm{AB}^{\ddagger} \to$ 生成物，
+\[
+  k = \kappa\frac{k_BT}{h}\overline{K}{}^{\ddagger}, \qquad
+  \overline{K}{}^{\ddagger} = \frac{\bar q^{\ddagger}/N_A}{(q_{\mathrm A}/N_A)(q_{\mathrm B}/N_A)}\,\eu^{-\Delta E_0^{\ddagger}/RT},
+\]
+其中 $\bar q^{\ddagger}$ 为活化络合物的配分函数，已去除反应坐标方向的运动；
+$q$ 为单位体积的摩尔配分函数，
+$\Delta E_0^{\ddagger}$ 为络合物零点能级高出反应物零点能级的高度。
+若采用热力学形式，取 $c^\circ = \qty{1}{mol/L}$，
+并记反应分子数为 $m$，则
+\[
+  k = \kappa\frac{k_BT}{h}(c^\circ)^{1-m}\,\eu^{\Delta^{\ddagger}S^\circ/R}\,\eu^{-\Delta^{\ddagger}H^\circ/RT}.
+\]
+此式即为\emph{艾林方程}\index{艾林方程}；$k_B$ 为玻尔兹曼常数，
+为避免与 $k$ 混淆而如此记写。
+\end{theorem}
+
+\begin{proof}
+准平衡：$[\ce{AB^{\ddagger}}] = K^{\ddagger}[\mathrm A][\mathrm B]$，其中 $K^{\ddagger}$ 由配分函数给出
+（见\cref{thm:b3:statistical-thermo-applied:k-from-q}，以浓度表示）。
+络合物的振动中有一个是沿反应坐标的运动：
+频率 $\nu \ll k_BT/h$ 的极松振动，其配分函数为 $k_BT/h\nu$
+（即\cref{prop:b3:partition-functions:q-vib}的高温极限）；因此
+$q^{\ddagger} = \bar q^{\ddagger}k_BT/h\nu$。络合物以该运动的频率 $\nu$ 向生成物方向穿越，故速率为
+$\nu[\ce{AB^{\ddagger}}] = \nu\frac{k_BT}{h\nu}\overline{K}{}^{\ddagger}[\mathrm A][\mathrm B]$，未知的 $\nu$ 相消。
+取 $\overline{K}{}^{\ddagger} = (c^\circ)^{1-m}\eu^{-\Delta^{\ddagger}G^\circ/RT}$，且 $\Delta^{\ddagger}G^\circ = \Delta^{\ddagger}H^\circ - T\Delta^{\ddagger}S^\circ$，
+即得
+第二种形式，其中引入 $\kappa$ 以修正再穿越。
+\end{proof}
+
+因子 $k_BT/h$ 在 \qty{298}{K} 时为 \qty{6.2e12}{s^{-1}}，
+这便是无势垒、无熵损失的单分子步骤的速率。
+反应的全部特征都体现在活化参数之中。
+
+\begin{definition}[活化吉布斯自由能、活化焓与活化熵]\label{def:b3:rate-theories:activation}
+一个基元反应的\emph{活化吉布斯自由能}\index{活化吉布斯自由能}
+$\Delta^{\ddagger}G^\circ$、\emph{活化焓}\index{活化焓} $\Delta^{\ddagger}H^\circ$ 与
+\emph{活化熵}\index{活化熵} $\Delta^{\ddagger}S^\circ$，
+分别是由反应物生成活化络合物（不计其反应坐标方向的运动）时的
+标准吉布斯自由能、标准焓与标准熵变，
+由艾林方程定义。
+\end{definition}
+
+\begin{proposition}[活化能与活化焓]\label{prop:b3:rate-theories:ea-dh}
+对于溶液中的反应，$E_a = \Delta^{\ddagger}H^\circ + RT$；对于气相双分子反应，
+$E_a = \Delta^{\ddagger}H^\circ + 2RT$。
+\end{proposition}
+
+\begin{proof}
+$E_a = RT^2\,\dd\ln k/\dd T$，且 $\ln k = \ln T + \Delta^{\ddagger}S^\circ/R - \Delta^{\ddagger}H^\circ/RT + $ 常数：$E_a =
+RT + \Delta^{\ddagger}H^\circ$，当活化参数不随 $T$ 变化时。在溶液中
+即为此结果。在气相中，以浓度表示的 $K^{\ddagger}$ 所满足的范托夫方程
+涉及内能，$\Delta^{\ddagger}U^\circ = \Delta^{\ddagger}H^\circ - \Delta n^{\ddagger}RT$，
+其中 $\Delta n^{\ddagger} = 1 - m$：对于 $m = 2$，$E_a = \Delta^{\ddagger}H^\circ + 2RT$。
+\end{proof}
+
+活化熵反映了过渡态的结构。两个
+分子结合成一个配合物时，会失去平动和转动自由度，
+$\Delta^{\ddagger}S^\circ$ 为强负值，$-50$ 至 $-150$ \unit{J.K^{-1}.mol^{-1}}，
+常见于缔合步骤和环状过渡态。在解离途中削弱一个键的分子则
+获得自由度：$\Delta^{\ddagger}S^\circ > 0$。
+
+\begin{proposition}[拟合直线的标准误差]\label{prop:b3:rate-theories:slope-uncertainty}
+对于最小二乘直线 $y = a + bx$，经过 $n$ 个点，其 $y$ 值带有
+相互独立、方差相同的误差，其方差由 $s^2 = \sum_i(y_i - a - bx_i)^2/(n - 2)$ 估计，
+则斜率与截距的标准误差为
+\[
+  s_b = \frac{s}{\sqrt{\sum_i(x_i - \bar x)^2}}, \qquad
+  s_a = s\sqrt{\frac1n + \frac{\bar x^2}{\sum_i(x_i - \bar x)^2}} .
+\]
+\end{proposition}
+
+\begin{proof}
+$b = \sum_i(x_i - \bar x)y_i/S_{xx}$，其中 $S_{xx} = \sum_i(x_i - \bar x)^2$，
+是独立 $y_i$ 的线性组合，各项方差均为 $\sigma^2$：其方差为 $\sigma^2\sum_i(x_i - \bar x)^2/S_{xx}^2 = \sigma^2/S_{xx}$。
+同理，$a = \bar y - b\bar x$，且 $\bar y$ 与 $b$ 不相关（其协方差为
+$\sigma^2\sum_i(x_i - \bar x)/(nS_{xx}) = 0$），故 $\operatorname{var}a = \sigma^2/n + \bar x^2\sigma^2/S_{xx}$。将 $\sigma^2$
+换为其估计值 $s^2$（除数 $n - 2$ 计入两个拟合参数，
+此点在本阶段不加证明地承认），即得结论。
+\end{proof}
+
+\begin{method}[带不确定度的艾林图]\label{met:b3:rate-theories:eyring-plot}
+\begin{enumerate}
+  \item 在 30 至 \qty{40}{K} 范围内取五个或更多温度，测量 $k$。
+  \item 作 $y = \ln(k/T)$ 对 $x = 1/T$ 的图，并拟合最小二乘直线 $y = a + bx$。
+  \item $\Delta^{\ddagger}H^\circ = -Rb$，$\Delta^{\ddagger}S^\circ = R[a - \ln(k_B/h)]$（$\ln(k_B/h) = 23.760$，$k$ 以
+        \unit{s^{-1}} 计）。
+  \item 标准误差为 $Rs_b$ 和 $Rs_a$；95\,\% 置信区间是将二者
+        分别乘以学生 $t$ 值（自由度为 $n - 2$，
+        当为五个点时取 3.18）。
+  \item 截距位于测量范围之外很远的 $1/T = 0$ 处：$\Delta^{\ddagger}S^\circ$
+        的精度总是远低于 $\Delta^{\ddagger}H^\circ$，且两者的误差
+        相关。
+\end{enumerate}
+\end{method}
+
+\begin{omfigure}
+\begin{tikzpicture}
+\begin{axis}[width=0.74\linewidth, height=6.2cm, xmin=3.12, xmax=3.62, ymin=-12.8, ymax=-6.4,
+  axis lines=left, xlabel={$1000\,\mathrm K/T$}, ylabel={$\ln\bigl(k/(\mathrm s^{-1}\,\mathrm K^{-1})\bigr)$},
+  tick label style={font=\small}, label style={font=\small},
+  legend style={font=\scriptsize, draw=none, fill=white, fill opacity=0.85, text opacity=1,
+  at={(0.98,0.98)}, anchor=north east}, legend cell align=left]
+\addplot[omDef, thick] table[x=invT, y=fit] {figdata/out/bachelor-3-eyring-band-H.dat};
+\addplot[omThm, thick] table[x=invT, y=fit] {figdata/out/bachelor-3-eyring-band-D.dat};
+\addplot[omDef, thin, dashed, forget plot] table[x=invT, y=lo] {figdata/out/bachelor-3-eyring-band-H.dat};
+\addplot[omDef, thin, dashed, forget plot] table[x=invT, y=hi] {figdata/out/bachelor-3-eyring-band-H.dat};
+\addplot[omThm, thin, dashed, forget plot] table[x=invT, y=lo] {figdata/out/bachelor-3-eyring-band-D.dat};
+\addplot[omThm, thin, dashed, forget plot] table[x=invT, y=hi] {figdata/out/bachelor-3-eyring-band-D.dat};
+\addplot[only marks, mark=*, mark size=1.8pt, omDef, forget plot] table[x=invT, y=lnkT_H] {figdata/out/bachelor-3-eyring-points.dat};
+\addplot[only marks, mark=square*, mark size=1.7pt, omThm, forget plot] table[x=invT, y=lnkT_D] {figdata/out/bachelor-3-eyring-points.dat};
+\legend{\ce{OCH3} 药物, \ce{OCD3} 药物}
+\end{axis}
+\end{tikzpicture}
+
+{\small 周末问题中速率常数的艾林图（数据取自该题），
+针对药物及其氘代类似物，并附最小二乘直线
+及其 95\,\% 置信带（虚线，几乎不比直线宽：数据点的散布
+约为 1\,\%）。两直线在其不确定度范围内平行：
+活化熵相同，而活化焓
+相差约 \qty{5}{kJ/mol}。}
+\end{omfigure}
+
+\section{动力学同位素效应}
+
+\begin{definition}[动力学同位素效应]\label{def:b3:rate-theories:kie}
+某一步骤的\emph{动力学同位素效应}\index{动力学同位素效应}是指其
+两种同位素异构体速率常数之比 $k_{\mathrm{light}}/k_{\mathrm{heavy}}$，最常见的是
+$k_{\mathrm H}/k_{\mathrm D}$。若被取代原子所连的键在该步骤中形成或断裂，
+则称为\emph{一级动力学同位素效应}\index{一级动力学同位素效应}；
+若不然，则称为
+\emph{二级动力学同位素效应}\index{二级动力学同位素效应}。
+\end{definition}
+
+\begin{proposition}[一级动力学同位素效应的最大值]\label{prop:b3:rate-theories:primary-kie}
+若 X--H 键的伸缩振动成为反应坐标，
+使该振动的零点能在过渡态中消失，而其他
+各项贡献对 H 与 D 均相同，
+\[
+  \frac{k_{\mathrm H}}{k_{\mathrm D}} = \exp\Bigl[\frac{hc(\tilde\nu_{\mathrm{XH}} - \tilde\nu_{\mathrm{XD}})}{2k_BT}\Bigr],
+  \qquad \frac{\tilde\nu_{\mathrm{XH}}}{\tilde\nu_{\mathrm{XD}}} = \sqrt{\frac{\mu_{\mathrm{XD}}}{\mu_{\mathrm{XH}}}} .
+\]
+\end{proposition}
+
+\begin{proof}
+两种同位素异构体的势能面相同（电子
+不感知中子）。在反应物中，X--H 伸缩振动具有
+$\frac12hc\tilde\nu_{\mathrm{XH}}$ 的零点能；在过渡态中，该振动模式已成为
+反应坐标，不再具有零点能。在零点能级之间测得的势垒
+因此对 H 降低 $\frac12hc\tilde\nu_{\mathrm{XH}}$，对 D 降低 $\frac12hc\tilde\nu_{\mathrm{XD}}$：$\Delta E_0^{\ddagger}(\mathrm D) -
+\Delta E_0^{\ddagger}(\mathrm H) = \frac12hc(\tilde\nu_{\mathrm{XH}} - \tilde\nu_{\mathrm{XD}})$，由艾林方程在其余因子相消时给出比值。
+伸缩振动的波数与
+$1/\sqrt\mu$ 成正比（见\cref{ch:b3:rovibrational-spectroscopy}）。
+\end{proof}
+
+\begin{omfigure}
+\begin{tikzpicture}[font=\small, >=Stealth, x=1cm, y=1cm]
+  \draw[->] (-1.4,0) -- (-1.4,4.7) node[anchor=south] {$E$};
+  \draw[->] (-1.4,0) -- (10.6,0) node[anchor=north east] {反应坐标};
+  \draw[very thick, black!70] plot[smooth, tension=0.6] coordinates {(1.6,3.4) (2.1,1.6) (2.7,0.8)
+    (3.3,0.6) (3.9,0.8) (4.7,2.0) (5.5,3.6) (6.2,4.0) (6.9,3.6) (7.7,2.2) (8.5,1.2) (9.2,1.0)
+    (9.9,1.2) (10.4,1.7)};
+  \draw[black!50, dashed] (2.8,0.6) -- (3.8,0.6);
+  \draw[omDef, thick] (2.42,1.35) -- (4.2,1.35);
+  \draw[omThm, thick] (2.5,1.05) -- (4.05,1.05);
+  \node[omDef, font=\scriptsize, anchor=south] at (3.3,1.37) {C--H};
+  \node[omThm, font=\scriptsize, anchor=north] at (3.3,1.03) {C--D};
+  \draw[black, thick] (5.7,4.0) -- (6.7,4.0);
+  \draw[black!40, densely dotted] (0.0,4.0) -- (5.7,4.0);
+  \draw[black!40, densely dotted] (0.7,1.35) -- (2.42,1.35) (0.0,1.05) -- (2.5,1.05);
+  \draw[<->, omThm] (0.0,1.05) -- (0.0,4.0) node[pos=0.5, left, font=\scriptsize] {$E_0(\mathrm D)$};
+  \draw[<->, omDef] (0.7,1.35) -- (0.7,4.0) node[pos=0.5, right, font=\scriptsize] {$E_0(\mathrm H)$};
+  \node[anchor=south, align=center, font=\scriptsize] at (6.2,4.05) {过渡态：伸缩振动已成为 \\ 反应坐标};
+\end{tikzpicture}
+
+{\small 一级动力学同位素效应的来源。反应物中，C--H
+伸缩振动所含零点能比 C--D 伸缩振动多（指阱底以上的能级，虚线所示）；
+在过渡态中，该振动已成为反应坐标，
+两种同位素异构体到达相同的顶点。
+对 D 而言，势垒因零点能之差而更大。}
+\end{omfigure}
+
+\begin{omfigure}
+\begin{tikzpicture}
+\begin{axis}[width=0.7\linewidth, height=5.6cm, xmin=200, xmax=800, ymin=1, ymax=50,
+  ymode=log, axis lines=left, xlabel={$T$ / K}, ylabel={$k_{\mathrm H}/k_{\mathrm D}$ （最大值）},
+  tick label style={font=\small}, label style={font=\small}, log ticks with fixed point,
+  ytick={1,2,5,10,20,50}, legend style={font=\scriptsize, draw=none, at={(0.98,0.98)},
+  anchor=north east}, legend cell align=left]
+\addplot[omThm, thick] table[x=T, y=OH] {figdata/out/bachelor-3-kie.dat};
+\addplot[black!60, thick] table[x=T, y=NH] {figdata/out/bachelor-3-kie.dat};
+\addplot[omDef, thick] table[x=T, y=CH] {figdata/out/bachelor-3-kie.dat};
+\legend{O--H (\qty{3657}{cm^{-1}}), N--H (\qty{3337}{cm^{-1}}), C--H (\qty{2917}{cm^{-1}})}
+\end{axis}
+\end{tikzpicture}
+
+{\small 失去 C--H、N--H 或 O--H 伸缩振动时的最大一级动力学同位素效应随温度的变化
+（取 \ce{CH4}、\ce{NH3} 和 \ce{H2O} 的基频；
+氘的波数由约化质量得出）。在 \qty{298}{K} 时，C--H 的值为 6.5；
+随温度升高，该值逐渐减小并趋近于 1。}
+\end{omfigure}
+
+室温下 C--H 的最大值约为 7，可作为标准参照。观测到的
+效应为 2 至 7，说明在速率决定步中 C--H 键已经断裂；
+较小的值则表明过渡态仍保留部分伸缩振动
+（不对称的、早期或晚期的氢转移），或该步骤并非最慢的一步。
+室温下远大于 7 的值不可能由零点能引起，
+而是揭示了隧道效应（\cref{ch:b3:quantum-model-systems}），
+质量为两倍的粒子所受影响要小得多。二级效应来自
+邻位反应中心处 C--H 键弯曲振动的变化，
+数值较小，通常每个氘为 0.8 至 1.2；例如，可借此区分碳原子
+是变为三角形（sp$^3$ 到 sp$^2$，$k_{\mathrm H}/k_{\mathrm D} > 1$），还是变为四面体形
+（$< 1$）。
+
+\begin{method}[通过竞争法测量动力学同位素效应]\label{met:b3:rate-theories:kie}
+\begin{enumerate}
+  \item 在两种同位素异构体的混合物上进行反应，或在
+        一个分子上，其一个等价位点带 H、另一个带 D。
+  \item 在低转化率时停止反应，
+        用质谱法或核磁共振法测定 H 产物与 D 产物的比值。
+  \item 将产物比值按初始比值校正，即得 $k_{\mathrm H}/k_{\mathrm D}$；
+        两种同位素异构体经历完全相同的条件，
+        因此该方法比两次分别测定速率更为精确。
+\end{enumerate}
+\end{method}
+
+\section{溶液中的反应}
+
+在液体中，分子在两次碰撞之间并非自由飞行：它在周围邻居构成的
+笼中振动，在扩散开之前与它们碰撞许多次。
+相遇后仍在一起、经历多次碰撞的两个反应物，称为一次遭遇。
+
+\begin{definition}[扩散控制与活化控制，笼效应]\label{def:b3:rate-theories:diffusion}
+溶液中的反应，当每次遭遇都迅速反应时，称为\emph{扩散控制的}\index{扩散控制的反应}，
+即其速率等于反应物相互扩散的速率；
+若只有很小一部分遭遇导致反应，则称为
+\emph{活化控制的}\index{活化控制的反应}。
+\emph{笼效应}\index{笼效应}是指
+一对分子被周围溶剂所限制，
+使它们在一次遭遇中反复碰撞。
+\end{definition}
+
+\begin{proposition}[斯莫卢霍夫斯基极限]\label{prop:b3:rate-theories:smoluchowski}
+对于在距离 $R^*$ 处反应的球形粒子之间的扩散控制反应，其速率常数为
+$k_d = 4\pi N_A(D_{\mathrm A} + D_{\mathrm B})R^*$。斯托克斯–爱因斯坦关系
+为 $D = k_BT/6\pi\eta a$，适用于半径为 $a$ 的球形粒子在黏度为 $\eta$ 的溶剂中的情形，
+并取 $R^* = a_{\mathrm A} + a_{\mathrm B}$，且 $a_{\mathrm A} = a_{\mathrm B}$，则
+\[
+  k_d = \frac{8RT}{3\eta} .
+\]
+\end{proposition}
+
+\begin{proof}[部分证明]
+将 A 固定在原点；B 以相对扩散系数 $D =
+D_{\mathrm A} + D_{\mathrm B}$ 扩散，并在 $r = R^*$ 处被消耗。在稳态下，
+通过每个球面的径向通量都相同，$J = 4\pi r^2D\,\dd c/\dd r$（菲克定律，取自物理学）；
+从 $R^*$（此处 $c = 0$）积分到无穷远（此处 $c = c_{\mathrm B}$），
+得 $J = 4\pi DR^*c_{\mathrm B}$，即每个 A 分子的速率。由斯托克斯–爱因斯坦关系（在本阶段不加证明地承认），
+$(D_{\mathrm A} + D_{\mathrm B})R^* = \frac{k_BT}{6\pi\eta}(\frac{1}{a} + \frac1a)(2a) = \frac{2k_BT}{3\pi\eta}$，于是 $k_d = 4\pi N_A \times
+\frac{2k_BT}{3\pi\eta} = 8RT/3\eta$。
+\end{proof}
+
+\begin{example}[水和己烷中的速率上限]\label{ex:b3:rate-theories:speed-limit}
+% ledger: visc:H2O.25C, visc:hexane.25C
+在 \qty{298.15}{K} 时，水（$\eta = \qty{0.890}{mPa.s}$）给出 $k_d = 8 \times 8.314 \times
+298.15/(3 \times \num{0.890e-3}) = \qty{7.4e6}{m^3.mol^{-1}.s^{-1}} = \qty{7.4e9}{L.mol^{-1}.s^{-1}}$；己烷
+（$\eta = \qty{0.298}{mPa.s}$）则为 \qty{2.2e10}{L.mol^{-1}.s^{-1}}。普通大小的中性分子之间的双分子反应
+都不会比这更快；接近这些数值的实测速率常数
+（激发态的淬灭、自由基的复合）均
+属扩散控制。异号离子相互吸引，速率可能更快。
+\end{example}
+
+溶液中的离子还会对活化产生静电贡献：两个离子的
+过渡态的电荷为 $z_{\mathrm A} + z_{\mathrm B}$，其活度系数
+不等于二者活度系数之积。
+
+\begin{definition}[动力学盐效应]\label{def:b3:rate-theories:salt}
+\emph{动力学盐效应}\index{动力学盐效应}是指离子之间反应的
+速率常数随溶液离子强度的变化。
+\end{definition}
+
+\begin{proposition}[布朗斯特–比耶鲁姆方程]\label{prop:b3:rate-theories:bronsted-bjerrum}
+对于稀水溶液中电荷分别为 $z_{\mathrm A}$ 和 $z_{\mathrm B}$ 的离子之间的一步反应，
+\[
+  \log k = \log k_0 + 2Az_{\mathrm A}z_{\mathrm B}\sqrt I,
+\]
+其中 $k_0$ 为离子强度为零时的速率常数。
+\end{proposition}
+
+\begin{proof}
+过渡态理论中，与活化络合物的平衡以活度写出：
+$[\ce{AB^{\ddagger}}] = K^{\ddagger}[\mathrm A][\mathrm B]\gamma_{\mathrm A}\gamma_{\mathrm B}/\gamma^{\ddagger}$，于是 $k = k_0\gamma_{\mathrm A}\gamma_{\mathrm B}/\gamma^{\ddagger}$。
+由极限定律，$\log(\gamma_{\mathrm A}\gamma_{\mathrm B}/\gamma^{\ddagger}) = -A\sqrt I[z_{\mathrm A}^2 + z_{\mathrm B}^2 - (z_{\mathrm A} + z_{\mathrm B})^2] =
+2Az_{\mathrm A}z_{\mathrm B}\sqrt I$.
+\end{proof}
+
+加入盐后，同号离子之间的反应加快（离子氛屏蔽了它们之间的排斥作用），
+异号离子之间的反应变慢，中性反应物则不显示一级盐效应。
+低离子强度下，以 $\log k$ 对 $\sqrt I$ 作图，
+可测定参与反应物种的电荷之积。
+
+\begin{method}[活化参数如何揭示反应机理]\label{met:b3:rate-theories:mechanism-evidence}
+\begin{enumerate}
+  \item $\Delta^{\ddagger}S^\circ$ 显著为负：缔合步骤、有序或环状过渡态，
+        或使溶剂有序化（电荷产生）；
+        为正：解离步骤。
+  \item 一级动力学同位素效应 $k_{\mathrm H}/k_{\mathrm D}$ 为 2 至 7：与 H 相连的键在
+        决速步中断裂；室温下约高于 10 时则为隧道效应。
+  \item $\log k$ 对 $\sqrt I$ 的斜率：决速步中相遇的
+        电荷之积 $z_{\mathrm A}z_{\mathrm B}$。
+  \item 速率常数接近 $10^{10}$~\unit{L.mol^{-1}.s^{-1}}，且随 $T/\eta$ 变化：
+        扩散控制。
+\end{enumerate}
+\end{method}
+
+\begin{inthelab}[用于艾林研究的夹套比色池]
+反应通过分光光度计比色池中的吸光度跟踪，该比色池的
+夹套由恒温浴供液；参比池中的热电偶用于将温度
+控制在 \qty{0.1}{K} 以内。五至七个温度各平行测定三次，
+可作艾林图；溶液在混合前于支架中
+恒温平衡，因为温度错误时开始的反应会使
+前几个数据点产生偏差。
+\end{inthelab}
+
+\begin{history}[艾林、埃文斯与波兰尼，1935 年]
+1935 年，亨利·艾林（普林斯顿）与梅雷迪斯·格温·埃文斯、迈克尔·
+波兰尼（曼彻斯特）各自独立发表了活化络合物理论。
+艾林曾与波兰尼于 1931 年在柏林计算出
+$\ce{H + H2}$ 的第一个势能面，所用为半经验方法，
+与本章图中所用方法同类。该理论最初备受怀疑：
+一家期刊起初认为艾林的论文不可靠而拒绝刊发，
+直至其他物理学家为之担保后才得以发表。
+\end{history}
+
+\section{练习}
+
+\begin{exercise}[$\star$]\label{exo:b3:rate-theories:1}
+% ledger: kin:NO+O3.A
+对 $\ce{NO + O3 -> NO2 + O2}$ 取 $\sigma = \qty{0.43}{nm^2}$（题中数据）。计算 $\bar v_{\mathrm{rel}}$
+在 \qty{298}{K}（$\mu = \qty{18.46}{u}$）下的值、碰撞理论指前因子，以及
+根据每个分子的实测值 $A = \qty{2.07e-12}{cm^3.s^{-1}}$ 求空间因子。
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:rate-theories:2}
+溶液中某反应在 \qty{298}{K} 附近的 $E_a = \qty{75.0}{kJ/mol}$。$\Delta^{\ddagger}H^\circ$ 为多少？又
+对于具有相同 $E_a$ 的双分子气相反应，其值为多少？
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:rate-theories:3}
+预测下列反应的 $\Delta^{\ddagger}S^\circ$ 符号：第尔斯–阿尔德环加成；
+\ce{N2} 从偶氮化合物中的单分子脱除；两个中性分子之间的 $\mathrm{S_N2}$ 反应，
+在极性溶剂中生成两个离子。
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:rate-theories:4}
+% ledger: visc:H2O.25C, visc:hexane.25C
+计算扩散控制的速率常数，分别在水中和己烷中，
+温度为 \qty{298.15}{K}。哪种溶剂使相遇更快？并说明原因。
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:rate-theories:5}
+一级反应在 \qty{298.15}{K} 时 $k = \qty{1.00e-3}{s^{-1}}$，而在
+\qty{318.15}{K} 时为 \qty{1.00e-2}{s^{-1}}。计算 $\Delta^{\ddagger}H^\circ$ 和 $\Delta^{\ddagger}S^\circ$，并求 $E_a$ 以作比较。
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:rate-theories:6}
+% ledger: vib:H2O.sym
+计算 O--H 质子转移的一级动力学同位素效应最大值，温度为
+\qty{298}{K}（$\tilde\nu_{\mathrm{OH}} = \qty{3657}{cm^{-1}}$，约化质量按 O = 16、H = 1、D = 2 计）。
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:rate-theories:7}
+% ledger: vib:CH4.nu1, vib:CD4.nu1
+由碳转移氢的酶促反应在 \qty{298}{K} 时显示 $k_{\mathrm H}/k_{\mathrm D} = 40$，
+将其与由零点能得出的最大值（$\tilde\nu = 2917$ 与 \qty{2109}{cm^{-1}}）比较，并作出结论。
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:rate-theories:8}
+预测离子强度从 0 升至 0.010 时，对下列
+反应速率的影响：\ce{I-} 被 \ce{S2O8^{2-}} 氧化（决速步为这两种离子之间的反应）；
+\ce{CH3COOC2H5} 与 \ce{OH-} 的反应；$\ce{[Co(NH3)5Br]^{2+}}$ 与 \ce{OH-} 的反应。
+若存在，给出其因子（$A = 0.51$）。
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:rate-theories:9}
+反应 $\ce{F + H2 -> HF + H}$ 为强放热的反应，其势垒位于
+势能面的何处？对逆反应而言，
+给予反应物的哪种形式的能量最能促进它？
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:rate-theories:10}
+对五个数据点作 $\ln(k/T)$ 对 $1/T$ 的最小二乘拟合，得 $b = -7446$ K，
+$s_b = \qty{31}{K}$，$a = 16.528$，$s_a = 0.103$。求 $\Delta^{\ddagger}H^\circ$ 与 $\Delta^{\ddagger}S^\circ$，并给出
+其标准误差及 95\,\% 置信区间（$t = 3.18$）。
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:rate-theories:11}
+由艾林方程出发，对单分子步骤证明 $E_a = \Delta^{\ddagger}H^\circ + RT$，
+并证明 $A = \eu\,(k_BT/h)\eu^{\Delta^{\ddagger}S^\circ/R}$。由此推出 $A$ 在 $\Delta^{\ddagger}S^\circ = 0$ 时
+\qty{298}{K} 下的值，并与简单键断裂的 $10^{13}$ 至 $10^{14}$~\unit{s^{-1}} 相比较。
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:rate-theories:12}
+对两个无结构的原子 A 和 B 应用过渡态理论，其活化络合物为
+键长为 $d$ 的双原子分子（去掉反应坐标后不再有振动，转动惯量
+为 $I = \mu d^2$）。证明由此可得碰撞理论的速率常数，
+其中 $\sigma = \pi d^2$。
+\end{exercise}
+
+\section{问题：较重的药物}
+
+\begin{problem}[{周末问题——较重的药物：C--H 与 C--D 伸缩的零点能，
+体温下的最大同位素效应，
+氘代药物的半衰期，以及两种化合物的艾林分析}]
+\label{pb:b3:rate-theories:1}
+% ledger: vib:CH4.nu1, vib:CD4.nu1, imass:H1, imass:H2, hist4:deut.2017
+该药物经两条途径从体内清除：75\,\% 的清除量经
+其两个 \ce{OCH3} 基团的 O-去甲基化完成，其中 C--H 键的断裂为
+决速步，其余 25\,\% 经由不涉及这些键的途径清除；其
+半衰期为 \qty{5.0}{h}（题目数据）。其类似物含两个 \ce{OCD3}
+基团。取 C--H 与 C--D 伸缩的模型：\ce{CH4} 的对称伸缩
+（\qty{2917}{cm^{-1}}）与 \ce{CD4}（\qty{2109}{cm^{-1}}）。去甲基化步骤的一级速率常数
+用肝酶制剂测得的
+（题目数据）：
+\begin{center}\small
+\begin{tabular}{lccccc}
+\hline
+$T$ / K & 278.15 & 288.15 & 298.15 & 308.15 & 318.15 \\
+$k_{\mathrm H}$ / \unit{s^{-1}} & 0.00989 & 0.0263 & 0.0632 & 0.150 & 0.328 \\
+$k_{\mathrm D}$ / \unit{s^{-1}} & 0.00117 & 0.00333 & 0.00874 & 0.0219 & 0.0503 \\ \hline
+\end{tabular}
+\end{center}
+
+\medskip\noindent\textbf{第一部分——零点能。}
+\begin{enumerate}
+  \item 计算 C--H 与 C--D 的约化质量（C = 12，H = 1.00783，
+        D = 2.01410）。
+  \item 由 C--H 的波数预测 C--D 的波数，并与
+        测得的 \qty{2109}{cm^{-1}} 相比较。
+  \item 计算两种伸缩振动的零点能及其
+        差值，分别以 \unit{cm^{-1}} 与 \unit{kJ/mol} 表示（使用测得的波数）。
+  \item 过渡态中，断裂的键的伸缩振动
+        会发生什么变化？
+  \item 推出 H 与 D 的势垒之差。
+\end{enumerate}
+
+\medskip\noindent\textbf{第二部分——同位素效应。}
+\begin{enumerate}[resume]
+  \item 计算 \qty{37}{\celsius} 时的最大 $k_{\mathrm H}/k_{\mathrm D}$。
+  \item 计算 \qty{25}{\celsius} 时的值。
+  \item 为何称之为最大值？
+  \item 每个 \ce{CD3} 基团中另外两个氘原子的贡献是否很大？
+  \item \qty{25}{\celsius} 下测得的值接近 7，这说明
+        反应机理如何？
+\end{enumerate}
+
+\medskip\noindent\textbf{第三部分——半衰期。}
+\begin{enumerate}[resume]
+  \item 半衰期如何依赖于总清除速率常数？
+  \item 将 H 药物的总速率常数写成其两条途径
+        之和（以分数表示）。
+  \item D 药物中去甲基化途径减慢了多少？
+  \item 计算 $k_{\mathrm{total}}(\mathrm D)/k_{\mathrm{total}}(\mathrm H)$。
+  \item 计算 D 药物的半衰期。
+  \item 计算两者半衰期之比。
+  \item 若全部清除均经由去甲基化，结果如何？
+  \item 半衰期延长对患者意味着什么？
+\end{enumerate}
+
+\medskip\noindent\textbf{第四部分——艾林分析。}
+\begin{enumerate}[resume]
+  \item 根据艾林方程，数据的哪种作图是线性的？
+  \item 对 H 药物进行拟合，求 $\Delta^{\ddagger}H^\circ$ 与 $\Delta^{\ddagger}S^\circ$ 及其标准误差。
+  \item 对 D 药物作同样的计算。
+  \item 计算 $\Delta\Delta^{\ddagger}H^\circ = \Delta^{\ddagger}H^\circ(\mathrm D) - \Delta^{\ddagger}H^\circ(\mathrm H)$ 及其标准误差。
+  \item 它是否等于第 3 题中的零点能之差？
+  \item 两个活化熵说明了什么？
+  \item 写出结论：预测两种药物的半衰期之比
+        在 \qty{37}{\celsius} 下的数值。
+\end{enumerate}
+\end{problem}

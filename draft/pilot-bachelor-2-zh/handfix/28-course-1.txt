@@ -1,0 +1,114 @@
+1| \chapter{逆合成分析与多步策略}\label{ch:b2:retrosynthesis}
+2| 
+3| 黑板上画着一个分子，却没有人知道如何制备它。若从架子上现有的试剂出发、顺向尝试各种反应，
+4| 则毫无头绪，因为可能性太多。化学家则反过来，从目标分子出发，朝着架子上的原料逐步回推，
+5| 在纸上每次切断一根键，每一次切断都相当于撤销一个已知可行的反应，
+6| 直到剩下的片段都是可以购得的化合物。本章将前几章的反应转化为这种逆向推理，
+7| 并进一步讨论如何评判由此得到的路线。
+8| 
+9| \begin{recall}
+10| \Cref{ch:b2:alkene-redox} 至 \cref{ch:b2:wittig}：需要被逆向使用的反应。本科一年级分册：
+11| 保护基与缩醛、格氏试剂与极性反转、威廉姆森合成、
+12| 化学选择性、醇的氧化。第 1 册：原子经济性。
+13| \end{recall}
+14| 
+15| \section{逆向思考}
+16| 
+17| \begin{definition}[逆合成分析]\label{def:b2:retrosynthesis:analysis}
+18| 待制备的分子称为\emph{目标分子}\index{目标分子}。\emph{逆合成分析}
+19| \index{逆合成分析}从目标分子出发，逐步回推至可获得的起始原料，
+20| 每一步都是某个已知反应的逆过程；逆合成步骤用双箭头 $\Rightarrow$ 表示，
+21| 读作“由……制得”。
+22| \end{definition}
+23| 
+24| \begin{definition}[切断与合成子]\label{def:b2:retrosynthesis:disconnection}
+25| \emph{切断}\index{切断}是对目标分子某根键的假想断开，
+26| 即成键反应的逆过程。异裂地切断一根键，得到两个\emph{合成子}\index{合成子}，
+27| 即理想化的带电片段：一个是给体（亲核的，通常带负电），另一个是受体（亲电的，通常带正电）。
+28| \emph{合成等价物}\index{合成等价物}是能起到合成子作用的真实试剂：
+29| 碳负离子 \ce{R-} 对应格氏试剂，
+30| 碳正离子 $\mathrm{R\overset{+}{C}H{-}OH}$ 对应醛。
+31| \end{definition}
+32| 
+33| \begin{definition}[官能团转换]\label{def:b2:retrosynthesis:fgi}
+34| \emph{官能团转换}\index{官能团转换}（FGI）是一种逆合成步骤，
+35| 它改变官能团，而不改变碳骨架：
+36| 由酮还原得到醇，由烯烃加氢得到烷烃链，由酰胺得到胺。
+37| \end{definition}
+38| 
+39| \begin{omfigure}
+40| \begin{tikzpicture}[every node/.style={align=center}]
+41| \node (T) at (0,0) {\setchemfig{atom sep=1.7em}\chemfig{Ph-CH(-[2]OH)-CH(-[6]CH_3)-CH_3}};
+42| \node (A) at (-4.6,-2.6) {\ce{PhCHO}\\[1pt] + \ce{(CH3)2CHMgBr}};
+43| \node (B) at (0,-2.6) {\ce{PhMgBr}\\[1pt] + \ce{(CH3)2CHCHO}};
+44| \node (C) at (4.6,-2.6) {\setchemfig{atom sep=1.7em}\chemfig{Ph-C(=[2]O)-CH(-[6]CH_3)-CH_3}};
+45| \node (D) at (4.6,-5.0) {\ce{C6H6}\\[1pt] + \ce{(CH3)2CHCOCl}};
+46| \draw[omretro] (T.south west) -- node[above left, font=\small] {a} (A.north);
+47| \draw[omretro] (T.south) -- node[right, font=\small] {b} (B.north);
+48| \draw[omretro] (T.south east) -- node[above right, font=\small] {FGI} (C.north);
+49| \draw[omretro] (C.south) -- node[right, font=\small] {c} (D.north);
+50| \end{tikzpicture}
+51| \par\vspace{6pt}
+52| 
+53| {\small 2-甲基-1-苯基丙-1-醇的逆合成树。(a) 与 (b)：醇碳旁边 \ce{C-C} 键的两种切断，
+54| 各得一个醛和一个格氏试剂。FGI：由酮还原得到醇；
+55| (c) 由苯经傅–克酰基化得到酮。
+56| 每个箭头均读作“由……制得”。}
+57| \end{omfigure}
+58| 
+59| 树状图体现了该方法的几个习惯。切断总是选在官能团旁边的键上，
+60| 因为反应正是在那里成键的。每一次切断都要写出合成子，并为之找到真实试剂加以核对。
+61| 而且答案很少只有一个：这棵树会分叉，
+62| 各分支最终在\cref{sec:b2:retrosynthesis:judging}中加以评判。
+63| 
+64| \begin{omfigure}
+65| \begin{center}
+66| \small
+67| \renewcommand{\arraystretch}{1.25}
+68| \begin{tabular}{lll}
+69| \hline
+70| 合成子 & 类型 & 合成等价物 \\
+71| \hline
+72| \ce{R-}（烷基、芳基） & 给体 & \ce{RMgBr}、\ce{RLi}、\ce{R2CuLi}（共轭加成） \\
+73| $\mathrm{^-CH_2COR}$ & 给体 & \ce{CH3COR} 的烯醇负离子，或 3-氧代丁酸乙酯 \\
+74| $\mathrm{^-C{\equiv}N}$ & 给体 & \ce{NaCN} \\
+75| $\mathrm{R\overset{+}{C}H{-}OH}$ & 受体 & 醛 \ce{RCHO} \\
+76| $\mathrm{R\overset{+}{C}{=}O}$ & 受体 & 酰氯 \ce{RCOCl}、酯 \\
+77| \ce{R+}（伯） & 受体 & 卤代烃 \ce{RBr}（双分子取代） \\
+78| $\mathrm{^+CH_2CH_2COR}$ & 受体 & 烯酮 \ce{CH2=CHCOR}（共轭加成） \\
+79| \hline
+80| \end{tabular}
+81| \end{center}
+82| 
+83| {\small 常见合成子及其合成等价物。给体合成子为碳负离子，
+84| 受体合成子为碳正离子；真实试剂的极性相同，但不带完整电荷。}
+85| \end{omfigure}
+86| 
+87| \section{单官能团切断}
+88| 
+89| 单官能团切断是切断与单个官能团相邻的键。对于醚、酯或胺中的 \ce{C-O} 键或 \ce{C-N} 键，
+90| 切断发生在碳与杂原子之间，杂原子为给体，
+91| 碳为受体（对应威廉姆森合成、酯化、酰胺的生成）。
+92| 对于 \ce{C-C} 键，官能团决定合成子的极性：与醇碳相邻时，
+93| 醇碳为受体（得到醛或酮），另一侧的碳为给体（有机金属试剂）；
+94| 羰基旁边，$\alpha$ 碳为给体（烯醇负离子）。
+95| 
+96| 多数这类反应需要在正确的位置上具有正确的氧化级别，因此各氧化级别之间的官能团转换
+97| 是路线中最常见的步骤：烯烃、醇、醛或酮、酸。其中一个问题在本科一年级分册中未能解决，
+98| 即如何使伯醇的氧化停留在醛的阶段。
+99| 
+100| \begin{proposition}[温和氧化]\label{prop:b2:retrosynthesis:mild-oxidation}
+101| 伯醇在无水有机溶剂中被氧化为醛，而不进一步氧化为酸，所用的氧化剂可以是
+102| 二氯甲烷中的氯铬酸吡啶盐，
+103| 斯文氧化（先以草酰氯活化二甲亚砜，再加入三乙胺，于低温下进行），或戴斯–马丁高碘烷。
+104| 在水中，铬（VI）或高锰酸盐则将其氧化为羧酸。
+105| \end{proposition}
+106| 
+107| \begin{proof}[论证]
+108| 这些氧化剂夺去 \ce{C-H} 键中的氢，该氢所在的碳上连有 \ce{OH}。生成的醛
+109| 不再含有这样的基团。然而在水中，醛与其水合物 \ce{RCH(OH)2} 处于平衡，
+110| 而该水合物在带氢的碳上又连有 \ce{OH}，因此会像醇一样被氧化为酸。
+111| 若无水，则不生成水合物，氧化便
+112| 停留在醛的阶段。
+113| \end{proof}
+114| 

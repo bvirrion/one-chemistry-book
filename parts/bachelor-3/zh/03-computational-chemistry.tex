@@ -1,0 +1,677 @@
+\chapter{计算化学：哈特里–福克与密度泛函理论}\label{ch:b3:computational-chemistry}
+
+氦氢离子 \ce{HeH+} 被认为是宇宙冷却过程中最早形成的分子，
+即一个氦原子结合一个质子。
+它于 1925 年在实验室放电管中制得，但此后数十年间在太空中搜寻，
+均无结果，直至 2019 年，其转动谱线才在一个行星状星云中被探测到。
+在此之前，它的键长、振动频率
+和谱线波长早已为人所知——源于计算。
+能近似求解电子\omterm{thm:b3:quantum-model-systems:schrodinger}{薛定谔方程}的计算机程序，
+可以预测一个无人曾装进瓶中的分子的形状、能量
+与光谱。本章
+说明这类程序如何工作，从原子核与电子的分离
+讲到哈特里–福克理论与\omterm{def:b3:computational-chemistry:dft}{密度泛函理论}，以及它们给出的数值
+哪些情形下可以信赖、哪些情形下不可以。
+
+\begin{recall}
+\Cref{ch:b3:quantum-model-systems}介绍了\omterm{def:b3:quantum-model-systems:schrodinger}{哈密顿算符}、\omterm{thm:b3:quantum-model-systems:schrodinger}{薛定谔方程}与氢原子；
+\cref{ch:b3:many-electron-atoms}给出了\omterm{def:b3:many-electron-atoms:slater}{斯莱特行列式}与\omterm{def:b3:many-electron-atoms:exchange}{交换积分}。
+本科二年级分册将分子轨道构造为
+原子轨道的线性组合（LCAO），并引入重叠积分、
+库仑积分与共振积分、久期行列式，并求解了
+休克尔方法；它还利用光电子能谱观测轨道能量。
+\end{recall}
+
+\begin{omfigure}
+\includegraphics[width=0.6\linewidth]{images/book4/ai/b3-03-cluster.jpg}
+
+{\small 计算集群：成排的服务器，多数量子化学计算如今都在其上进行，
+通常每个分子需耗时数小时或数天。}
+\end{omfigure}
+
+\section{玻恩–奥本海默近似与势能面}
+
+分子的\omterm{def:b3:quantum-model-systems:schrodinger}{哈密顿算符}包含原子核和
+电子的动能，以及它们之间的全部库仑相互作用。原子核至少比电子重 1836 倍，
+在相同的力作用下，它们的运动要慢得多，
+而电子几乎瞬时地适应原子核的
+各个位置。
+
+\begin{definition}[玻恩–奥本海默近似]\label{def:b3:computational-chemistry:born-oppenheimer}
+在\emph{玻恩–奥本海默近似}\index{玻恩–奥本海默近似}中，
+电子\omterm{thm:b3:quantum-model-systems:schrodinger}{薛定谔方程}被求解，此时原子核
+被固定在位置 $\mathbf R$ 处，
+\[
+\hat H_{\mathrm{el}}\,\psi_{\mathrm{el}}(\mathbf r;\mathbf R) =
+E_{\mathrm{el}}(\mathbf R)\,\psi_{\mathrm{el}}(\mathbf r;\mathbf R),
+\]
+原子核则在势 $E_{\mathrm{el}}(\mathbf R) +
+V_{\mathrm{nn}}(\mathbf R)$ 中运动，此势即电子能量加上
+原子核之间的排斥能。
+\end{definition}
+
+\begin{definition}[势能面、驻点、几何优化]\label{def:b3:computational-chemistry:pes}
+分子的\emph{势能面}\index{势能面}（PES）
+是函数 $U(\mathbf R) = E_{\mathrm{el}}(\mathbf R) +
+V_{\mathrm{nn}}(\mathbf R)$，为其核坐标的函数。
+\emph{驻点}\index{驻点}是 $U$ 的所有一阶偏导数均为零的点；
+极小点即为\emph{平衡构型}\index{平衡构型}。
+从某一初始结构出发，沿着
+力 $-\nabla U$ 的方向搜索驻点，此过程称为\emph{几何优化}\index{几何优化}。
+\end{definition}
+
+对双原子分子，\omterm{def:b3:computational-chemistry:pes}{势能面}是曲线 $U(R)$；对三原子分子，
+则为三个坐标的函数；对 $N$ 个原子，为 $3N - 6$ 个坐标的函数。原子核的
+质量并不进入 $\hat H_{\mathrm{el}}$：\ce{H2}、\ce{HD} 与 \ce{D2} 具有
+相同的\omterm{def:b3:computational-chemistry:pes}{势能面}、相同的键长与\omterm{def:b3:quantum-model-systems:oscillator}{力常数}，它们的差别仅在于
+原子核在其上的运动方式（\omterm{def:b3:quantum-model-systems:oscillator}{零点能}，见\cref{ch:b3:quantum-model-systems}）。
+
+\begin{proposition}[由海森矩阵求频率]\label{prop:b3:computational-chemistry:hessian}
+在极小点附近，$U \approx U_0 + \frac12\sum_{ij}H_{ij}\,\delta q_i\,\delta q_j$，其中
+海森矩阵为 $H_{ij} = \partial^2U/\partial q_i\partial q_j$。取质量加权坐标
+$\delta q_i\sqrt{m_i}$，质量加权海森矩阵的
+\omterm{def:b3:quantum-model-systems:operator}{本征值} $\lambda_k$ 给出简正模式的简谐角频率 $\omega_k =
+\sqrt{\lambda_k}$。在极小点处，所有 $\lambda_k$ 均为
+正；六个（线性分子为五个）为零，它们对应
+平动与转动；在一阶鞍点处，恰好有一个为负。
+\end{proposition}
+
+\begin{proof}[部分证明]
+对双原子分子，$U \approx U_0 + \frac12k(R - R_e)^2$，其中 $k = U''(R_e)$，
+在\cref{ch:b3:quantum-model-systems}中，\omterm{def:b3:quantum-model-systems:oscillator}{谐振子}给出 $\omega =
+\sqrt{k/\mu}$。一般地，经典方程 $m_i\ddot q_i =
+-\sum_jH_{ij}q_j$ 在质量加权坐标 $x_i = \sqrt{m_i}q_i$ 下变为
+$\ddot{\mathbf x} = -\tilde H\mathbf x$，其中对称矩阵 $\tilde H_{ij} =
+H_{ij}/\sqrt{m_im_j}$；其特征向量各自独立地以
+$\sqrt{\lambda_k}$ 振动。负的 $\lambda_k$ 给出虚频：沿
+该方向能量下降，即为极大值。\cref{ch:b3:group-theory-applied}中的简正模式
+即为这些特征向量。
+\end{proof}
+
+\begin{omfigure}
+\begin{tikzpicture}[font=\small, scale=0.95]
+  \fill[omDef!8] (0,0) ellipse (1.9 and 1.15);
+  \foreach \s in {1.0,0.75,0.5,0.25}{\draw[omDef!70] (0,0) ellipse ({1.9*\s} and {1.15*\s});}
+  \fill[omThm!8] (6,0.4) ellipse (1.6 and 1.0);
+  \foreach \s in {1.0,0.75,0.5,0.25}{\draw[omThm!70] (6,0.4) ellipse ({1.6*\s} and {1.0*\s});}
+  \draw[gray] (2.1,-0.15) .. controls (2.9,0.55) and (3.4,0.55) .. (4.3,0.35);
+  \draw[gray] (2.2,0.9) .. controls (3.0,0.35) and (3.5,0.35) .. (4.1,1.2);
+  \node[omsaddle] at (3.15,0.42) {};
+  \draw[ompath] (0,0) .. controls (1.8,0.6) and (2.4,0.5) .. (3.15,0.42) .. controls (4.0,0.35) and (4.8,0.4) .. (6,0.4);
+  \node[anchor=north] at (0,-1.25) {极小点 A（反应物）};
+  \node[anchor=north] at (6,-0.7) {极小点 B（生成物）};
+  \node[anchor=south] at (3.15,1.25) {鞍点};
+  \draw[->, gray] (3.15,1.25) -- (3.15,0.6);
+  \fill (0,0) circle (1.2pt) (6,0.4) circle (1.2pt);
+  \draw[->] (-2.3,-2.2) -- (8.2,-2.2) node[right] {$q_1$};
+  \draw[->] (-2.3,-2.2) -- (-2.3,1.8) node[above] {$q_2$};
+\end{tikzpicture}
+
+{\small \omterm{def:b3:computational-chemistry:pes}{势能面}的俯视图，为以两个核坐标为变量的等高线图（示意）。两个
+极小点通过鞍点（十字）相连，连接二者的是能量最低的路径（虚线），
+即最小能量路径，
+在\cref{ch:b3:rate-theories}中讨论。}
+\end{omfigure}
+
+\section{变分原理}
+
+对于含多于一个电子的任何分子，电子\omterm{thm:b3:quantum-model-systems:schrodinger}{薛定谔方程}
+都无法精确求解。近似方法的优劣由一条定理
+来判断。
+
+\begin{theorem}[变分原理]\label{thm:b3:computational-chemistry:variational}
+对满足问题边界条件的任意可归一化
+试探函数 $\phi$，
+\[
+E[\phi] = \frac{\langle\phi|\hat H|\phi\rangle}{\langle\phi|\phi\rangle} \ge E_0,
+\]
+其中 $E_0$ 为 $\hat H$ 的最低\omterm{def:b3:quantum-model-systems:operator}{本征值}；仅当 $\phi$
+为基态\omterm{def:b3:quantum-model-systems:operator}{本征函数}时才取等号。此即\emph{变分
+原理}\index{变分原理}。
+\end{theorem}
+
+\begin{proof}
+将 $\phi = \sum_nc_n\psi_n$ 按 $\hat H$ 的正交归一\omterm{def:b3:quantum-model-systems:operator}{本征函数}展开
+（见\cref{thm:b3:quantum-model-systems:hermitian-real}）。则 $\langle\phi|\hat
+H|\phi\rangle = \sum_n|c_n|^2E_n \ge E_0\sum_n|c_n|^2 = E_0\langle\phi|\phi\rangle$，
+由于每个 $E_n \ge E_0$；取等号要求 $c_n = 0$ 在 $E_n > E_0$ 时成立。
+\end{proof}
+
+试探函数的能量越低，则越好；任何可调参数
+都由极小化 $E$ 确定。
+
+\begin{proposition}[屏蔽电荷的氦]\label{prop:b3:computational-chemistry:helium-zeta}
+对于氦，试探函数 $\phi = \eu^{-\zeta(r_1 + r_2)}$（原子单位下，
+长度以 $a_0$、能量以 $E_h$ 计）给出 $E(\zeta) = \zeta^2 - \frac{27}{8}\zeta$，
+在 $\zeta = \frac{27}{16}$ 时取极小，此时 $E = -(\frac{27}{16})^2 E_h =
+\qty{-2.8477}{\hartree}$。
+\end{proposition}
+
+\begin{proof}
+对处于 $\eu^{-\zeta r}$ 中的一个电子，$\langle T\rangle = \zeta^2/2$，且
+$\langle 1/r\rangle = \zeta$；同处一个 $1s$
+函数中的两电子排斥为 $\frac58\zeta$（标准积分，在本阶段不加证明地承认）。于是 $E = 2\cdot\frac12
+\zeta^2 - 2\cdot2\zeta + \frac58\zeta = \zeta^2 - \frac{27}{8}\zeta$，且令 $\dd E/\dd
+\zeta = 0$ 得 $\zeta = 27/16 = 1.6875$。
+\end{proof}
+
+\begin{example}[效果如何？]\label{ex:b3:computational-chemistry:helium}
+% ledger: ie:He, ie4:He2, const:Eh, const:eV
+氦的总能量等于其两个电离能之和的负值，
+$-(24.5874 + 54.4178)\,\unit{eV} = \qty{-2.9034}{\hartree}$。单参数
+函数偏高 \qty{0.056}{\hartree}（\qty{1.5}{eV}）：每个电子感受到的
+核被另一电子屏蔽至 $Z_{\mathrm{eff}} = 1.69$，正如斯莱特规则
+所暗示的，但电子之间还以任何两个函数之积都无法描述的方式
+相互回避。
+\end{example}
+
+\begin{proposition}[线性变分]\label{prop:b3:computational-chemistry:linear-variation}
+对试探函数 $\phi = \sum_{i=1}^n c_i\chi_i$，它由 $n$ 个固定函数构成，
+其中 $H_{ij} = \langle\chi_i|\hat H|\chi_j\rangle$ 及 $S_{ij} = \langle\chi_i|\chi_j
+\rangle$，$E$ 的驻值为 $\det(H - ES) = 0$ 的根，
+且最低根是 $E_0$ 的上界。
+\end{proposition}
+
+\begin{proof}
+$E\sum_{ij}c_ic_jS_{ij} = \sum_{ij}c_ic_jH_{ij}$（系数取实数）。对
+$c_k$ 求导，并令 $\partial E/\partial c_k = 0$：$\sum_j(H_{kj} -
+ES_{kj})c_j = 0$，对每个 $k$ 成立。非零解需要
+行列式为零。最低根对应的本征向量给出 $E[\phi]$，因此 $\ge E_0$。
+\end{proof}
+
+本科二年级分册中的休克尔方法即为本命题在 $p$
+轨道和经验 $H_{ij}$ 下的情形。下文各方法都是同一思想，
+只是采用了更好的函数与更好的矩阵元。
+
+\section{基组}
+
+\begin{definition}[基组、最小基组、斯莱特型与高斯型轨道]\label{def:b3:computational-chemistry:basis}
+称\emph{基组}\index{基组}为一组固定函数 $\chi_i$，
+中心位于各原子上，分子轨道由它们构造。称
+\emph{最小基组}\index{最小基组}为每个被占据原子轨道各含一个函数
+的基组（H 含一个 $1s$，C 含五个）。称\emph{斯莱特型
+轨道}\index{斯莱特型轨道}（STO）的径向形式为
+$r^{n-1}\eu^{-\zeta r}$；称\emph{高斯型
+轨道}\index{高斯型轨道}（GTO）的形式为 $\eu^{-\alpha r^2}$ 乘以 $x$、$y$、
+$z$ 的多项式。称\emph{收缩高斯函数}\index{收缩高斯函数}
+为原始高斯函数的固定组合 $\sum_kd_k\,\eu^{-\alpha_kr^2}$。
+\end{definition}
+
+斯莱特函数具有正确的形状（原子核处有尖点，
+并有指数衰减的尾部），但其跨越多个中心的双电子积分
+计算代价很高；高斯函数形状不对，但位于不同中心的两个高斯函数之积
+是位于两者之间某点的高斯函数，因此
+每个积分都可化为闭式。收缩兼取二者之长：
+在 STO-3G \omterm{def:b3:computational-chemistry:basis}{基组}中，每个斯莱特函数都由
+三个与之拟合的高斯函数的固定和代替。
+
+\begin{example}[氢的 STO-3G 函数]\label{ex:b3:computational-chemistry:sto3g}
+% ledger: bse:H.sto3g.a1, bse:H.sto3g.a2, bse:H.sto3g.a3, bse:sto3g.c1, bse:sto3g.c2, bse:sto3g.c3
+STO-3G 中氢的 $1s$ 函数为 $0.15433\,g(3.42525) + 0.53533\,
+g(0.62391) + 0.44463\,g(0.16886)$，其中 $g(\alpha)$ 为归一化的高斯函数
+$(2\alpha/\pi)^{3/4}\eu^{-\alpha r^2}$（指数以 $a_0^{-2}$ 计）。它模拟一个
+指数为 $\zeta = 1.24$ 的斯莱特函数——一个略有
+压缩的氢原子，分子中正是如此。其与同指数精确 $1s$ 函数的
+重叠为 $0.9998$；仅原子核处的尖点与远处的
+尾部未能再现（见下图）。
+\end{example}
+
+\begin{definition}[劈裂价、极化与弥散函数]\label{def:b3:computational-chemistry:split-valence}
+称\emph{劈裂价基组}\index{劈裂价基组}用两个（或更多）
+大小不同的函数描述每个价轨道，使其
+能在分子中胀大或缩小。称\emph{极化
+函数}\index{极化函数}具有比占据轨道更高的 $l$
+（H 上为 $p$，C 上为 $d$），使\omterm{def:b3:computational-chemistry:dft}{电子密度}能偏离原子；称
+\emph{弥散函数}\index{弥散函数}的指数较小，
+用以描述远离原子核的阴离子与弱相互作用。
+\end{definition}
+
+例如 6-31G(d) 表示：内层每个函数用六个原始高斯函数，
+价层分裂为由三个原始高斯函数收缩成的一个收缩函数和一个单原始高斯函数，并在重原子上加 $d$
+\omterm{def:b3:computational-chemistry:split-valence}{极化函数}。随着\omterm{def:b3:computational-chemistry:basis}{基组}增大，结果趋向于
+\emph{\omterm{def:b3:computational-chemistry:basis}{基组}极限}；计算的质量只取决于
+所用的\omterm{def:b3:computational-chemistry:basis}{基组}。
+
+\begin{omfigure}
+\begin{tikzpicture}
+\begin{axis}[width=0.46\linewidth, height=5.4cm, xmin=0, xmax=5, ymin=0,
+  ymax=0.6, axis lines=left, xlabel={$r$ / $a_0$}, ylabel={$\phi(r)$},
+  legend cell align=left, legend style={font=\small, draw=none},
+  tick label style={font=\small}, label style={font=\small},
+  title={\small STO-3G 与 $\eu^{-r}$ 对比（$\zeta = 1$）}]
+\addplot[black, thick] table[x=r, y=slater] {figdata/out/bachelor-3-minimal-basis-hf-sto.dat};
+\addlegendentry{斯莱特型函数}
+\addplot[omDef, thick, dashed] table[x=r, y=g3] {figdata/out/bachelor-3-minimal-basis-hf-sto.dat};
+\addlegendentry{STO-3G}
+\addplot[omThm, thick, dotted] table[x=r, y=g1] {figdata/out/bachelor-3-minimal-basis-hf-sto.dat};
+\addlegendentry{单个高斯函数}
+\end{axis}
+\end{tikzpicture}\hfill
+\begin{tikzpicture}
+\begin{axis}[width=0.46\linewidth, height=5.4cm, xmin=0.5, xmax=8.5,
+  ymin=-2.86, ymax=-2.78, axis lines=left, xlabel={SCF 循环},
+  ylabel={$E$ / $E_h$}, ytick={-2.85,-2.83,-2.81,-2.79},
+  yticklabel style={/pgf/number format/fixed, /pgf/number format/precision=2},
+  tick label style={font=\small}, label style={font=\small},
+  title={\small \ce{HeH+} 的 SCF}]
+\addplot[omDef, thick, mark=*] table[x=it, y=E] {figdata/out/bachelor-3-minimal-basis-hf-heh-scf.dat};
+\addplot[gray, dashed, domain=0.5:8.5] {-2.84184};
+\end{axis}
+\end{tikzpicture}
+
+{\small 左图：STO-3G 收缩函数（虚线）除原子核处外，与 $1s$ 斯莱特型函数
+非常接近；单个高斯函数（点线）则不然。
+右图：\ce{HeH+} 在 \qty{1.4632}{\bohr} 下的能量，
+在\omterm{def:b3:computational-chemistry:hartree-fock}{自洽场}迭代过程中（STO-3G），能量从上方收敛到
+\qty{-2.8418}{\hartree}，数次循环内即收敛，每次迭代都
+满足\omterm{thm:b3:computational-chemistry:variational}{变分原理}。}
+\end{omfigure}
+
+\section{哈特里–福克理论}
+
+$N$ 个电子的最简单\omterm{def:b3:many-electron-atoms:indistinguishable}{反对称波函数}是一个
+\omterm{def:b3:many-electron-atoms:slater}{斯莱特行列式}。哈特里–福克理论可求出其中最优的那一个。
+
+\begin{definition}[哈特里–福克方法、福克算符、自洽场]\label{def:b3:computational-chemistry:hartree-fock}
+\emph{哈特里–福克方法}\index{哈特里–福克方法}以
+能量最低的单个\omterm{def:b3:many-electron-atoms:slater}{斯莱特行列式}近似基态。其轨道是
+\emph{福克算符}\index{福克算符}的\omterm{def:b3:quantum-model-systems:operator}{本征函数}，
+\[
+\hat f(1) = \hat h(1) + \sum_b\big[2\hat J_b(1) - \hat K_b(1)\big],
+\]
+在闭壳层情形下：$\hat h$ 为单电子的动能与对原子核的吸引能，
+$\hat J_b$ 为轨道 $b$ 的电荷云产生的排斥，
+$\hat K_b$ 为交换\omterm{def:b3:quantum-model-systems:operator}{算符}，其\omterm{def:b3:quantum-model-systems:hermitian}{期望值}即
+\cref{ch:b3:many-electron-atoms}中的\omterm{def:b3:many-electron-atoms:exchange}{交换积分}。由于 $\hat f$
+依赖于它所确定的轨道，方程需通过迭代求解，
+直至轨道不再变化，此方法称为\emph{自洽
+场}\index{自洽场}（SCF）。
+\end{definition}
+
+\begin{theorem}[鲁特汉–霍尔方程]\label{thm:b3:computational-chemistry:roothaan}
+将各轨道在\omterm{def:b3:computational-chemistry:basis}{基组}中展开，$\phi_a = \sum_\mu C_{\mu a}\chi_\mu$，
+则闭壳层哈特里–福克方程化为矩阵本征问题
+\[
+\mathbf F\mathbf C = \mathbf S\mathbf C\boldsymbol\varepsilon, \qquad F_{\mu\nu} =
+h_{\mu\nu} + \sum_{\lambda\sigma}P_{\lambda\sigma}\big[(\mu\nu|\sigma\lambda) -
+\tfrac12(\mu\lambda|\sigma\nu)\big],
+\]
+其中密度矩阵 $P_{\lambda\sigma} = 2\sum_a^{\mathrm{occ}}C_{\lambda a}C_{\sigma
+a}$，双电子积分 $(\mu\nu|\lambda\sigma) = \iint\chi_\mu(1)\chi_\nu(1)
+r_{12}^{-1}\chi_\lambda(2)\chi_\sigma(2)$（原子单位制）。
+\end{theorem}
+
+\begin{proof}[部分证明]
+行列式的能量为 $E = \sum_{\mu\nu}P_{\mu\nu}h_{\mu\nu} + \frac12
+\sum P_{\mu\nu}P_{\lambda\sigma}[(\mu\nu|\sigma\lambda) - \frac12(\mu\lambda|\sigma\nu)]$，是系数的
+二次函数。在约束条件下求其极小，
+即轨道保持正交归一，$\mathbf C^{\mathsf T}\mathbf S\mathbf C = \mathbf 1$，
+对每个约束引入一个拉格朗日乘子，驻定条件为
+$\mathbf F\mathbf C = \mathbf S\mathbf C\boldsymbol\varepsilon$，这些乘子构成
+一个矩阵，通过占据轨道之间的
+旋转可使其对角化。代数步骤在本阶段不加证明地承认。
+\end{proof}
+
+\begin{method}[SCF 过程]\label{met:b3:computational-chemistry:scf}
+\begin{enumerate}
+  \item 计算积分 $S_{\mu\nu}$、$h_{\mu\nu}$ 与 $(\mu\nu|\lambda\sigma)$，只需计算一次。
+  \item 猜测密度矩阵（例如仅由 $\mathbf h$ 的本征向量
+        给出的“核心”猜测）。
+  \item 构造 $\mathbf F$，它依赖于 $\mathbf P$；求解 $\mathbf F\mathbf C = \mathbf S\mathbf C
+        \boldsymbol\varepsilon$（先用 $\mathbf S^{-1/2}$ 正交化，再对角化）。
+  \item 填充最低的轨道，每个轨道两个电子；由此构造新的 $\mathbf P$
+        并求能量。
+  \item 从第 3 步起重复，直至能量与 $\mathbf P$ 的变化均小于
+        阈值。
+\end{enumerate}
+\end{method}
+
+\begin{omfigure}
+\begin{tikzpicture}[font=\small, node distance=4mm,
+  box/.style={draw=black!60, rounded corners=2pt, fill=omDef!6, align=center,
+  text width=4.4cm, inner sep=4pt}]
+  \node[box] (a) {积分 $S$、$h$、$(\mu\nu|\lambda\sigma)$};
+  \node[box, below=of a] (b) {猜测 $\mathbf P$};
+  \node[box, below=of b] (c) {构造 $\mathbf F(\mathbf P)$};
+  \node[box, below=of c] (d) {求解 $\mathbf F\mathbf C = \mathbf S\mathbf C\boldsymbol\varepsilon$};
+  \node[box, below=of d] (e) {新的 $\mathbf P$，能量 $E$};
+  \node[diamond, aspect=2.4, draw=black!60, fill=omThm!6, below=of e, inner sep=1pt] (f) {是否收敛？};
+  \node[box, below=of f, fill=omProp!8] (g) {轨道、$\varepsilon$、$E$};
+  \draw[->] (a) -- (b); \draw[->] (b) -- (c); \draw[->] (c) -- (d);
+  \draw[->] (d) -- (e); \draw[->] (e) -- (f);
+  \draw[->] (f) -- node[left] {是} (g);
+  \draw[->] (f.east) -- ++(1.6,0) |- node[pos=0.25, right] {否} (c.east);
+\end{tikzpicture}
+
+{\small 哈特里–福克计算中的\omterm{def:b3:computational-chemistry:hartree-fock}{自洽场}循环。}
+\end{omfigure}
+
+\begin{example}[最小基组中的 \ce{H2}]\label{ex:b3:computational-chemistry:h2}
+% ledger: re:H2, janaf:H.dfH0, diat:H2.we, diat:H2.wexe
+每个原子取一个 STO-3G 函数，成键轨道由对称性唯一确定，
+$\sigma_g \propto \chi_A + \chi_B$，\omterm{def:b3:computational-chemistry:hartree-fock}{自洽场}只需一步即可完成。在 $R =
+\qty{1.4}{\bohr}$ 处，重叠积分 $S_{AB} = 0.6593$，能量为
+\qty{-1.1167}{\hartree}；极小值位于 \qty{1.346}{\bohr}（\qty{71.2}{pm}，
+实验值为 \qty{74.1}{pm}），能量为 \qty{-1.1175}{\hartree}。
+下图将该曲线与真实曲线作比较，真实曲线由实测光谱数据
+和解离能构造（即莫尔斯曲线，见\cref{ch:b3:rovibrational-spectroscopy}）。
+\end{example}
+
+\begin{omfigure}
+\begin{tikzpicture}
+\begin{axis}[width=0.7\linewidth, height=6cm, xmin=0.8, xmax=10, ymin=-1.2,
+  ymax=-0.45, axis lines=left, xlabel={$R$ / $a_0$}, ylabel={$E$ / $E_h$},
+  legend cell align=left, legend style={font=\small, at={(0.04,0.98)}, anchor=north west, draw=none},
+  tick label style={font=\small}, label style={font=\small}]
+\addplot[omDef, thick] table[x=R, y=rhf] {figdata/out/bachelor-3-minimal-basis-hf-h2.dat};
+\addlegendentry{RHF/STO-3G}
+\addplot[black, thick, dashed] table[x=R, y=morse] {figdata/out/bachelor-3-minimal-basis-hf-h2.dat};
+\addlegendentry{实测（莫尔斯形式）}
+\addplot[gray, dotted, domain=0.8:10] {-1.0};
+\addplot[omThm, dotted, domain=0.8:10] {-0.93316};
+\node[font=\scriptsize, anchor=north] at (axis cs:8,-1.005) {两个精确的 H 原子};
+\node[font=\scriptsize, anchor=south, omThm] at (axis cs:8,-0.930) {两个 STO-3G 的 H 原子};
+\end{axis}
+\end{tikzpicture}
+
+{\small \ce{H2} 的能量随核间距的变化：限制性\omterm{def:b3:computational-chemistry:hartree-fock}{哈特里–福克方法}在 STO-3G \omterm{def:b3:computational-chemistry:basis}{基组}中的结果（实线）
+与真实曲线（虚线，由实测的 $D_0$、$\omega_e$、$\omega_ex_e$、$r_e$ 构造的莫尔斯形式）。
+在极小值附近 RHF 结果良好；
+在 $R$ 很大时，其能量远高于两个氢原子。}
+\end{omfigure}
+
+\begin{proposition}[为何限制性哈特里–福克方法在解离时失效]\label{prop:b3:computational-chemistry:rhf-dissociation}
+在\omterm{def:b3:computational-chemistry:basis}{最小基组}中，\ce{H2} 的 RHF 波函数除归一化因子外为
+$\sigma_g(1)\sigma_g(2) \propto \chi_A(1)\chi_B(2) + \chi_B(1)\chi_A(2)
++ \chi_A(1)\chi_A(2) + \chi_B(1)\chi_B(2)$：无论距离多远，一半为共价态，一半为离子态
+（\ce{H+ H-}）。当 $R$ 很大时，其能量趋于两个中性原子与一个离子对的平均值，
+而不是两个原子的能量。
+\end{proposition}
+
+\begin{proof}
+展开 $(\chi_A + \chi_B)(1)(\chi_A + \chi_B)(2)$：两个交叉项各使一个电子位于每个原子上，
+两个平方项则使两个电子同时位于同一原子上，
+无论 $R$ 为何值，四项的权重均相等。行列式无法改变这些权重。
+\end{proof}
+
+\begin{definition}[电子相关，相关能]\label{def:b3:computational-chemistry:correlation}
+\emph{电子相关}\index{电子相关}是电子之间相互回避的那部分效应，
+它不能由单个行列式描述（在该行列式中，
+自旋相反的电子各自独立地在彼此的平均场中运动）。
+\emph{相关能}\index{相关能}是在完备\omterm{def:b3:computational-chemistry:basis}{基组}下
+精确能量减去哈特里–福克能量之差，
+它总是负的。
+\end{definition}
+
+\omterm{def:b3:computational-chemistry:correlation}{相关能}约为每个电子对 \qty{-0.04}{\hartree}，占总能量的百分之一，
+但与反应能量相当：加入\omterm{def:b3:computational-chemistry:correlation}{相关能}的方法
+（组态相互作用、微扰理论、耦合簇）的计算代价远高于\omterm{def:b3:computational-chemistry:hartree-fock}{哈特里–福克方法}，
+而后者的代价
+已大致随基函数数目的四次方增长。
+
+\begin{theorem}[库普曼斯定理]\label{thm:b3:computational-chemistry:koopmans}
+在哈特里–福克理论中，保持其他轨道不变，从占据轨道
+$a$ 中移去一个电子所需的能量为 $-\varepsilon_a$。
+因此实测电离能近似为轨道能量的相反数，
+这就是\emph{库普曼斯定理}\index{库普曼斯定理}。
+\end{theorem}
+
+\begin{proof}
+闭壳层行列式的能量为 $\sum_a2h_{aa} + \sum_{ab}(2J_{ab} -
+K_{ab})$，而 $\varepsilon_a = h_{aa} + \sum_b(2J_{ab} - K_{ab})$。
+若不改变轨道而从 $a$ 中移去一个电子，失去的项为：$h_{aa}$，
+该电子与其他所有电子的相互作用 $\sum_b(2J_{ab} - K_{ab}) -
+J_{aa}$，再加上 $J_{aa}$ 与其原来伙伴之间的作用——
+合计恰为 $\varepsilon_a$。因此 $E^+ - E = -\varepsilon_a$。
+\end{proof}
+
+\begin{example}[电离 \ce{H2}]\label{ex:b3:computational-chemistry:koopmans}
+% ledger: ie4:H2
+在 \qty{1.4}{\bohr} 处，$\sigma_g$ 的 STO-3G 轨道能量为
+\qty{-0.5782}{\hartree}：\omterm{thm:b3:computational-chemistry:koopmans}{库普曼斯定理}预测为 \qty{15.73}{eV}，实测值为
+\qty{15.43}{eV}。冻结的轨道高估了离子的能量（离子本会发生弛豫），
+而缺失的\omterm{def:b3:computational-chemistry:correlation}{相关能}则产生相反方向的影响；对于价层电离，
+两种误差大体相互抵消，这正是为何可以用轨道图
+来读解本科二年级分册中的光电子能谱。
+\end{example}
+
+\section{密度泛函理论，以及计算能说明什么}
+
+$N$ 个电子的波函数依赖于 $3N$ 个坐标；
+而\omterm{def:b3:computational-chemistry:dft}{电子密度}只依赖于三个坐标。
+
+\begin{definition}[电子密度，密度泛函理论]\label{def:b3:computational-chemistry:dft}
+\emph{电子密度}\index{电子密度} $\rho(\mathbf r)$ 是在 $\mathbf r$ 处
+单位体积内的电子数，对所有电子求和：
+$\int\rho\,\dd\tau = N$。\emph{密度泛函理论}\index{密度泛函理论}
+（DFT）将基态能量表示为 $\rho$ 的泛函。实际计算中，
+$\rho = \sum_a|\phi_a|^2$ 由\emph{科恩–沈轨道}\index{科恩–沈轨道}构造，
+这些轨道是虚构的独立电子的轨道，
+它们给出与真实电子相同的密度，
+而交换与相关的全部效应
+都包含在\emph{交换–相关泛函}\index{交换–相关泛函} $E_{\mathrm{xc}}[\rho]$ 中。
+\end{definition}
+
+\begin{theorem}[霍恩伯格–科恩定理]\label{thm:b3:computational-chemistry:hohenberg-kohn}
+电子体系的基态密度唯一地决定外势（即原子核的作用），
+差一个常数，因而决定哈密顿量及一切基态性质；
+并且密度的能量泛函
+在真实密度处取最小值。
+\end{theorem}
+\admitted
+
+证明超出本课程范围，将在更高级的课程中讨论。它只保证精确泛函存在，
+而不说明其具体形式：每一种实用泛函都是近似，
+从一个层级中选取：局域密度近似、梯度修正、
+掺入部分哈特里–福克交换的杂化泛函，并用参考数据加以校准。
+科恩–沈方程与哈特里–福克方程采用相同的\omterm{def:b3:computational-chemistry:hartree-fock}{自洽场}迭代求解，
+代价相近，但包含了\omterm{def:b3:computational-chemistry:correlation}{电子相关}；
+这正是\omterm{def:b3:computational-chemistry:dft}{密度泛函理论}成为化学主力方法的原因。
+
+\begin{method}[阅读计算结果]\label{met:b3:computational-chemistry:read-calculation}
+\begin{enumerate}
+  \item 检查\omterm{def:b3:computational-chemistry:hartree-fock}{自洽场}已收敛，且\omterm{def:b3:computational-chemistry:pes}{几何优化}结束时
+        受力已低于阈值。
+  \item 在同一水平上做频率计算：全部为实频率
+        即表示极小值点；若有一个虚频，则为过渡态结构，其
+        简正模式即穿越势垒的运动。
+  \item 同类比较：同一水平下所得结构之间的能量差，
+        绝不比较不同水平下的绝对能量。
+  \item 与实验比较时，应了解该水平的典型误差：
+        简谐频率通常需乘以 0.9 至 0.97 的缩放因子；
+        采用杂化泛函与极化\omterm{def:b3:computational-chemistry:basis}{基组}时，键长约可精确到 1 pm；
+        反应能至多精确到几 \unit{kJ/mol}。
+\end{enumerate}
+\end{method}
+
+\begin{method}[选择理论水平]\label{met:b3:computational-chemistry:choose-level}
+有机分子的几何结构与频率：采用杂化泛函与
+极化\omterm{def:b3:computational-chemistry:split-valence}{劈裂价基组}。弱相互作用：加入色散校正
+和\omterm{def:b3:computational-chemistry:split-valence}{弥散函数}。反应势垒与精确能量：
+在 DFT 几何结构上采用\omterm{def:b3:computational-chemistry:correlation}{电子相关}的波函数方法，视预算而定。
+大体系（蛋白质、表面）：将一小块区域
+用量子力学方法处理，并置于经典力场之中。
+始终用一个结果已知的相关分子检验所选的理论水平。
+\end{method}
+
+\begin{inthelab}[计算实验]
+计算应像实验一样进行，并记入实验记录本：
+程序及其版本、方法、\omterm{def:b3:computational-chemistry:basis}{基组}、收敛阈值、
+初始结构，以及作为原始数据保存的输出文件。
+典型的步骤是：构建分子，在较低水平上优化其几何结构，
+计算频率以确认为极小值点，再在
+更高水平上计算该几何结构处的能量。
+\end{inthelab}
+
+\begin{history}[一种先由计算得知的分子]
+% ledger: hist4:HeHp.2019
+\ce{HeH+} 于 1925 年在实验室中制得。其性质
+自 1930 年代起被详细计算，并预言它在某些天体物理气体中含量丰富；
+但其第一条转动谱线位于远红外区，
+会被大气吸收。2019 年，一架机载天文台
+在行星状星云 NGC 7027 中探测到了它，
+其频率与计算及实验室光谱的预言相符。
+\end{history}
+
+\section{练习}
+
+\begin{exercise}[$\star$]\label{exo:b3:computational-chemistry:1}
+对氢原子，取试探函数 $\eu^{-\alpha r^2}$。在原子
+单位制中 $E(\alpha) = \frac32\alpha - 2\sqrt{2\alpha/\pi}$。求最佳 $\alpha$ 及
+相应的能量，并与 $-\frac12E_h$ 比较。
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:computational-chemistry:2}
+苯的计算在 STO-3G \omterm{def:b3:computational-chemistry:basis}{基组}下共用多少个基函数？
+若用 6-31G(d) \omterm{def:b3:computational-chemistry:basis}{基组}，每个碳原子取六个笛卡尔 $d$ 函数，每个氢原子取两个 $s$
+函数，共用多少个？
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:computational-chemistry:3}
+解释为什么 \ce{H2} 与 \ce{D2} 的键长相同、\omterm{def:b3:quantum-model-systems:oscillator}{力
+常数}相同，而振动波数不同。你预期的比值是多少？
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b3:computational-chemistry:4}
+对化学式为 \ce{C2H5F} 的结构做频率计算，得到 17 个实频率
+和一个虚频 $487\iu$~\unit{cm^{-1}}。该结构是哪种
+\omterm{def:b3:computational-chemistry:pes}{驻点}？总共应预期有多少个频率？
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:computational-chemistry:5}
+% ledger: ie:He, ie4:He2
+利用 $E(\zeta) = \zeta^2 - \frac{27}{8}\zeta$，计算氦的最佳变分
+能量，分别以 \unit{\hartree} 和 eV 表示，并给出它相对精确值
+$\qty{-2.9034}{\hartree}$ 的误差。误差占总能量的比例是多少？
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:computational-chemistry:6}
+两个基函数给出 $H_{11} = \qty{-1.0}{\hartree}$，$H_{22} =
+\qty{-0.5}{\hartree}$，$H_{12} = \qty{-0.2}{\hartree}$，$S_{12} = 0.3$。求解
+久期方程。较低的根是否低于 $H_{11}$？
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:computational-chemistry:7}
+苯在 STO-3G \omterm{def:b3:computational-chemistry:basis}{基组}下的哈特里–福克计算需 10 分钟。假设
+计算代价与基函数个数的四次方成正比，
+估算在 6-31G(d) \omterm{def:b3:computational-chemistry:basis}{基组}下所需的时间。
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:computational-chemistry:8}
+% ledger: ie4:H2
+\ce{H2} 在 \qty{1.4}{\bohr} 处的 STO-3G 轨道能量为
+\qty{-0.5782}{\hartree}。用\omterm{thm:b3:computational-chemistry:koopmans}{库普曼斯定理}估算电离能（以 eV 计），
+并与 \qty{15.43}{eV} 比较。请说出二者不同的两个原因及
+其各自的方向。
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b3:computational-chemistry:9}
+在 STO-3G \omterm{def:b3:computational-chemistry:basis}{基组}下，一个氢原子的能量为 \qty{-0.4666}{\hartree}，
+\ce{H2} 在 \qty{10}{\bohr} 处的 RHF 能量为 \qty{-0.5960}{\hartree}。该距离下的 RHF 能量比两个
+原子高出多少（以 eV 计）？请结合离子项
+作出解释。
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:computational-chemistry:10}
+设 $\phi = c_1\chi_1 + c_2\chi_2$ 为实函数，写出 $E(c_1,c_2)$，
+令 $\partial E/\partial c_1 =
+\partial E/\partial c_2 = 0$，推出两个久期方程。
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:computational-chemistry:11}
+% ledger: aw:H, diat:H2.we
+\ce{H2} 的 RHF/STO-3G 能量分别为 $-1.116871$、$-1.117501$ 和
+$\qty{-1.116714}{\hartree}$，对应 $R = 1.30$、1.35 和 \qty{1.40}{\bohr}。用有限差分估算
+\omterm{def:b3:quantum-model-systems:oscillator}{力常数}，再将其换算为 \unit{N/m}
+（$\qty{1}{\hartree\per\bohr\squared} = \qty{1556.9}{N/m}$），并计算
+谐振波数，并与 $\tilde\omega_e = \qty{4401}{cm^{-1}}$ 比较。
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b3:computational-chemistry:12}
+请计算某种糖的两种构象之间的能量差，已知二者相差几个
+\unit{kJ/mol}，其中一种构象含有分子内氢键。
+请选择并论证一种方法、一个\omterm{def:b3:computational-chemistry:basis}{基组}，以及
+你将进行的检验。
+\end{exercise}
+
+\section{问题：HeH\texorpdfstring{$^+$}{+}，第一个分子}
+
+\begin{problem}[{周末问题——最小基组的哈特里–福克计算：
+氦化氢离子的基组、核心猜测、
+收敛轨道，以及质子与氦的结合}]
+\label{pb:b3:computational-chemistry:1}
+% ledger: bse:He.sto3g.a1, bse:He.sto3g.a2, bse:He.sto3g.a3, bse:H.sto3g.a1, pa:He, ie:He, ie4:He2
+在 STO-3G \omterm{def:b3:computational-chemistry:basis}{基组}下计算 \ce{HeH+} 于 $R = \qty{1.4632}{\bohr}$ 处的结果（He
+指数为 6.3624、1.1589、0.31365；H 的指数为 3.4253、0.62391、0.16886；
+三个系数相同）。函数 1 位于 He 上，函数 2 位于 H 上。程序给出
+（原子单位）：
+\[
+\mathbf S = \begin{pmatrix}1 & 0.5368\\ 0.5368 & 1\end{pmatrix},\quad
+\mathbf h = \begin{pmatrix}-2.5983 & -1.4318\\ -1.4318 & -1.7318\end{pmatrix},\quad
+\mathbf F_{\mathrm{final}} = \begin{pmatrix}-1.5902 & -1.0610\\ -1.0610 & -0.8340
+\end{pmatrix},
+\]
+占据轨道 $\phi = 0.8766\chi_1 + 0.2025\chi_2$，轨道能量
+分别为 $-1.6328$ 和 \qty{-0.1725}{\hartree}，SCF 能量依次为 $-2.7978$、$-2.8404$、
+$-2.8418$、$-2.8418$。同一\omterm{def:b3:computational-chemistry:basis}{基组}下氦原子的能量为
+\qty{-2.8078}{\hartree}。$\qty{1}{\hartree} = \qty{27.211}{eV} =
+\qty{2625.5}{kJ/mol}$。
+
+\medskip\noindent\textbf{第一部分——\omterm{def:b3:computational-chemistry:basis}{基组}。}
+\begin{enumerate}
+  \item “STO-3G”是什么意思？
+  \item 为什么氦的指数比氢的大？请检验
+        它们的比值是否等于 $(1.69/1.24)^2$。
+  \item 基函数、电子和占据轨道各有多少个？
+  \item 计算核排斥能。
+  \item 解释 $S_{12} = 0.5368$。
+  \item 为什么 $h_{11}$ 低于 $h_{22}$？
+\end{enumerate}
+
+\medskip\noindent\textbf{第二部分——核心猜测。}
+\begin{enumerate}[resume]
+  \item 将久期方程 $\det(\mathbf h - \varepsilon\mathbf S) = 0$ 写成
+        关于 $\varepsilon$ 的二次方程。
+  \item 求解该方程。
+  \item 为什么这只是一个出发点？
+  \item 写出福克矩阵的表达式，用 $\mathbf h$、
+        密度矩阵和双电子积分表示。
+  \item $\mathbf F$ 包含而 $\mathbf h$ 不含的是哪些电子相互作用？
+  \item 解释为什么该过程必须迭代。
+\end{enumerate}
+
+\medskip\noindent\textbf{第三部分——收敛轨道。}
+\begin{enumerate}[resume]
+  \item 检验 $\phi$ 是否已归一化。
+  \item 布居数为 $P\mathbf S$ 的对角元素，He 上为 $2c_1^2 + 2c_1c_2S$，
+        H 上为 $2c_2^2 + 2c_1c_2S$。计算它们的值。
+  \item 正电荷位于何处？该分子更适合描述为
+        \ce{He + H+} 还是 \ce{He+ + H}？
+  \item 用\omterm{thm:b3:computational-chemistry:koopmans}{库普曼斯定理}估算从 \ce{HeH+} 中移去一个
+        电子所需的能量。
+  \item 计算电子能 $E_{\mathrm{el}} = E - V_{\mathrm{nn}}$。
+  \item 收敛到 \qty{e-4}{\hartree} 需要多少次循环？为什么
+        每次循环能量都下降？
+  \item 若将氦的指数缩放为 $\zeta = 2.0925$（而非 1.69），
+        同一程序给出 \qty{-2.8607}{\hartree}。哪一个\omterm{def:b3:computational-chemistry:basis}{基组}更好，
+        你为何能这样判断？
+  \item 虚轨道能量 \qty{-0.1725}{\hartree} 代表什么？
+\end{enumerate}
+
+\medskip\noindent\textbf{第四部分——质子的结合。}
+\begin{enumerate}[resume]
+  \item 裸质子的能量是多少？相距很远的 \ce{He + H+}，
+        在该\omterm{def:b3:computational-chemistry:basis}{基组}下的能量是多少？
+  \item 计算在该水平下 \ce{He + H+ -> HeH+} 释放的能量，以
+        \unit{kJ/mol} 表示。
+  \item 氦的实测质子亲和能为 \qty{177.8}{kJ/mol}。
+        请加以评论。
+  \item 氦的精确能量为其电离能之和的负值，
+        两个电离能分别为 24.5874 和 \qty{54.4178}{eV}。以 \unit{\hartree} 计算其值，
+        并求 STO-3G 氦原子的误差。
+  \item 为什么这一量级的误差仍能给出有用的
+        分子几何构型？
+  \item 给出结果：\ce{HeH+} 在
+        \qty{1.4632}{\bohr} 处的 RHF/STO-3G 总能量。
+\end{enumerate}
+\end{problem}

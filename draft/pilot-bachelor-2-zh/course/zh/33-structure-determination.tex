@@ -1,0 +1,385 @@
+\chapter{结构测定：\texorpdfstring{$^{13}$C}{13C} NMR、MS 与 IR 联用}\label{ch:b2:structure-determination}
+
+一家香料实验室收到一小瓶无色液体，闻起来有茉莉花香。无人
+贴过标签。质谱给出其分子式，红外光谱给出其官能团，
+碳-13 谱给出其骨架，质子谱给出各片段的连接方式；一小时之内，
+这种液体便有了名字。本章在本科一年级分册中质子核磁共振谱与红外光谱的基础上，加入碳-13 核磁共振谱，
+并结合\cref{ch:b2:mass-spec-atomic}中的质谱法，
+将四种方法合为一套方法。
+
+\begin{recall}
+本科一年级分册：化学位移与屏蔽、等效质子、积分、自旋–自旋耦合
+以及 $n + 1$ 规则、官能团的红外波数与指纹区、
+不饱和度，由三种谱图推定结构。\Cref{ch:b2:mass-spec-atomic}：
+分子离子、同位素峰形、碎裂。
+\end{recall}
+
+\section{碳-13 核磁共振}
+
+主要同位素碳-12 没有核自旋，不给出核磁共振信号。碳-13 的自旋为
+$\tfrac12$，与质子相同，但它在天然碳中只占 1.1~\%，
+按每个原子核计，其信号比质子的弱；因此碳谱需要更多样品或更多次扫描。
+% ledger: iso:C13
+
+\begin{definition}[碳-13 核磁共振]\label{def:b2:structure-determination:c13}
+\emph{碳-13 核磁共振}\index{碳-13 核磁共振}记录样品中 \ce{^{13}C} 原子核的共振信号。
+通常采用\emph{宽带去偶}\index{宽带去偶}：测量过程中对质子
+在其整个频率范围内进行照射，从而去除全部碳–质子耦合，
+使每类碳只给出一条谱线。\emph{等效
+碳}\index{等效碳}经分子的对称操作（或快速转动）互换，
+给出相同的谱线。
+\end{definition}
+
+\begin{proposition}[无碳–碳耦合]\label{prop:b2:structure-determination:no-cc-coupling}
+相邻碳原子之间的耦合不会出现在天然丰度的
+\ce{^{13}C} 谱中。
+\end{proposition}
+
+\begin{proof}
+两个碳之间的耦合只在两者均为 \ce{^{13}C} 的分子中出现。对于两个给定的
+相邻位置，其概率为 $a_{13}^2 = 0.011^2 \approx 1.2 \times 10^{-4}$：约为
+八千分之一。每个碳的信号几乎全部来自
+其相邻碳均为 \ce{^{12}C} 的分子，对谱仪不可见；耦合卫星峰
+比普通谱图的噪声还弱一百倍。
+\end{proof}
+
+\begin{proposition}[谱线数目]\label{prop:b2:structure-determination:signals}
+去偶后的 \ce{^{13}C} 谱中，每组等效碳对应一条谱线，除非
+两组碳恰好具有相同的化学位移。
+\end{proposition}
+
+\begin{proof}[论证]
+等效碳处于相同的化学环境，因此化学位移相同；不等效的碳
+一般不同。去掉与质子的耦合，碳–碳耦合也不存在
+（见\cref{prop:b2:structure-determination:no-cc-coupling}），没有任何因素使谱线裂分。偶然重叠
+发生在两个不同碳的化学位移相差小于分辨率时，这在
+苯环碳在 \qty{128}{ppm} 附近尤为常见。
+\end{proof}
+
+化学位移分布约为 \qty{220}{ppm}，是质子范围的二十倍，因此重叠比
+质子谱中少见，仅凭化学位移即可判断碳的类型。下图给出了本章化合物的
+实测化学位移。
+
+\begin{omfigure}
+\begin{tikzpicture}
+\begin{axis}[width=0.86\linewidth, height=4.6cm, xmin=0, xmax=220, ymin=-0.6, ymax=4.6, x dir=reverse,
+  xlabel={化学位移 $\delta$ (ppm)}, label style={font=\small}, tick label style={font=\scriptsize},
+  ytick={0,1,2,3,4}, yticklabels={烷基碳, C--O, 芳香碳, 酯 C=O, 酮 C=O},
+  xtick={0,20,40,60,80,100,120,140,160,180,200,220}, grid=major, grid style={black!10}]
+\addplot[only marks, mark=|, mark size=5pt, thick, omDef] table[x=shift, y=cls] {figdata/out/bachelor-2-nmr-spectra-d.dat};
+\end{axis}
+\end{tikzpicture}
+
+{\small 丁-2-酮、戊-2-酮、苯甲酸乙酯和乙酸苄酯的实测 \ce{^{13}C} 化学位移，
+按碳的类型排列（CDCl$_3$；PubChem 数据）。酮羰基位于 209 附近，酯羰基位于
+167--171 附近，芳香碳位于 128 至 137 之间，与酯氧相连的碳位于
+61--66 附近，烷基碳位于 46 以下。}
+% figdata: bachelor-2/nmr-spectra.py part d
+% ledger: c13:butanone, c13:pentan-2-one, c13:ethylbenzoate, c13:benzylacetate
+\end{omfigure}
+
+\begin{proposition}[谱线高度不代表计数]\label{prop:b2:structure-determination:intensities}
+在常规去偶 \ce{^{13}C} 谱中，谱线的高度与其所代表的
+碳原子数目不成正比；不含氢的碳给出较弱的谱线。
+\end{proposition}
+
+\begin{proof}[论证]
+常规谱图的测量重复速度快于最慢的碳恢复到平衡态的速度，
+而不连接质子的碳弛豫缓慢，因此其信号部分饱和。去偶
+还会增强连接质子的碳的信号，增强程度取决于其周围环境。
+以丁-2-酮为例，羰基谱线是四条中最弱的，尽管它与其余各碳一样，只代表
+一个碳原子。积分对质子谱十分有用，但在常规碳谱中不予使用。
+\end{proof}
+
+\section{DEPT 实验}
+
+\begin{definition}[DEPT 实验]\label{def:b2:structure-determination:dept}
+\emph{DEPT}\index{DEPT}（无失真极化转移增强）是一组碳-13
+实验，使连接质子的碳的信号依其所连氢的数目而呈正号、负号，
+或不出现。\emph{季碳}\index{季碳}不连接氢原子
+（与其他四个原子相连，或为不含 H 的羰基碳或芳香碳），因此不给出 DEPT 信号。
+\end{definition}
+
+\begin{proposition}[DEPT 谱的判读]\label{prop:b2:structure-determination:dept}
+在 DEPT-135 中，\ce{CH} 与 \ce{CH3} 碳的峰向上，\ce{CH2} 碳的峰向下，季碳
+不出现。在 DEPT-90 中，只出现 \ce{CH} 碳。
+\end{proposition}
+
+\admitted
+
+该实验将磁化强度从质子转移到与其相连的碳上，依靠一串
+射频脉冲实现，其最后一个脉冲的角度用于选择响应；脉冲如何实现这一点
+在本科三年级分册中说明。将去偶谱与 DEPT-135 及 DEPT-90 比较，即可将每条谱线
+归入 C、CH、\ce{CH2} 或 \ce{CH3} 中的一类。
+
+\begin{omfigure}
+\pgfplotsset{dept/.style={width=\linewidth, height=2.9cm, ycomb, x dir=reverse, ymin=-1, ymax=1.15,
+  ytick=\empty, axis y line=none, axis x line=middle, x axis line style={-}, tick label style={font=\tiny},
+  title style={font=\scriptsize, at={(0.0,0.95)}, anchor=north west}, every axis plot/.append style={thick}}}
+\begin{minipage}[t]{0.49\linewidth}\centering
+{\small 丁-2-酮}\par
+\begin{tikzpicture}
+\begin{axis}[dept, xmin=0, xmax=220, xtick={0,50,100,150,200}, title={去偶}]
+\addplot[omDef] table[x=shift, y=dec] {figdata/out/bachelor-2-nmr-spectra-a.dat};
+\end{axis}
+\end{tikzpicture}\par
+\begin{tikzpicture}
+\begin{axis}[dept, xmin=0, xmax=220, xtick={0,50,100,150,200}, title={DEPT-135}]
+\addplot[omThm] table[x=shift, y=d135] {figdata/out/bachelor-2-nmr-spectra-a.dat};
+\end{axis}
+\end{tikzpicture}\par
+\begin{tikzpicture}
+\begin{axis}[dept, xmin=0, xmax=220, xtick={0,50,100,150,200}, title={DEPT-90}]
+\addplot[omMeth] table[x=shift, y=d90] {figdata/out/bachelor-2-nmr-spectra-a.dat};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\linewidth}\centering
+{\small 苯甲酸乙酯}\par
+\begin{tikzpicture}
+\begin{axis}[dept, xmin=0, xmax=220, xtick={0,50,100,150,200}, title={去偶}]
+\addplot[omDef] table[x=shift, y=dec] {figdata/out/bachelor-2-nmr-spectra-b.dat};
+\end{axis}
+\end{tikzpicture}\par
+\begin{tikzpicture}
+\begin{axis}[dept, xmin=0, xmax=220, xtick={0,50,100,150,200}, title={DEPT-135}]
+\addplot[omThm] table[x=shift, y=d135] {figdata/out/bachelor-2-nmr-spectra-b.dat};
+\end{axis}
+\end{tikzpicture}\par
+\begin{tikzpicture}
+\begin{axis}[dept, xmin=0, xmax=220, xtick={0,50,100,150,200}, title={DEPT-90}]
+\addplot[omMeth] table[x=shift, y=d90] {figdata/out/bachelor-2-nmr-spectra-b.dat};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}
+
+{\small 去偶 \ce{^{13}C} 谱（测得的化学位移与峰高，数据取自 PubChem），以及 DEPT
+响应（符号取自\cref{prop:b2:structure-determination:dept}，峰高仅为示意）。丁-2-酮：C=O
+209.3（DEPT 中不出现），\ce{CH2} 36.9（向下），\ce{CH3} 29.4 与 7.9（向上）。苯甲酸乙酯：C=O 166.5 与
+连有酯基的环碳 130.6 消失；三个芳香 CH（132.8、129.6、128.3）在
+DEPT-90 中保留；\ce{OCH2} 60.9 的峰向下。}
+% figdata: bachelor-2/nmr-spectra.py parts a, b
+\end{omfigure}
+
+\section{综合运用多种技术}
+
+各种技术各自回答一个问题，答案按固定顺序拼合：先确定分子式，
+因为它限定了其他一切；其次确定官能团与骨架；再
+确定连接方式。
+
+\begin{method}[求解未知物]\label{met:b2:structure-determination:solve}
+\begin{enumerate}
+  \item 分子式：分子离子，$M+1$ 用于确定碳数，同位素峰形，氮规则；若
+        有精确质量则用之。计算不饱和度。
+  \item 红外：\ce{C=O}（并判断属何种）、\ce{O-H}、\ce{N-H}、\ce{C#N}，
+        芳香或烯烃的 \ce{C-H} 位于 \qty{3000}{cm^{-1}} 以上。
+  \item 碳-13 谱与 DEPT：碳的种类数（由对称性判断），由化学位移判定各类碳，以及
+        由 DEPT 判定 C、CH、\ce{CH2}、\ce{CH3}，并与分子式比较。
+  \item 质子核磁共振：积分面积、化学位移、多重性；由 $n + 1$ 规则判定邻接关系。
+  \item 拼合各片段，写出所有候选结构。
+  \item 将每个候选结构与全部数据逐一核对，包括质谱碎片；保留
+        能解释全部数据的那一个。
+\end{enumerate}
+\end{method}
+
+\begin{omfigure}
+\begin{tikzpicture}[x=1cm, y=1cm, st/.style={draw=black!70, rounded corners=2pt, fill=white,
+  font=\small, align=center, minimum height=0.9cm, inner sep=3pt, text width=2.3cm}]
+\node[st, fill=omDef!10] (ms) at (0,0) {MS\\分子式，$M+1$};
+\node[st] (dbe) at (2.9,0) {不饱和度};
+\node[st, fill=omDef!10] (ir) at (5.8,0) {IR\\官能团};
+\node[st, fill=omDef!10] (c13) at (8.7,0) {\ce{^{13}C}、DEPT\\骨架};
+\node[st, fill=omDef!10] (h1) at (8.7,-1.8) {\ce{^1H}\\连接方式};
+\node[st] (cand) at (5.8,-1.8) {候选 \\结构};
+\node[st, fill=omThm!10] (chk) at (2.9,-1.8) {核对每个 \\数据};
+\node[st] (ans) at (0,-1.8) {结构};
+\draw[->, thick] (ms) -- (dbe); \draw[->, thick] (dbe) -- (ir); \draw[->, thick] (ir) -- (c13);
+\draw[->, thick] (c13) -- (h1); \draw[->, thick] (h1) -- (cand); \draw[->, thick] (cand) -- (chk);
+\draw[->, thick] (chk) -- (ans);
+\draw[->, thick, densely dashed] (chk.south) -- ++(0,-0.5) -| node[pos=0.25, below, font=\footnotesize]
+  {有数据无法解释：回到候选结构} (cand.south);
+\end{tikzpicture}
+\par\vspace{4pt}
+
+{\small 未知物的工作顺序（见\cref{met:b2:structure-determination:solve}）。最后一步
+是最常被略去的一步：若某个峰仍无法解释，该结构尚不能作为答案。}
+\end{omfigure}
+
+\section{典型例题}
+
+\begin{example}[一种酮，C$_5$H$_{10}$O]\label{ex:b2:structure-determination:ketone}
+某未知物的 $M = 86$，红外吸收带约在 \qty{1715}{cm^{-1}}，碳谱峰位于 208.9、45.7、29.8、17.4 及
+13.7~ppm，质子信号位于 2.41（t，2H）、2.13（s，3H）、1.61（六重峰，2H）及 0.91（t，3H）。
+不饱和度为 1，为饱和酮（9.7 附近无醛基质子）。五个碳，五条谱线：
+无对称性。2.13 处的三质子单峰是与羰基相邻的 \ce{CH3}；三重峰、
+六重峰、三重峰的组合为丙基，其 2.41 处的 \ce{CH2} 与羰基相连。戊-2-酮，
+\ce{CH3COCH2CH2CH3}。其对称的同分异构体戊-3-酮只应有三条碳谱线，且不应有单峰；
+其质谱在 58 处有麦氏重排离子，而戊-3-酮无此离子（见\cref{ch:b2:mass-spec-atomic}）。
+% ledger: c13:pentan-2-one, nmr:pentan-2-one, ir:CO-ketone, ms:pentan-2-one
+\end{example}
+
+\begin{example}[一种芳香酯，C$_9$H$_{10}$O$_2$]\label{ex:b2:structure-determination:ester}
+某未知物分子式为 \ce{C9H10O2}（不饱和度为 5），有羰基吸收带，并有七条
+碳谱线：166.5（C）、132.8（CH）、130.6（C）、129.6（CH）、128.3（CH）、60.9（\ce{CH2}）及 14.3
+（\ce{CH3}）。其质子谱：8.05（m，2H）、7.35--7.63（m，3H）、4.37（q，2H）、1.38（t，3H）。一个
+单取代苯环（四条芳香碳谱线，其中两条各代表两个碳；五个
+芳香质子）提供四个不饱和度，羰基提供第五个。四重峰–三重峰组合
+为乙基；其 4.37 处的 \ce{CH2}（碳谱中为 60.9）与氧相连。酯羰基
+位于 166.5 处，与苯环相连：邻近它的两个质子位于 8.05，向低场移动。苯甲酸乙酯，
+\ce{C6H5COOCH2CH3}。
+% ledger: c13:ethylbenzoate, nmr:ethylbenzoate
+\end{example}
+
+\section{陷阱}
+
+\begin{itemize}
+  \item \emph{可交换质子}（\ce{O-H}、\ce{N-H}）的信号宽而位置可变，
+        常与相邻质子不发生耦合，向样品中滴入一滴 \ce{D2O} 并振荡后，
+        信号消失。
+  \item \emph{峰重叠}：苯环上的两个碳，或链上若干个 \ce{CH2}，可能
+        共用同一条谱线；判断对称性之前，应先将谱线数与分子式对照。
+  \item \emph{非对映异位质子}：紧邻手性碳原子的 \ce{CH2} 上的两个质子
+        不等价，化学位移可能不同，且彼此发生耦合。
+  \item \emph{二级谱图}：当两个相互耦合质子的化学位移差
+        仅为其耦合常数的几倍时，多重峰相互靠拢，$n+1$ 规则失效；
+        采用更高场强的谱仪可恢复简单的峰形。
+\end{itemize}
+
+\begin{safety}{\ghs[5mm]{GHS02}\,\ghs[5mm]{GHS07}\,\ghs[5mm]{GHS08}}
+2-丁酮易燃。核磁共振谱仪的磁体始终开启：附近不得放置钢制工具、
+气瓶或磁卡，禁止心脏起搏器佩戴者入内。
+% ledger: ghs:butanone, ghs:benzylacetate
+\end{safety}
+
+\section{练习}
+
+\begin{exercise}[$\star$]\label{exo:b2:structure-determination:1}
+求各二甲苯（1,2-、1,3-和
+1,4-二甲苯）的去偶 \ce{^{13}C} 谱各有几条谱线？
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b2:structure-determination:2}
+预测 2-丁醇的 DEPT-135 与 DEPT-90 谱图。
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b2:structure-determination:3}
+某谱线位于 209、170、129、64 和 14~ppm，它最可能属于哪一类碳？
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b2:structure-determination:4}
+计算 \ce{C8H8O2} 的不饱和度，并提出一个含苯环的结构。
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b2:structure-determination:5}
+某液体 \ce{C4H8O} 在 \qty{1715}{cm^{-1}} 处有红外吸收带，碳谱线位于 209、37、29 和 8~ppm
+（DEPT-135：37 向下，29 和 8 向上，209 不出现）。确定其结构。
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b2:structure-determination:6}
+如何仅凭 \ce{^{13}C} 核磁共振区分戊-2-酮和戊-3-酮？仅凭
+质子核磁共振呢？用质谱法又如何？
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b2:structure-determination:7}
+某酯 $M = 88$，其质子信号位于 4.12（q，2H）、2.04（s，3H）和 1.26（t，3H）（练习
+数据）。确定其结构。
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b2:structure-determination:8}
+用 \ce{^{13}C} 核磁共振区分 1,2-二氯苯与 1,4-二氯苯。
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b2:structure-determination:9}
+在 2-氯丁烷中，\ce{CH2} 基团的两个质子为何不等价？这对
+质子谱有何影响？
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b2:structure-determination:10}
+某未知物 \ce{C9H10O} 在 \qty{1690}{cm^{-1}} 处有红外吸收带，碳谱线位于 200.8（C）、137.0（C），
+132.9（CH）、128.6（CH）、128.0（CH）、31.8（\ce{CH2}）和 8.3（\ce{CH3}），质子信号位于 7.95（m，
+2H）、7.40--7.55（m，3H）、2.98（q，2H）和 1.22（t，3H）（练习数据）。确定其结构，并解释
+羰基波数偏低的原因。
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b2:structure-determination:11}
+\ce{C5H10O2} 的四种同分异构体：戊酸、丁酸甲酯、丙酸乙酯和乙酸丙酯。
+分别给出每一种的一个红外或质子核磁共振谱特征，以便将其与另外三种区分开来。
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b2:structure-determination:12}
+某报告将苯甲酸乙酯中 166.5~ppm 处的谱线归属于连有酯基的环碳，
+并将 130.6~ppm 处的谱线归属于羰基碳。请结合 DEPT 数据与化学位移表，说明该归属
+不可能正确。
+\end{exercise}
+
+\section{问题：茉莉花的四种谱图}
+
+\begin{problem}[{周末问题——由分子离子确定分子式、红外羰基吸收带、
+碳-13 与 DEPT、质子谱，以及借助碎片检验结构}]
+\label{pb:b2:structure-determination:1}
+一种无色液体，带有茉莉花的花香气味，其数据如下。质谱（NIST
+WebBook）：$m/z$ 150（31.7）、151（3.1）、108（100）、91（71.7）、90（40.6）、43（37.6）。红外谱（练习
+数据）：1740 与 \qty{1230}{cm^{-1}} 处有强吸收带，略高于 \qty{3000}{cm^{-1}} 处有弱吸收带，无
+\qty{3300}{cm^{-1}} 附近的宽吸收带。碳-13，CDCl$_3$（PubChem 数据）：170.70、136.14、128.56、
+128.24、66.24、20.82~ppm。质子谱，CDCl$_3$，\qty{90}{MHz}：7.33（m，5H）、5.09（s，2H）、2.06（s，3H）。
+% ledger: use:benzylacetate, ms:benzylacetate, c13:benzylacetate, nmr:benzylacetate, ir:CO-ester, iso:C12, iso:C13, mass:C12, mass:H1, mass:O16
+
+\begin{center}
+\begin{tikzpicture}
+\pgfplotsset{dept/.style={width=0.8\linewidth, height=3.2cm, ycomb, x dir=reverse, ymin=0, ymax=1.15,
+  xmin=0, xmax=200, ytick=\empty, axis y line=none, axis x line=bottom, x axis line style={-}, tick label style={font=\tiny},
+  title style={font=\scriptsize, at={(0.02,0.82)}, anchor=west}, every axis plot/.append style={thick}}}
+\begin{axis}[dept, title={去偶}, xtick={0,20,40,60,80,100,120,140,160,180,200}]
+\addplot[omDef] table[x=shift, y=dec] {figdata/out/bachelor-2-nmr-spectra-c.dat};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+% figdata: bachelor-2/nmr-spectra.py part c
+
+\medskip
+\noindent\textbf{第一部分——分子式。}
+\begin{enumerate}
+  \item 由 151/150 的比值，估算碳原子数。
+  \item 氮规则说明了什么？
+  \item 若含九个碳，质量 150 还剩多少？试提出一个含氧的分子式。
+  \item 为什么 \ce{C10H14O}（标称质量同为 150）可能性较小？
+  \item 计算不饱和度。
+  \item 计算所保留分子式的单同位素质量。
+\end{enumerate}
+
+\medskip
+\noindent\textbf{第二部分——红外光谱。}
+\begin{enumerate}[resume]
+  \item 指认 \qty{1740}{cm^{-1}} 处的吸收带。其位置提示是哪一类官能团？
+  \item 指认 \qty{1230}{cm^{-1}} 处的吸收带。
+  \item \qty{3000}{cm^{-1}} 以上的弱吸收带说明了什么？
+  \item 在 \qty{3300}{cm^{-1}} 附近没有宽吸收带，排除了什么？
+  \item 羰基是否与环共轭？请由其波数加以说明。
+\end{enumerate}
+
+\medskip
+\noindent\textbf{第三部分——碳-13 与 DEPT。}
+\begin{enumerate}[resume]
+  \item 将每条谱线指认到一类碳原子。
+  \item 在 DEPT-135 中，哪条谱线朝下？
+  \item 在 DEPT-135 中，哪些谱线消失？
+  \item 在 DEPT-90 中，哪些谱线保留？
+  \item 一取代苯环有几类碳原子？请说明为何只出现两条芳香
+        CH 谱线。
+  \item 128.24 处的谱线最高。它是否代表数目最多的碳原子？
+\end{enumerate}
+
+\medskip
+\noindent\textbf{第四部分——质子核磁共振与结构。}
+\begin{enumerate}[resume]
+  \item 指认三组质子信号。
+  \item 为什么 5.09 和 2.06 处的信号为单峰？
+  \item 为什么 5.09 处的 \ce{CH2} 峰位于如此低场？
+  \item 组装出结构并命名。
+  \item 其同分异构体 2-苯乙酸甲酯 \ce{C6H5CH2COOCH3} 具有相同分子式。哪项数据可以
+        排除它？
+  \item 说明 108、91 和 43 处的碎片离子。
+  \item 若化合物的 \ce{^{13}C} 谱经宽带去偶且完美分辨，会出现几条谱线，
+        其中几条在 DEPT-135 中朝下？
+\end{enumerate}
+\end{problem}

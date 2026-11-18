@@ -12,7 +12,8 @@ term-link engine.
 
 **All four books are written in English (2026-10-02/03) and all four also ship in
 `fr`, `nl`, `es`, `pt`, `hi`, `ar`, `id` — Books 1–2 on 2026-10-04, Books 3–4 on
-2026-10-06/07: thirty-two editions (see "Language editions"):**
+2026-10-06/07: thirty-two editions (see "Language editions") — plus Simplified Chinese
+(`zh`, pilot tier, 2026-11-18):**
 
 | Book | Entry file | Years | Ch. | Pages | Figures | AI | Photos | Ledger rows | Links | figdata |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -316,6 +317,20 @@ dropped glyph.
 - Local TeX Live has no `french`/`spanish`/`dutch` `.ldf` (Indonesian's is
   there): local Latin-script builds hyphenate in English, CI's full TeX Live
   does not. Expect CI's overfull count to differ.
+
+- **Simplified Chinese (`zh`) for all four books, 2026-11-18, by the pilot method**
+  (`../pilot_translation_instruction.md`): Haiku 5.5 one call per section, one Opus 5.5
+  coordinator for the whole physics + chemistry run, no subagents; pilot tier 88 each, not
+  read in full; 407 / 269 / 341 / 370 pp, all 0/0/0 (Book 4 logs one invisible U+007F, as
+  its `hi`/`ar` editions do), `check_translation.sh <year> zh` and `gates.sh` green; links
+  7,109 / 3,318 / 2,267 / 2,379. XeLaTeX + xeCJK with TeX Live's Fandol fonts, pinyin index,
+  Greek and Ⅰ–Ⅻ declared a CJK class, `\ohm` from the maths font, chemgreek on math Greek
+  (`\om@unicodefacetrue`). **Fandol has no 鎓, 鏻, 噁, 啰**: write X正离子, 季磷盐, 恶唑,
+  菲咯啉 (`zh_sweeps.py` `onium` converts them; count "Missing character" at every build).
+  IUPAC subscripts fus/vap/trs stay Latin. Term configs `tools/term_config/book<N>_zh.py`
+  (`INDEX_CJK = True`, STOP/`EXTRA_PROTECT` for homographs: 构型, 屏蔽, 循环, 自由度 in
+  statistics); one-character terms (醛, 酮, 酶) and Latin + Han terms (`E 因子`) cannot link.
+  Run file `sources/TRANSLATION_BOOKS_1-4_ZH.md`; uncommitted; not in the HTML reader.
 
 ## Style file additions (`styles/onechemistry.sty`)
 

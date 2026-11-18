@@ -16,6 +16,7 @@ $out_dir = 'build';
     'one_chemistry_book_1_school_hi.tex',
     'one_chemistry_book_1_school_ar.tex',
     'one_chemistry_book_1_school_id.tex',
+    'one_chemistry_book_1_school_zh.tex',
     'one_chemistry_book_2_university_year_1_fr.tex',
     'one_chemistry_book_2_university_year_1_nl.tex',
     'one_chemistry_book_2_university_year_1_es.tex',
@@ -23,6 +24,7 @@ $out_dir = 'build';
     'one_chemistry_book_2_university_year_1_hi.tex',
     'one_chemistry_book_2_university_year_1_ar.tex',
     'one_chemistry_book_2_university_year_1_id.tex',
+    'one_chemistry_book_2_university_year_1_zh.tex',
     # Language editions of Books 3 and 4 (2026-10-06).
     'one_chemistry_book_3_university_year_2_fr.tex',
     'one_chemistry_book_3_university_year_2_nl.tex',
@@ -31,6 +33,7 @@ $out_dir = 'build';
     'one_chemistry_book_3_university_year_2_hi.tex',
     'one_chemistry_book_3_university_year_2_ar.tex',
     'one_chemistry_book_3_university_year_2_id.tex',
+    'one_chemistry_book_3_university_year_2_zh.tex',
     'one_chemistry_book_4_university_year_3_fr.tex',
     'one_chemistry_book_4_university_year_3_nl.tex',
     'one_chemistry_book_4_university_year_3_es.tex',
@@ -38,6 +41,7 @@ $out_dir = 'build';
     'one_chemistry_book_4_university_year_3_hi.tex',
     'one_chemistry_book_4_university_year_3_ar.tex',
     'one_chemistry_book_4_university_year_3_id.tex',
+    'one_chemistry_book_4_university_year_3_zh.tex',
 );
 # Hindi editions (*_hi.tex) need XeLaTeX for OpenType Devanagari, and Arabic
 # editions (*_ar.tex) need LuaLaTeX for babel's Lua bidi engine (bidi=basic); every other
@@ -68,7 +72,7 @@ sub op_compile {
     # chemistry books' pgfplots/chemfig figures exhaust it: the first Hindi
     # probe died "TeX capacity exceeded [main memory size=5000000]" at an
     # \end{axis} (2026-10-04). LuaTeX allocates dynamically and needs nothing.
-    my @engine = $source =~ /_hi\.tex$/
+    my @engine = $source =~ /_(?:hi|zh)\.tex$/
         ? ('xelatex',
            '-cnf-line=main_memory=12000000',
            '-cnf-line=extra_mem_top=6000000',
@@ -106,4 +110,23 @@ sub op_compile {
     }
     return $status;
 }
-$makeindex = 'makeindex %O -o %D %S';
+# Chinese index entries sorted by code point mean nothing to a reader: the
+# Chinese editions sort by pinyin with upmendex (ICU collation, in TeX Live),
+# through styles/zh-pinyin.ist. Every other edition keeps plain makeindex.
+# latexmk runs the indexer inside the output directory, so the style file
+# needs the repo root, which is the directory this rc file is read from.
+use Cwd ();
+my $oc_root = Cwd::getcwd();
+$makeindex = 'internal oc_makeindex %O %D %S';
+sub oc_makeindex {
+    my @args = @_;
+    my $source = pop @args;
+    my $dest = pop @args;
+    # upmendex exits non-zero on an empty .idx (a run that stopped on an error writes one), which would stop latexmk
+    # before the next xelatex pass could fix it; makeindex exits 0 there. Match makeindex.
+    if ($source =~ /_zh\.idx$/ && -z $source) { open(my $fh, '>', $dest); close $fh; return 0; }
+    my @cmd = $source =~ /_zh\.idx$/
+        ? ('upmendex', '-s', "$oc_root/styles/zh-pinyin.ist", @args, '-o', $dest, $source)
+        : ('makeindex', @args, '-o', $dest, $source);
+    return system(@cmd);
+}

@@ -1,0 +1,385 @@
+\chapter{Structure Determination: \texorpdfstring{$^{13}$C}{13C} NMR, MS and IR Together}\label{ch:b2:structure-determination}
+
+A fragrance laboratory receives a vial of a colourless liquid that smells of jasmine. Nobody has
+written a label. A \omterm{def:b2:mass-spec-atomic:spectrum}{mass spectrum} gives its molecular formula, an infrared spectrum its functional
+groups, a carbon-13 spectrum its skeleton and a proton spectrum the way the pieces are joined; within an
+hour the liquid has a name. This chapter adds \omterm{def:b2:structure-determination:c13}{carbon-13 NMR} to the proton NMR and infrared spectroscopy
+of the Year 1 volume and to the \omterm{def:b2:mass-spec-atomic:spectrum}{mass spectrometry} of \cref{ch:b2:mass-spec-atomic}, and turns the four
+into one method.
+
+\begin{recall}
+The Year 1 volume: chemical shift and shielding, equivalent protons, integration, spin--spin coupling
+and the $n + 1$ rule, infrared wavenumbers of functional groups and the fingerprint region, the degree
+of unsaturation, solving a structure from three spectra. \Cref{ch:b2:mass-spec-atomic}: the \omterm{def:b2:mass-spec-atomic:molecular-ion}{molecular
+ion}, \omterm{def:b2:mass-spec-atomic:isotope-pattern}{isotope patterns}, fragmentation.
+\end{recall}
+
+\section{Carbon-13 NMR}
+
+Carbon-12, the main isotope, has no nuclear spin and gives no NMR signal. Carbon-13 has a spin of
+$\tfrac12$, like the proton, but it makes up only 1.1~\% of natural carbon and its signal is weaker,
+nucleus for nucleus, than that of a proton; a carbon spectrum therefore needs more sample or more scans.
+% ledger: iso:C13
+
+\begin{definition}[Carbon-13 NMR]\label{def:b2:structure-determination:c13}
+\emph{Carbon-13 NMR}\index{carbon-13 NMR} records the resonances of the \ce{^{13}C} nuclei of a sample.
+It is usually run with \emph{broadband decoupling}\index{broadband decoupling}: the protons are
+irradiated over their whole range of frequencies during the measurement, which removes every
+carbon--proton coupling, so that each kind of carbon gives one single line. \emph{Equivalent
+carbons}\index{equivalent carbons}, exchanged by a symmetry of the molecule (or by a fast rotation),
+give the same line.
+\end{definition}
+
+\begin{proposition}[No carbon--carbon coupling]\label{prop:b2:structure-determination:no-cc-coupling}
+Couplings between neighbouring carbon atoms do not appear in a natural-abundance \ce{^{13}C}
+spectrum.
+\end{proposition}
+
+\begin{proof}
+A coupling between two carbons is seen only in molecules where both are \ce{^{13}C}. For two given
+neighbouring positions the probability is $a_{13}^2 = 0.011^2 \approx 1.2 \times 10^{-4}$: about one
+molecule in eight thousand. The signal of each carbon comes almost entirely from molecules in which its
+neighbours are \ce{^{12}C}, invisible to the spectrometer; the coupled satellites are a hundred times
+weaker than the noise of an ordinary spectrum.
+\end{proof}
+
+\begin{proposition}[Number of lines]\label{prop:b2:structure-determination:signals}
+A decoupled \ce{^{13}C} spectrum shows one line per set of \omterm{def:b2:structure-determination:c13}{equivalent carbons}, unless two sets happen to
+have the same shift.
+\end{proposition}
+
+\begin{proof}[Argument]
+\omterm{def:b2:structure-determination:c13}{Equivalent carbons} are in identical surroundings, so they have the same shift; non-equivalent carbons
+generally differ. With couplings to protons removed and couplings between carbons absent
+(\cref{prop:b2:structure-determination:no-cc-coupling}), nothing splits a line. Accidental overlap
+happens when two different carbons have shifts closer than the resolution, which is common for the
+carbons of a benzene ring near \qty{128}{ppm}.
+\end{proof}
+
+Shifts spread over about \qty{220}{ppm}, twenty times the range of protons, so overlaps are rarer than
+in proton spectra, and the shift alone tells the kind of carbon. The chart below shows the shifts
+measured for the compounds of this chapter.
+
+\begin{omfigure}
+\begin{tikzpicture}
+\begin{axis}[width=0.86\linewidth, height=4.6cm, xmin=0, xmax=220, ymin=-0.6, ymax=4.6, x dir=reverse,
+  xlabel={$\delta$ (ppm)}, label style={font=\small}, tick label style={font=\scriptsize},
+  ytick={0,1,2,3,4}, yticklabels={alkyl C, C--O, aromatic C, ester C=O, ketone C=O},
+  xtick={0,20,40,60,80,100,120,140,160,180,200,220}, grid=major, grid style={black!10}]
+\addplot[only marks, mark=|, mark size=5pt, thick, omDef] table[x=shift, y=cls] {figdata/out/bachelor-2-nmr-spectra-d.dat};
+\end{axis}
+\end{tikzpicture}
+
+{\small Measured \ce{^{13}C} shifts of butan-2-one, pentan-2-one, ethyl benzoate and benzyl ethanoate,
+sorted by kind of carbon (CDCl$_3$; PubChem data). Ketone carbonyls lie near 209, ester carbonyls near
+167--171, \omterm{def:b2:huckel:aromatic}{aromatic} carbons between 128 and 137, carbons bonded to an ester oxygen near 61--66, and
+alkyl carbons below 46.}
+% figdata: bachelor-2/nmr-spectra.py part d
+% ledger: c13:butanone, c13:pentan-2-one, c13:ethylbenzoate, c13:benzylacetate
+\end{omfigure}
+
+\begin{proposition}[Heights are not counts]\label{prop:b2:structure-determination:intensities}
+In a routine decoupled \ce{^{13}C} spectrum the heights of the lines are not proportional to the
+numbers of carbons they represent; carbons without hydrogens give weak lines.
+\end{proposition}
+
+\begin{proof}[Argument]
+Routine spectra repeat the measurement faster than the slowest carbons relax back to equilibrium, and
+carbons without attached protons relax slowly, so their signal is partly saturated. Decoupling also
+enhances the signals of carbons carrying protons, by an amount that depends on their surroundings.
+In butan-2-one, the carbonyl line is the weakest of the four although it stands for one carbon like
+the others. Integration, so useful for protons, is therefore not used for routine carbon spectra.
+\end{proof}
+
+\section{DEPT}
+
+\begin{definition}[DEPT]\label{def:b2:structure-determination:dept}
+\emph{DEPT}\index{DEPT} (distortionless enhancement by polarisation transfer) is a set of carbon-13
+experiments that give the signals of carbons with attached protons a sign or an absence depending on
+their number of hydrogens. A \emph{quaternary carbon}\index{quaternary carbon} carries no hydrogen
+(bonded to four other atoms, or a carbonyl or \omterm{def:b2:huckel:aromatic}{aromatic} carbon without H); it gives no DEPT signal.
+\end{definition}
+
+\begin{proposition}[Reading DEPT]\label{prop:b2:structure-determination:dept}
+In DEPT-135, \ce{CH} and \ce{CH3} carbons point up, \ce{CH2} carbons point down and \omterm{def:b2:structure-determination:dept}{quaternary carbons}
+are absent. In DEPT-90, only \ce{CH} carbons appear.
+\end{proposition}
+
+\admitted
+
+The experiment transfers magnetisation from the protons to the carbon they are bonded to, through a
+sequence of radio-frequency pulses whose last angle selects the response; how the pulses do it is
+explained in the Year 3 volume. Comparing the decoupled spectrum with DEPT-135 and DEPT-90 sorts every
+line into C, CH, \ce{CH2} or \ce{CH3}.
+
+\begin{omfigure}
+\pgfplotsset{dept/.style={width=\linewidth, height=2.9cm, ycomb, x dir=reverse, ymin=-1, ymax=1.15,
+  ytick=\empty, axis y line=none, axis x line=middle, x axis line style={-}, tick label style={font=\tiny},
+  title style={font=\scriptsize, at={(0.0,0.95)}, anchor=north west}, every axis plot/.append style={thick}}}
+\begin{minipage}[t]{0.49\linewidth}\centering
+{\small butan-2-one}\par
+\begin{tikzpicture}
+\begin{axis}[dept, xmin=0, xmax=220, xtick={0,50,100,150,200}, title={decoupled}]
+\addplot[omDef] table[x=shift, y=dec] {figdata/out/bachelor-2-nmr-spectra-a.dat};
+\end{axis}
+\end{tikzpicture}\par
+\begin{tikzpicture}
+\begin{axis}[dept, xmin=0, xmax=220, xtick={0,50,100,150,200}, title={DEPT-135}]
+\addplot[omThm] table[x=shift, y=d135] {figdata/out/bachelor-2-nmr-spectra-a.dat};
+\end{axis}
+\end{tikzpicture}\par
+\begin{tikzpicture}
+\begin{axis}[dept, xmin=0, xmax=220, xtick={0,50,100,150,200}, title={DEPT-90}]
+\addplot[omMeth] table[x=shift, y=d90] {figdata/out/bachelor-2-nmr-spectra-a.dat};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\linewidth}\centering
+{\small ethyl benzoate}\par
+\begin{tikzpicture}
+\begin{axis}[dept, xmin=0, xmax=220, xtick={0,50,100,150,200}, title={decoupled}]
+\addplot[omDef] table[x=shift, y=dec] {figdata/out/bachelor-2-nmr-spectra-b.dat};
+\end{axis}
+\end{tikzpicture}\par
+\begin{tikzpicture}
+\begin{axis}[dept, xmin=0, xmax=220, xtick={0,50,100,150,200}, title={DEPT-135}]
+\addplot[omThm] table[x=shift, y=d135] {figdata/out/bachelor-2-nmr-spectra-b.dat};
+\end{axis}
+\end{tikzpicture}\par
+\begin{tikzpicture}
+\begin{axis}[dept, xmin=0, xmax=220, xtick={0,50,100,150,200}, title={DEPT-90}]
+\addplot[omMeth] table[x=shift, y=d90] {figdata/out/bachelor-2-nmr-spectra-b.dat};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}
+
+{\small Decoupled \ce{^{13}C} spectra (measured shifts and heights, PubChem data) with the \omterm{def:b2:structure-determination:dept}{DEPT}
+responses (signs from \cref{prop:b2:structure-determination:dept}, heights schematic). Butan-2-one: C=O
+209.3 (absent in \omterm{def:b2:structure-determination:dept}{DEPT}), \ce{CH2} 36.9 (down), \ce{CH3} 29.4 and 7.9 (up). Ethyl benzoate: C=O 166.5 and
+the ring carbon bearing the ester, 130.6, vanish; three \omterm{def:b2:huckel:aromatic}{aromatic} CH (132.8, 129.6, 128.3) stay in
+DEPT-90; \ce{OCH2} 60.9 points down.}
+% figdata: bachelor-2/nmr-spectra.py parts a, b
+\end{omfigure}
+
+\section{Combining the techniques}
+
+Each technique answers its own question, and the answers are assembled in a fixed order: the formula
+first, because it bounds everything else; then the functional groups and the skeleton; then the
+connections.
+
+\begin{method}[Solving an unknown]\label{met:b2:structure-determination:solve}
+\begin{enumerate}
+  \item Formula: \omterm{def:b2:mass-spec-atomic:molecular-ion}{molecular ion}, $M+1$ for the number of carbons, \omterm{def:b2:mass-spec-atomic:isotope-pattern}{isotope patterns}, \omterm{def:b2:mass-spec-atomic:nitrogen-rule}{nitrogen rule}; an
+        exact mass if available. Degree of unsaturation.
+  \item Infrared: \ce{C=O} (and which kind), \ce{O-H}, \ce{N-H}, \ce{C#N}, \omterm{def:b2:huckel:aromatic}{aromatic} or alkene
+        \ce{C-H} above \qty{3000}{cm^{-1}}.
+  \item Carbon-13 and \omterm{def:b2:structure-determination:dept}{DEPT}: number of kinds of carbon (symmetry), their classes from the shifts, and
+        C, CH, \ce{CH2}, \ce{CH3} from \omterm{def:b2:structure-determination:dept}{DEPT}. Compare with the formula.
+  \item Proton NMR: integrations, shifts, multiplicities; neighbours from the $n + 1$ rule.
+  \item Assemble the fragments; write every candidate structure.
+  \item Check each candidate against every datum, including the mass-spectrum fragments; keep the one
+        that explains them all.
+\end{enumerate}
+\end{method}
+
+\begin{omfigure}
+\begin{tikzpicture}[x=1cm, y=1cm, st/.style={draw=black!70, rounded corners=2pt, fill=white,
+  font=\small, align=center, minimum height=0.9cm, inner sep=3pt, text width=2.3cm}]
+\node[st, fill=omDef!10] (ms) at (0,0) {MS\\formula, $M+1$};
+\node[st] (dbe) at (2.9,0) {degree of\\unsaturation};
+\node[st, fill=omDef!10] (ir) at (5.8,0) {IR\\functional groups};
+\node[st, fill=omDef!10] (c13) at (8.7,0) {\ce{^{13}C}, DEPT\\skeleton};
+\node[st, fill=omDef!10] (h1) at (8.7,-1.8) {\ce{^1H}\\connections};
+\node[st] (cand) at (5.8,-1.8) {candidate\\structures};
+\node[st, fill=omThm!10] (chk) at (2.9,-1.8) {check every\\datum};
+\node[st] (ans) at (0,-1.8) {structure};
+\draw[->, thick] (ms) -- (dbe); \draw[->, thick] (dbe) -- (ir); \draw[->, thick] (ir) -- (c13);
+\draw[->, thick] (c13) -- (h1); \draw[->, thick] (h1) -- (cand); \draw[->, thick] (cand) -- (chk);
+\draw[->, thick] (chk) -- (ans);
+\draw[->, thick, densely dashed] (chk.south) -- ++(0,-0.5) -| node[pos=0.25, below, font=\footnotesize]
+  {a datum unexplained: back to the candidates} (cand.south);
+\end{tikzpicture}
+\par\vspace{4pt}
+
+{\small The order of work for an unknown (\cref{met:b2:structure-determination:solve}). The last step
+is the one most often skipped: a structure that leaves one peak unexplained is not yet the answer.}
+\end{omfigure}
+
+\section{Worked cases}
+
+\begin{example}[A ketone, C$_5$H$_{10}$O]\label{ex:b2:structure-determination:ketone}
+An unknown has $M = 86$, an IR band near \qty{1715}{cm^{-1}}, carbon lines at 208.9, 45.7, 29.8, 17.4 and
+13.7~ppm, and proton signals at 2.41 (t, 2H), 2.13 (s, 3H), 1.61 (sextet, 2H) and 0.91 (t, 3H).
+One degree of unsaturation, a saturated ketone (no aldehyde proton near 9.7). Five carbons, five lines:
+no symmetry. The singlet of three protons at 2.13 is a \ce{CH3} next to the carbonyl; the triplet,
+sextet, triplet sequence is a propyl group whose \ce{CH2} at 2.41 touches the carbonyl. Pentan-2-one,
+\ce{CH3COCH2CH2CH3}. Its symmetric isomer pentan-3-one would show three carbon lines and no singlet;
+its \omterm{def:b2:mass-spec-atomic:spectrum}{mass spectrum} has the McLafferty ion at 58 that pentan-3-one lacks (\cref{ch:b2:mass-spec-atomic}).
+% ledger: c13:pentan-2-one, nmr:pentan-2-one, ir:CO-ketone, ms:pentan-2-one
+\end{example}
+
+\begin{example}[An aromatic ester, C$_9$H$_{10}$O$_2$]\label{ex:b2:structure-determination:ester}
+An unknown of formula \ce{C9H10O2} (five degrees of unsaturation) shows a carbonyl band and seven
+carbon lines: 166.5 (C), 132.8 (CH), 130.6 (C), 129.6 (CH), 128.3 (CH), 60.9 (\ce{CH2}) and 14.3
+(\ce{CH3}). Its proton spectrum: 8.05 (m, 2H), 7.35--7.63 (m, 3H), 4.37 (q, 2H), 1.38 (t, 3H). A
+monosubstituted benzene ring (four \omterm{def:b2:huckel:aromatic}{aromatic} carbon lines, two of them for two carbons each; five
+\omterm{def:b2:huckel:aromatic}{aromatic} protons) accounts for four unsaturations, the carbonyl for the fifth. The quartet--triplet pair
+is an ethyl group; its \ce{CH2} at 4.37 (and at 60.9 in carbon) is bonded to oxygen. The ester carbonyl
+at 166.5 is bonded to the ring: the two protons at 8.05, next to it, are pushed downfield. Ethyl
+benzoate, \ce{C6H5COOCH2CH3}.
+% ledger: c13:ethylbenzoate, nmr:ethylbenzoate
+\end{example}
+
+\section{Traps}
+
+\begin{itemize}
+  \item \emph{Exchangeable protons} (\ce{O-H}, \ce{N-H}) give broad signals at variable shifts, are
+        often not coupled to their neighbours, and disappear when a drop of \ce{D2O} is shaken with the
+        sample.
+  \item \emph{Overlapping signals}: two carbons of a benzene ring, or several \ce{CH2} of a chain, may
+        share one line; count lines against the formula before concluding on symmetry.
+  \item \emph{Diastereotopic protons}: the two protons of a \ce{CH2} next to a stereocentre are not
+        equivalent, may have different shifts and couple to each other.
+  \item \emph{Second-order patterns}: when two coupled protons have shifts closer than a few times their
+        coupling constant, the multiplets lean towards each other and the $n+1$ rule fails; a
+        higher-field spectrometer restores simple patterns.
+\end{itemize}
+
+\begin{safety}{\ghs[5mm]{GHS02}\,\ghs[5mm]{GHS07}\,\ghs[5mm]{GHS08}}
+Butan-2-one is flammable. The magnet of an NMR spectrometer is always on: no steel tools, gas
+cylinders or magnetic cards near it, and no access for people with pacemakers.
+% ledger: ghs:butanone, ghs:benzylacetate
+\end{safety}
+
+\section{Exercises}
+
+\begin{exercise}[$\star$]\label{exo:b2:structure-determination:1}
+How many lines does the decoupled \ce{^{13}C} spectrum of each xylene (1,2-, 1,3- and
+1,4-dimethylbenzene) show?
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b2:structure-determination:2}
+Predict the DEPT-135 and DEPT-90 spectra of butan-2-ol.
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b2:structure-determination:3}
+To which kind of carbon does a line at 209, 170, 129, 64 and 14~ppm most likely belong?
+\end{exercise}
+
+\begin{exercise}[$\star$]\label{exo:b2:structure-determination:4}
+Compute the degree of unsaturation of \ce{C8H8O2} and propose a structure containing a benzene ring.
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b2:structure-determination:5}
+A liquid \ce{C4H8O} shows an IR band at \qty{1715}{cm^{-1}} and carbon lines at 209, 37, 29 and 8~ppm
+(DEPT-135: 37 down, 29 and 8 up, 209 absent). Identify it.
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b2:structure-determination:6}
+How would you tell pentan-2-one from pentan-3-one with \ce{^{13}C} NMR alone? With proton NMR? With
+\omterm{def:b2:mass-spec-atomic:spectrum}{mass spectrometry}?
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b2:structure-determination:7}
+An ester has $M = 88$ and proton signals at 4.12 (q, 2H), 2.04 (s, 3H) and 1.26 (t, 3H) (exercise
+data). Identify it.
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b2:structure-determination:8}
+Distinguish 1,2-dichlorobenzene from 1,4-dichlorobenzene by \ce{^{13}C} NMR.
+\end{exercise}
+
+\begin{exercise}[$\star\star$]\label{exo:b2:structure-determination:9}
+In 2-chlorobutane, why are the two protons of the \ce{CH2} group not equivalent? What does that do to
+the proton spectrum?
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b2:structure-determination:10}
+An unknown \ce{C9H10O} shows an IR band at \qty{1690}{cm^{-1}}, carbon lines at 200.8 (C), 137.0 (C),
+132.9 (CH), 128.6 (CH), 128.0 (CH), 31.8 (\ce{CH2}) and 8.3 (\ce{CH3}), and proton signals at 7.95 (m,
+2H), 7.40--7.55 (m, 3H), 2.98 (q, 2H) and 1.22 (t, 3H) (exercise data). Identify it, and explain the
+low carbonyl wavenumber.
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b2:structure-determination:11}
+Four isomers \ce{C5H10O2}: pentanoic acid, methyl butanoate, ethyl propanoate and propyl ethanoate.
+Give for each one feature of its IR or proton NMR spectrum that tells it from the other three.
+\end{exercise}
+
+\begin{exercise}[$\star\star\star$]\label{exo:b2:structure-determination:12}
+A report assigns the line at 166.5~ppm of ethyl benzoate to the ring carbon bearing the ester and
+the line at 130.6~ppm to the carbonyl carbon. Show, with the \omterm{def:b2:structure-determination:dept}{DEPT} data and the shift chart, that the
+assignment cannot be right.
+\end{exercise}
+
+\section{Problem: Four Spectra of Jasmine}
+
+\begin{problem}[{Weekend problem --- the formula from the molecular ion, the infrared carbonyl band,
+carbon-13 and DEPT, the proton spectrum, and a structure checked against the fragments}]
+\label{pb:b2:structure-determination:1}
+A colourless liquid with a flowery odour of jasmine gives the following data. \omterm{def:b2:mass-spec-atomic:spectrum}{Mass spectrum} (NIST
+WebBook): $m/z$ 150 (31.7), 151 (3.1), 108 (100), 91 (71.7), 90 (40.6), 43 (37.6). Infrared (exercise
+data): strong bands at 1740 and \qty{1230}{cm^{-1}}, weak bands just above \qty{3000}{cm^{-1}}, no
+broad band near \qty{3300}{cm^{-1}}. Carbon-13, CDCl$_3$ (PubChem data): 170.70, 136.14, 128.56,
+128.24, 66.24, 20.82~ppm. Proton, CDCl$_3$, \qty{90}{MHz}: 7.33 (m, 5H), 5.09 (s, 2H), 2.06 (s, 3H).
+% ledger: use:benzylacetate, ms:benzylacetate, c13:benzylacetate, nmr:benzylacetate, ir:CO-ester, iso:C12, iso:C13, mass:C12, mass:H1, mass:O16
+
+\begin{center}
+\begin{tikzpicture}
+\pgfplotsset{dept/.style={width=0.8\linewidth, height=3.2cm, ycomb, x dir=reverse, ymin=0, ymax=1.15,
+  xmin=0, xmax=200, ytick=\empty, axis y line=none, axis x line=bottom, x axis line style={-}, tick label style={font=\tiny},
+  title style={font=\scriptsize, at={(0.02,0.82)}, anchor=west}, every axis plot/.append style={thick}}}
+\begin{axis}[dept, title={decoupled}, xtick={0,20,40,60,80,100,120,140,160,180,200}]
+\addplot[omDef] table[x=shift, y=dec] {figdata/out/bachelor-2-nmr-spectra-c.dat};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+% figdata: bachelor-2/nmr-spectra.py part c
+
+\medskip
+\noindent\textbf{Part I --- The formula.}
+\begin{enumerate}
+  \item From the 151/150 ratio, estimate the number of carbons.
+  \item What does the \omterm{def:b2:mass-spec-atomic:nitrogen-rule}{nitrogen rule} say?
+  \item With nine carbons, what remains of the mass 150? Propose a formula with oxygen.
+  \item Why is \ce{C10H14O}, also of nominal mass 150, less likely?
+  \item Compute the degree of unsaturation.
+  \item Compute the \omterm{def:b2:mass-spec-atomic:exact-mass}{monoisotopic mass} of the formula retained.
+\end{enumerate}
+
+\medskip
+\noindent\textbf{Part II --- Infrared.}
+\begin{enumerate}[resume]
+  \item Assign the band at \qty{1740}{cm^{-1}}. Which family does its position suggest?
+  \item Assign the band at \qty{1230}{cm^{-1}}.
+  \item What do the weak bands above \qty{3000}{cm^{-1}} indicate?
+  \item What does the absence of a broad band near \qty{3300}{cm^{-1}} exclude?
+  \item Is the carbonyl conjugated with the ring? Explain from its wavenumber.
+\end{enumerate}
+
+\medskip
+\noindent\textbf{Part III --- Carbon-13 and \omterm{def:b2:structure-determination:dept}{DEPT}.}
+\begin{enumerate}[resume]
+  \item Assign each line to a kind of carbon.
+  \item Which line points down in DEPT-135?
+  \item Which lines vanish in DEPT-135?
+  \item Which lines remain in DEPT-90?
+  \item How many kinds of carbon does a monosubstituted benzene ring have? Explain why only two \omterm{def:b2:huckel:aromatic}{aromatic}
+        CH lines appear.
+  \item The line at 128.24 is the tallest. Does it stand for the most carbons?
+\end{enumerate}
+
+\medskip
+\noindent\textbf{Part IV --- Proton NMR and structure.}
+\begin{enumerate}[resume]
+  \item Assign the three proton signals.
+  \item Why are the signals at 5.09 and 2.06 singlets?
+  \item Why is the \ce{CH2} at 5.09 so far downfield?
+  \item Assemble the structure and name it.
+  \item Its isomer methyl 2-phenylethanoate, \ce{C6H5CH2COOCH3}, has the same formula. Which datum rules it
+        out?
+  \item Explain the fragments at 108, 91 and 43.
+  \item How many lines would a perfectly resolved decoupled \ce{^{13}C} spectrum of the compound show, and
+        how many of them point down in DEPT-135?
+\end{enumerate}
+\end{problem}

@@ -19,10 +19,10 @@ ENTRY = {
 # Books 1 and 2 are translated (2026-10-04); Books 3 and 4 are English only. A
 # translation adds its code here (and its tools/term_config/book<N>_<lang>.py).
 LANGS = {
-    1: ("en", "fr", "nl", "es", "pt", "hi", "ar", "id"),
-    2: ("en", "fr", "nl", "es", "pt", "hi", "ar", "id"),
-    3: ("en", "fr", "nl", "es", "pt", "hi", "ar", "id"),
-    4: ("en", "fr", "nl", "es", "pt", "hi", "ar", "id"),
+    1: ("en", "fr", "nl", "es", "pt", "hi", "ar", "id", "zh"),
+    2: ("en", "fr", "nl", "es", "pt", "hi", "ar", "id", "zh"),
+    3: ("en", "fr", "nl", "es", "pt", "hi", "ar", "id", "zh"),
+    4: ("en", "fr", "nl", "es", "pt", "hi", "ar", "id", "zh"),
 }
 
 
