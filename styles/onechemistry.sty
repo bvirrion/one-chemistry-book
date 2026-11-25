@@ -1348,6 +1348,8 @@
 % Quantum boxes, one per orbital, in a row: \omorbs{ud,ud,u,} gives a full,
 % a full, a half-filled and an empty box (u = one electron spin up, d = spin
 % down, ud = a pair, empty = vacant). Sits on the text baseline.
+% \omorbs{} is one vacant box: \foreach runs zero times over an empty list,
+% so without the \ifblank branch it drew nothing at all.
 \newcommand{\om@orbspin}[2]{%
   \ifdefstring{#1}{ud}{%
     \draw[-{Straight Barb[left,length=2.2pt]}] (#2+0.32,0.14) -- (#2+0.32,0.86);
@@ -1358,9 +1360,10 @@
     \draw[-{Straight Barb[left,length=2.2pt]}] (#2+0.5,0.86) -- (#2+0.5,0.14);}{}}
 \newcommand{\omorbs}[1]{%
   \tikz[baseline=0.1em,x=1.15em,y=1.15em,line width=0.45pt]{%
+    \ifblank{#1}{\draw (0,0) rectangle ++(1,1);}{%
     \foreach \om@s [count=\om@i from 0] in {#1}{%
       \draw (\om@i,0) rectangle ++(1,1);%
-      \om@orbspin{\om@s}{\om@i}}}}
+      \om@orbspin{\om@s}{\om@i}}}}}
 
 % Arabic editions: chemistry is written left to right, as one block.
 % Found on the scaffolding probe of the first chemistry translations
